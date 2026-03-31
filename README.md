@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# Sistema de Condomínio – Frontend (Next.js)
 
-First, run the development server:
+Este projeto é o frontend do Sistema de Condomínio, desenvolvido em [Next.js](https://nextjs.org) para proporcionar uma experiência moderna, rápida e responsiva para moradores, síndicos e porteiros.
+
+## Funcionalidades
+
+- Área do morador: comunicados, ocorrências, pagamentos, reservas
+- Área do síndico: gestão de moradores, comunicados, ocorrências, pagamentos, reservas, relatórios
+- Área do porteiro: controle de visitantes, consultas
+- Autenticação e controle de acesso por perfil
+- Interface amigável e responsiva
+
+## Como rodar o projeto
 
 ```bash
 npm run dev
-# or
+# ou
 yarn dev
-# or
+# ou
 pnpm dev
-# or
+# ou
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000) no seu navegador para ver o resultado.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Você pode começar a editar a página inicial em `src/app/page.tsx`. As alterações são aplicadas automaticamente.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+O projeto utiliza [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) para otimização de fontes e [Geist](https://vercel.com/font) como família principal.
 
-## Learn More
+## Saiba mais
 
-To learn more about Next.js, take a look at the following resources:
+Para saber mais sobre Next.js:
+- [Documentação Next.js](https://nextjs.org/docs)
+- [Tutorial interativo Next.js](https://nextjs.org/learn)
+- [Repositório Next.js no GitHub](https://github.com/vercel/next.js)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+A maneira mais fácil de fazer deploy do seu app Next.js é usando a [Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Consulte a [documentação de deploy do Next.js](https://nextjs.org/docs/app/building-your-application/deploying) para mais detalhes.
