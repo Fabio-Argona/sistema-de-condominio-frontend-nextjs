@@ -18,6 +18,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  // Proxy Rewrites: Conecta o Frontend (HTTPS) ao Backend (HTTP) da AWS
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://54.82.31.127:8080/api/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
