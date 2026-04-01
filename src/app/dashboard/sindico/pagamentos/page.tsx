@@ -39,6 +39,10 @@ export default function GestaoPagamentosPage() {
   const [nomeArquivo, setNomeArquivo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedBoletoId, setSelectedBoletoId] = useState<number | null>(null);
+  
   const { get, post, del, put } = useApi();
 
   useEffect(() => {
@@ -210,27 +214,39 @@ export default function GestaoPagamentosPage() {
     }
   };
 
-  const handleMarcarPago = async (id: number) => {
-    if (window.confirm("Dar baixa neste boleto? Tem certeza que o pagamento foi recebido? O status dele mudará para PAGO de forma permanente.")) {
-      try {
-        await put(`/boletos/${id}/pagar`, {});
-        toast.success("Boleto baixado com sucesso! Recebimento confirmado.");
-        loadBoletos(); // Atualiza a tabela
-      } catch (error) {
-        toast.error("Erro ao registrar pagamento.");
-      }
+  const handleMarcarPago = (id: number) => {
+    setSelectedBoletoId(id);
+    setIsPayModalOpen(true);
+  };
+
+  const handleConfirmPay = async () => {
+    if (!selectedBoletoId) return;
+    try {
+      await put(`/boletos/${selectedBoletoId}/pagar`, {});
+      toast.success("Boleto baixado com sucesso! Recebimento confirmado.");
+      setIsPayModalOpen(false);
+      setSelectedBoletoId(null);
+      loadBoletos();
+    } catch (error) {
+      toast.error("Erro ao registrar pagamento.");
     }
   };
 
-  const handleDeleteBoleto = async (id: number) => {
-    if (window.confirm("Atenção! Ter certeza que deseja APAGAR este boleto do sistema? Tem certeza?")) {
-      try {
-        await del(`/boletos/${id}`);
-        toast.success("Boleto excluído para sempre!");
-        loadBoletos(); // Atualiza a tabela
-      } catch (error) {
-        toast.error("Erro ao excluir boleto.");
-      }
+  const handleDeleteBoleto = (id: number) => {
+    setSelectedBoletoId(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedBoletoId) return;
+    try {
+      await del(`/boletos/${selectedBoletoId}`);
+      toast.success("Boleto excluído com sucesso!");
+      setIsDeleteModalOpen(false);
+      setSelectedBoletoId(null);
+      loadBoletos();
+    } catch (error) {
+      toast.error("Erro ao excluir boleto.");
     }
   };
 
@@ -337,7 +353,7 @@ export default function GestaoPagamentosPage() {
         </div>
         <div className="flex gap-2">
           <Button onClick={abrirModalEmissao}>
-            Emitir Boleto Avulso
+            Anexar Boleto
           </Button>
         </div>
       </div>
@@ -475,12 +491,49 @@ export default function GestaoPagamentosPage() {
               Cancelar
             </Button>
             <Button type="submit" isLoading={isSubmitting}>
-              Emitir Boleto
+              Anexar Boleto
             </Button>
           </div>
         </form>
       </Modal>
 
+      {/* Modal de Confirmação de Baixa */}
+      <Modal isOpen={isPayModalOpen} onClose={() => setIsPayModalOpen(false)} title="Confirmar Recebimento">
+        <div className="space-y-4">
+          <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl flex items-start gap-3">
+            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg text-emerald-600 dark:text-emerald-400">
+               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200">Confirmar baixa do boleto?</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">O status será alterado para PAGO e o morador será notificado da quitação.</p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setIsPayModalOpen(false)}>Cancelar</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleConfirmPay}>Confirmar Pagamento</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Excluir Registro">
+        <div className="space-y-4">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-xl flex items-start gap-3">
+            <div className="p-2 bg-red-100 dark:bg-red-900/40 rounded-lg text-red-600 dark:text-red-400">
+               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-red-800 dark:text-red-200">Deseja apagar este boleto?</p>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">Atenção: Esta ação é irreversível e o boleto sumirá do histórico do morador.</p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setIsDeleteModalOpen(false)}>Manter Boleto</Button>
+            <Button variant="danger" onClick={handleConfirmDelete}>Sim, Excluir Boleto</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

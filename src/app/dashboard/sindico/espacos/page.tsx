@@ -14,7 +14,9 @@ import toast from 'react-hot-toast';
 export default function EspacosPage() {
   const [areas, setAreas] = useState<AreaComum[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingArea, setEditingArea] = useState<AreaComum | null>(null);
+  const [areaToDelete, setAreaToDelete] = useState<number | null>(null);
   const [formData, setFormData] = useState({ 
     nome: '', 
     descricao: '', 
@@ -73,14 +75,20 @@ export default function EspacosPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (confirm('Deseja realmente remover esta área comum? Todas as futuras reservas ligadas a ela também podem ser afetadas.')) {
-      const success = await del(`/areas-comuns/${id}`);
-      if (success !== null) {
-        setAreas(areas.filter((a) => a.id !== id));
-        toast.success('Espaço removido.');
-      }
+  const handleDelete = (id: number) => {
+    setAreaToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!areaToDelete) return;
+    const success = await del(`/areas-comuns/${areaToDelete}`);
+    if (success !== null) {
+      setAreas(areas.filter((a) => a.id !== areaToDelete));
+      toast.success('Espaço removido com sucesso!');
     }
+    setIsDeleteModalOpen(false);
+    setAreaToDelete(null);
   };
 
   const handleCloseModal = () => {
@@ -153,6 +161,25 @@ export default function EspacosPage() {
             <Button type="submit" isLoading={isLoading}>{editingArea ? 'Salvar Alterações' : 'Criar Espaço'}</Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Remover Espaço" size="sm">
+        <div className="space-y-4">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-xl flex items-start gap-3">
+             <div className="p-2 bg-red-100 dark:bg-red-900/40 rounded-lg text-red-600 dark:text-red-400 shrink-0">
+               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+             </div>
+             <div>
+               <p className="text-sm font-bold text-red-800 dark:text-red-200">Deseja remover este espaço?</p>
+               <p className="text-xs text-red-600 dark:text-red-400 mt-1">Todas as reservas futuras vinculadas a este espaço também serão afetadas.</p>
+             </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</Button>
+            <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleConfirmDelete} isLoading={isLoading}>Remover Espaço</Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

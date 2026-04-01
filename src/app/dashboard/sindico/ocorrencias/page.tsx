@@ -20,6 +20,9 @@ export default function OcorrenciasPage() {
   const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
   const [selectedOcorrencia, setSelectedOcorrencia] = useState<Ocorrencia | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [statusToChange, setStatusToChange] = useState<OcorrenciaStatus | null>(null);
+  const [ocorrenciaToChange, setOcorrenciaToChange] = useState<number | null>(null);
   const [filterStatus, setFilterStatus] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -42,11 +45,33 @@ export default function OcorrenciasPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleStatusChange = async (id: number, newStatus: OcorrenciaStatus) => {
+  const handleStatusChange = (id: number, newStatus: OcorrenciaStatus) => {
+    // Se for apenas iniciar atendimento, podemos fazer direto p/ experiência ser fluida
+    // Mas fechar/resolver são ações definitivas que merecem confirmação
+    if (newStatus === 'EM_ANDAMENTO') {
+       executeStatusChange(id, newStatus);
+       return;
+    }
+    
+    setOcorrenciaToChange(id);
+    setStatusToChange(newStatus);
+    setIsStatusModalOpen(true);
+  };
+
+  const executeStatusChange = async (id: number, newStatus: OcorrenciaStatus) => {
     const updated = await patch(`/ocorrencias/${id}/status`, { status: newStatus }) as Ocorrencia;
     if (updated) {
       setOcorrencias(ocorrencias.map((o) => o.id === id ? updated : o));
       toast.success(`Status atualizado para ${statusLabels[newStatus]}`);
+    }
+    setIsStatusModalOpen(false);
+    setOcorrenciaToChange(null);
+    setStatusToChange(null);
+  };
+
+  const handleConfirmStatus = () => {
+    if (ocorrenciaToChange && statusToChange) {
+       executeStatusChange(ocorrenciaToChange, statusToChange);
     }
   };
 

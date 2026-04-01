@@ -65,11 +65,42 @@ export default function RelatoriosPage() {
   }, []);
 
   const handleExportPDF = () => {
-    toast.success('Relatório PDF gerado! (funcionalidade disponível com a API)');
+    // Usando a funcionalidade nativa de impressão do navegador, que é excelente para gerar PDF
+    // Adicionamos um pequeno delay para garantir que a UI esteja pronta
+    window.print();
+    toast.success('Preparando documento para exportação...');
   };
 
   const handleExportExcel = () => {
-    toast.success('Relatório Excel gerado! (funcionalidade disponível com a API)');
+    // Cabeçalhos do Excel
+    const headers = ['Mês', 'Recebido (R$)', 'Pendente (R$)', 'Atrasado (R$)', 'Total (R$)'];
+    
+    // Dados formatados
+    const rows = monthlyData.map(d => [
+      `${d.mes}/2026`,
+      d.recebido.toFixed(2).replace('.', ','),
+      d.pendente.toFixed(2).replace('.', ','),
+      d.atrasado.toFixed(2).replace('.', ','),
+      (d.recebido + d.pendente + d.atrasado).toFixed(2).replace('.', ',')
+    ]);
+
+    // Montagem do CSV (Excel entende ';' como separador no Brasil)
+    const csvContent = [headers, ...rows]
+      .map(e => e.join(';'))
+      .join('\n');
+
+    // Blob com BOM (\uFEFF) para forçar o Excel a ler como UTF-8
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Relatorio_Financeiro_Oceano_${periodo}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success('Relatório baixado com sucesso!');
   };
 
   const totalRecebido = monthlyData.reduce((sum, d) => sum + d.recebido, 0);

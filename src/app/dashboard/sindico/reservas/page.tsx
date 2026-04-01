@@ -16,6 +16,9 @@ export default function ReservasPage() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [areas, setAreas] = useState<AreaComum[]>([]);
   const [filterStatus, setFilterStatus] = useState('');
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [statusToChange, setStatusToChange] = useState<ReservaStatus | null>(null);
+  const [reservaToChange, setReservaToChange] = useState<number | null>(null);
   
   const { get, patch, isLoading } = useApi();
 
@@ -34,13 +37,24 @@ export default function ReservasPage() {
 
   const filteredReservas = reservas.filter((r) => !filterStatus || r.status === filterStatus);
 
-  const handleUpdateStatus = async (id: number, status: ReservaStatus) => {
-    const updated = await patch(`/reservas/${id}/status`, { status }) as Reserva;
+  const handleUpdateStatus = (id: number, status: ReservaStatus) => {
+    setReservaToChange(id);
+    setStatusToChange(status);
+    setIsStatusModalOpen(true);
+  };
+
+  const handleConfirmStatus = async () => {
+    if (!reservaToChange || !statusToChange) return;
+    
+    const updated = await patch(`/reservas/${reservaToChange}/status`, { status: statusToChange }) as Reserva;
     if (updated) {
-       setReservas(reservas.map((r) => r.id === id ? updated : r));
-       if (status === 'APROVADA') toast.success('Reserva aprovada!');
-       else if (status === 'REJEITADA') toast.error('Reserva rejeitada!');
+       setReservas(reservas.map((r) => r.id === reservaToChange ? updated : r));
+       if (statusToChange === 'APROVADA') toast.success('Reserva aprovada com sucesso!');
+       else if (statusToChange === 'REJEITADA') toast.error('Reserva rejeitada!');
     }
+    setIsStatusModalOpen(false);
+    setReservaToChange(null);
+    setStatusToChange(null);
   };
 
   const formatDate = (dateString?: string) => {
