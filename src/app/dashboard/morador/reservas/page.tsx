@@ -45,6 +45,11 @@ export default function MoradorReservasPage() {
     e.preventDefault();
     if (!user || !formData.areaComumId) return;
 
+    if (formData.horaInicio >= formData.horaFim) {
+      toast.error('A hora de início deve ser anterior à hora de fim.');
+      return;
+    }
+
     const payload = {
       dataReserva: formData.dataReserva,
       horaInicio: formData.horaInicio,
@@ -82,6 +87,11 @@ export default function MoradorReservasPage() {
       return dateString;
   };
 
+  const handleAreaClick = (areaId: number) => {
+    setFormData({ ...formData, areaComumId: String(areaId) });
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-slide-up">
@@ -101,13 +111,24 @@ export default function MoradorReservasPage() {
         ) : areas.length === 0 ? (
             <div className="col-span-1 md:col-span-3 text-center py-8 text-slate-500">Nenhuma área comum cadastrada no condomínio</div>
         ) : areas.map((area) => (
-          <Card key={area.id} hover gradient>
+          <Card 
+            key={area.id} 
+            hover 
+            gradient 
+            onClick={() => area.disponivel && handleAreaClick(area.id)}
+            className={!area.disponivel ? 'opacity-60 cursor-not-allowed' : ''}
+          >
             <CardContent className="p-5">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-1">{area.nome}</h3>
-              <p className="text-xs text-slate-500 mb-3">{area.descricao}</p>
+              <div className="flex justify-between items-start mb-1">
+                <h3 className="font-bold text-slate-900 dark:text-white">{area.nome}</h3>
+                {!area.disponivel && <Badge variant="danger" size="sm">Indisponível</Badge>}
+              </div>
+              <p className="text-xs text-slate-500 mb-3 line-clamp-2">{area.descricao}</p>
               <div className="flex justify-between text-xs text-slate-400">
                 <span>🕐 {area.horarioAbertura}-{area.horarioFechamento}</span>
-                <span>{area.valorReserva > 0 ? `R$ ${area.valorReserva}` : '✅ Gratuito'}</span>
+                <span className="font-medium text-blue-600 dark:text-blue-400">
+                  {area.valorReserva > 0 ? `R$ ${area.valorReserva}` : '✅ Gratuito'}
+                </span>
               </div>
             </CardContent>
           </Card>

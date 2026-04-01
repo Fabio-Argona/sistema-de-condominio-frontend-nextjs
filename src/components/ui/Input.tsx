@@ -1,14 +1,14 @@
 'use client';
 
 import { InputHTMLAttributes, forwardRef, ReactNode } from 'react';
-import { formatPhone, capitalizeSentences } from '@/utils/formatters';
+import { formatPhone, formatCPF, capitalizeSentences } from '@/utils/formatters';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   icon?: ReactNode;
   helperText?: string;
-  mask?: 'phone' | 'capitalize' | 'none';
+  mask?: 'phone' | 'cpf' | 'capitalize' | 'none';
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -18,6 +18,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (mask === 'phone') {
         e.target.value = formatPhone(e.target.value);
+      } else if (mask === 'cpf') {
+        e.target.value = formatCPF(e.target.value);
       } else if (mask === 'capitalize') {
         const cursorPosition = e.target.selectionStart;
         const newValue = capitalizeSentences(e.target.value);

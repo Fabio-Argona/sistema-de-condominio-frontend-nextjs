@@ -46,7 +46,7 @@ export interface Morador {
   apartamento: string;
   bloco: string;
   dataNascimento?: string;
-  dataEntrada: string;
+  dataEntrada?: string;
   ativo: boolean;
   avatar?: string;
 }

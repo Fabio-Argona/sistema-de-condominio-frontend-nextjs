@@ -40,6 +40,24 @@ export const isValidPhone = (phone: string): boolean => {
   return cleanPhone.length === 10 || cleanPhone.length === 11;
 };
 
+// Formatador e Validador de CPF
+export const formatCPF = (value: string): string => {
+  if (!value) return '';
+  const cleanValue = value.replace(/\D/g, '').slice(0, 11);
+  
+  if (cleanValue.length <= 3) return cleanValue;
+  if (cleanValue.length <= 6) return `${cleanValue.slice(0, 3)}.${cleanValue.slice(3)}`;
+  if (cleanValue.length <= 9) return `${cleanValue.slice(0, 3)}.${cleanValue.slice(3, 6)}.${cleanValue.slice(6)}`;
+  
+  return `${cleanValue.slice(0, 3)}.${cleanValue.slice(3, 6)}.${cleanValue.slice(6, 9)}-${cleanValue.slice(9)}`;
+};
+
+export const isValidCPF = (cpf: string): boolean => {
+  if (!cpf) return false;
+  const cleanCPF = cpf.replace(/\D/g, '');
+  return cleanCPF.length === 11;
+};
+
 // Formatador de Inícios de Parágrafos (Primeira Letra Maiúscula)
 export const capitalizeSentences = (value: string): string => {
   if (!value) return '';
