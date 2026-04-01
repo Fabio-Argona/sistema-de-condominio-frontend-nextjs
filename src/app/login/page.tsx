@@ -273,30 +273,6 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            {/* Demo credentials */}
-            <div className="mt-6 p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5">
-              <p className="text-xs text-slate-600 dark:text-slate-500 mb-3 font-semibold uppercase tracking-wider">Credenciais de demonstração</p>
-              <div className="space-y-2">
-                {[
-                  { role: 'Síndico', email: 'sindico@condogest.com' },
-                  { role: 'Morador', email: 'morador@condogest.com' },
-                  { role: 'Porteiro', email: 'porteiro@condogest.com' },
-                ].map((cred) => (
-                  <button
-                    key={cred.role}
-                    type="button"
-                    onClick={() => {
-                      setEmail(cred.email);
-                      setSenha('123456');
-                    }}
-                    className="flex items-center justify-between w-full text-xs text-slate-400 hover:text-blue-400 transition-colors group"
-                  >
-                    <span className="font-medium">{cred.role}</span>
-                    <span className="text-slate-500 group-hover:text-blue-400 transition-colors">{cred.email}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
 
           <p className="text-center text-xs text-slate-500 mt-6">
