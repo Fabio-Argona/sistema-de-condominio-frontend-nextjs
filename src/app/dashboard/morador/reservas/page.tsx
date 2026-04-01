@@ -19,6 +19,8 @@ export default function MoradorReservasPage() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [areas, setAreas] = useState<AreaComum[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [reservaToCancel, setReservaToCancel] = useState<number | null>(null);
   const [formData, setFormData] = useState({ areaComumId: '', dataReserva: '', horaInicio: '', horaFim: '', observacoes: '' });
   
   const { user } = useAuth();
@@ -66,13 +68,20 @@ export default function MoradorReservasPage() {
     }
   };
 
-  const handleCancel = async (id: number) => {
-    if (confirm('Deseja realmente cancelar esta reserva?')) {
-      const updated = await patch(`/reservas/${id}/status`, { status: 'CANCELADA' }) as Reserva;
-      if (updated) {
-        setReservas(reservas.map((r) => r.id === id ? updated : r));
-        toast.success('Reserva cancelada');
-      }
+  const handleCancelClick = (id: number) => {
+    setReservaToCancel(id);
+    setIsCancelModalOpen(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!reservaToCancel) return;
+    
+    const updated = await patch(`/reservas/${reservaToCancel}/status`, { status: 'CANCELADA' }) as Reserva;
+    if (updated) {
+      setReservas(reservas.map((r) => r.id === reservaToCancel ? updated : r));
+      toast.success('Reserva cancelada com sucesso.');
+      setIsCancelModalOpen(false);
+      setReservaToCancel(null);
     }
   };
 
@@ -152,7 +161,7 @@ export default function MoradorReservasPage() {
                     <div className="flex items-center gap-3">
                       <Badge variant={statusColors[r.status] || 'info'} dot>{statusLabels[r.status] || r.status}</Badge>
                       {(r.status === 'PENDENTE' || r.status === 'APROVADA') && (
-                        <button disabled={isLoading} onClick={() => handleCancel(r.id)} className="text-xs text-red-500 hover:text-red-400 font-medium">Cancelar</button>
+                        <button disabled={isLoading} onClick={() => handleCancelClick(r.id)} className="text-xs text-red-500 hover:text-red-400 font-medium">Cancelar</button>
                       )}
                     </div>
                   </div>
@@ -180,6 +189,25 @@ export default function MoradorReservasPage() {
             <Button type="submit" disabled={isLoading}>Solicitar Reserva</Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal de Confirmação de Cancelamento */}
+      <Modal isOpen={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} title="Confirmar Cancelamento">
+        <div className="space-y-4">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-xl flex items-start gap-3">
+            <div className="p-2 bg-red-100 dark:bg-red-900/40 rounded-lg text-red-600 dark:text-red-400">
+               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-red-800 dark:text-red-200">Deseja realmente cancelar esta reserva?</p>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">Esta ação não poderá ser desfeita e a vaga será liberada para outros moradores.</p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setIsCancelModalOpen(false)} disabled={isLoading}>Manter Reserva</Button>
+            <Button variant="danger" onClick={handleConfirmCancel} isLoading={isLoading}>Sim, Cancelar Reserva</Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

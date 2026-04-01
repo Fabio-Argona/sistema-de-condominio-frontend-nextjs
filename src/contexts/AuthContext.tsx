@@ -66,7 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await api.post('/auth/login', credentials);
       const { token: jwt, user: userData } = response.data;
 
-      Cookies.set('token', jwt, { expires: 7, secure: true, sameSite: 'strict' });
+      // Em produção use secure: true, em localhost deixamos false para o middleware ler no HTTP
+      Cookies.set('token', jwt, { expires: 7, secure: false, sameSite: 'lax' });
       setToken(jwt);
       setUser(userData);
 

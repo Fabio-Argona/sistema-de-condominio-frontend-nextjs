@@ -220,11 +220,11 @@ export default function MoradoresPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-slide-up">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white line-through decoration-emerald-500">Moradores</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Gerencie os moradores do condomínio (v2)</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Moradores</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Gerencie os moradores do condomínio</p>
         </div>
         <Button onClick={() => handleOpenModal()} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
-          Cadastrar Novo Morador
+          Cadastrar Morador
         </Button>
       </div>
 

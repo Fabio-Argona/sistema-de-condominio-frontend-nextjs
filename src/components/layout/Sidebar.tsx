@@ -93,6 +93,7 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard/morador', icon: icons.dashboard, roles: ['MORADOR'] },
   { label: 'Dashboard', href: '/dashboard/porteiro', icon: icons.dashboard, roles: ['PORTEIRO'] },
   { label: 'Moradores', href: '/dashboard/sindico/moradores', icon: icons.users, roles: ['SINDICO'] },
+  { label: 'Espaços', href: '/dashboard/sindico/espacos', icon: icons.building, roles: ['SINDICO'] },
   { label: 'Ocorrências', href: '/dashboard/sindico/ocorrencias', icon: icons.occurrence, roles: ['SINDICO'] },
   { label: 'Ocorrências', href: '/dashboard/morador/ocorrencias', icon: icons.occurrence, roles: ['MORADOR'] },
   { label: 'Reservas', href: '/dashboard/sindico/reservas', icon: icons.calendar, roles: ['SINDICO'] },

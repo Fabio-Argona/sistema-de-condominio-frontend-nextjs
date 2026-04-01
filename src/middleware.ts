@@ -1,23 +1,64 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Função utilitária para decodificar JWT no Edge Runtime (onde jwt-decode não funciona)
+function getJwtPayload(token: string) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+}
+
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
-  const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard');
+  const { pathname } = request.nextUrl;
 
-  if (isDashboardRoute && !token) {
-    // Se está tentando acessar o dashboard sem token, redireciona para login
-    const loginUrl = new URL('/login', request.url);
-    return NextResponse.redirect(loginUrl);
+  // Se já está logado e tenta ir para o login, redireciona para o dashboard correto
+  if (pathname === '/login' && token) {
+    const payload = getJwtPayload(token);
+    if (payload && (payload.exp * 1000 > Date.now())) {
+      const destination = payload.role === 'SINDICO' ? '/dashboard/sindico' : 
+                         payload.role === 'PORTEIRO' ? '/dashboard/porteiro' : 
+                         '/dashboard/morador';
+      return NextResponse.redirect(new URL(destination, request.url));
+    }
   }
 
-  // Aqui você também pode adicionar logica de role-based access
-  // Mas como o JWT precisa ser decodificado e o `jwt-decode` não funciona bem no Edge Runtime às vezes,
-  // ou você faz a checagem no layout/client-side, ou usa um parser base64 leve.
-  
+  // Se não tem token e tenta entrar no Dashboard, manda pro login
+  if (pathname.startsWith('/dashboard') && !token) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Se tem token, valida a role e expiração apenas ao acessar o Dashboard
+  if (pathname.startsWith('/dashboard') && token) {
+    const payload = getJwtPayload(token);
+    
+    // Se o token for inválido ou expirado, limpa e manda pro login
+    if (!payload || (payload.exp * 1000 < Date.now())) {
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('token');
+      return response;
+    }
+
+    // Proteção de Roles (Síndico não entra no Morador e vice-versa)
+    const role = payload.role;
+    if (pathname.startsWith('/dashboard/sindico') && role !== 'SINDICO') {
+       return NextResponse.redirect(new URL('/dashboard/morador', request.url));
+    }
+    if (pathname.startsWith('/dashboard/morador') && role !== 'MORADOR') {
+       return NextResponse.redirect(new URL('/dashboard/sindico', request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/dashboard/:path*', '/login'],
 };

@@ -102,6 +102,7 @@ export interface AreaComum {
   horarioFechamento: string;
   imagem?: string;
   disponivel: boolean;
+  regras?: string;
 }
 
 export interface Reserva {
