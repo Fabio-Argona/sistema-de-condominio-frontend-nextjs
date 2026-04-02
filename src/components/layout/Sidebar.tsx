@@ -98,20 +98,22 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard/sindico', icon: icons.dashboard, roles: ['SINDICO'] },
   { label: 'Dashboard', href: '/dashboard/morador', icon: icons.dashboard, roles: ['MORADOR'] },
   { label: 'Dashboard', href: '/dashboard/porteiro', icon: icons.dashboard, roles: ['PORTEIRO'] },
+  // Pagamentos logo após Dashboard
+  { label: 'Pagamentos', href: '/dashboard/sindico/pagamentos', icon: icons.payment, roles: ['SINDICO'] },
+  { label: 'Pagamentos', href: '/dashboard/morador/pagamentos', icon: icons.payment, roles: ['MORADOR'] },
   { label: 'Moradores', href: '/dashboard/sindico/moradores', icon: icons.users, roles: ['SINDICO'] },
   { label: 'Espaços', href: '/dashboard/sindico/espacos', icon: icons.building, roles: ['SINDICO'] },
   { label: 'Ocorrências', href: '/dashboard/sindico/ocorrencias', icon: icons.occurrence, roles: ['SINDICO'] },
   { label: 'Ocorrências', href: '/dashboard/morador/ocorrencias', icon: icons.occurrence, roles: ['MORADOR'] },
   { label: 'Reservas', href: '/dashboard/sindico/reservas', icon: icons.calendar, roles: ['SINDICO'] },
   { label: 'Reservas', href: '/dashboard/morador/reservas', icon: icons.calendar, roles: ['MORADOR'] },
-  { label: 'Pagamentos', href: '/dashboard/sindico/pagamentos', icon: icons.payment, roles: ['SINDICO'] },
-  { label: 'Pagamentos', href: '/dashboard/morador/pagamentos', icon: icons.payment, roles: ['MORADOR'] },
   { label: 'Comunicados', href: '/dashboard/sindico/comunicados', icon: icons.announcement, roles: ['SINDICO'] },
   { label: 'Comunicados', href: '/dashboard/morador/comunicados', icon: icons.announcement, roles: ['MORADOR'] },
   { label: 'Relatórios', href: '/dashboard/sindico/relatorios', icon: icons.report, roles: ['SINDICO'] },
   { label: 'Acessos', href: '/dashboard/sindico/acessos', icon: icons.access, roles: ['SINDICO'] },
-  { label: 'Visitantes', href: '/dashboard/porteiro/visitantes', icon: icons.visitor, roles: ['PORTEIRO'] },
-  { label: 'Consulta', href: '/dashboard/porteiro/consulta', icon: icons.users, roles: ['PORTEIRO'] },
+  // Libera visão do porteiro para SÍNDICO (consulta)
+  { label: 'Visitantes', href: '/dashboard/porteiro/visitantes', icon: icons.visitor, roles: ['PORTEIRO', 'SINDICO'] },
+  { label: 'Consulta', href: '/dashboard/porteiro/consulta', icon: icons.users, roles: ['PORTEIRO', 'SINDICO'] },
 ];
 
 interface SidebarProps {
