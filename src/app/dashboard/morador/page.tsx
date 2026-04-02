@@ -38,18 +38,21 @@ export default function MoradorDashboard() {
          }
          
          const dataBoletos = await get(`/boletos/morador/${user.id}`) as Boleto[];
-         if (dataBoletos && dataBoletos.length > 0) {
-            const pendentesEVencidos = dataBoletos.filter((b: Boleto) => b.status === 'PENDENTE' || b.status === 'VENCIDO');
-            if (pendentesEVencidos.length > 0) {
-               pendentesEVencidos.sort((a, b) => new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime());
-               setBoletosAbertos(pendentesEVencidos);
-               setSituacaoFinanceira('PENDENTE');
-            } else {
-               setSituacaoFinanceira('EM_DIA');
-            }
-         } else {
-            setSituacaoFinanceira('EM_DIA');
-         }
+        if (dataBoletos && dataBoletos.length > 0) {
+          const pendentesEVencidos = dataBoletos.filter((b: Boleto) => b.status === 'PENDENTE' || b.status === 'VENCIDO');
+          pendentesEVencidos.sort((a, b) => new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime());
+          setBoletosAbertos(pendentesEVencidos);
+          // Só exibe "pendência" se houver boleto vencido (atrasado)
+          const hoje = new Date();
+          hoje.setHours(0, 0, 0, 0);
+          const existeVencido = pendentesEVencidos.some(b => {
+            const venc = new Date(b.dataVencimento + 'T00:00:00');
+            return (b.status === 'VENCIDO' || venc < hoje);
+          });
+          setSituacaoFinanceira(existeVencido ? 'PENDENTE' : 'EM_DIA');
+        } else {
+          setSituacaoFinanceira('EM_DIA');
+        }
       }
     };
     
@@ -99,20 +102,20 @@ export default function MoradorDashboard() {
                 className={`flex items-center justify-between p-4 rounded-xl border ${
                   isVencido
                     ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
-                    : 'bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800'
+                    : 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   {isVencido ? (
                     <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                   ) : (
-                    <svg className="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <svg className="w-5 h-5 text-yellow-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   )}
                   <div>
-                    <p className={`text-sm font-semibold ${isVencido ? 'text-red-700 dark:text-red-400' : 'text-orange-700 dark:text-orange-400'}`}>
+                    <p className={`text-sm font-semibold ${isVencido ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'}`}>
                       {boleto.descricao} — R$ {boleto.valor.toFixed(2).replace('.', ',')}
                     </p>
-                    <p className={`text-xs mt-0.5 ${isVencido ? 'text-red-500 dark:text-red-400' : 'text-orange-500 dark:text-orange-400'}`}>
+                    <p className={`text-xs mt-0.5 ${isVencido ? 'text-red-500 dark:text-red-400' : 'text-yellow-500 dark:text-yellow-400'}`}>
                       {isVencido
                         ? `Vencido há ${diasAtraso} dia${diasAtraso !== 1 ? 's' : ''}`
                         : `Vence em ${vencimento.toLocaleDateString('pt-BR')}`
@@ -134,7 +137,7 @@ export default function MoradorDashboard() {
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                     isVencido
                       ? 'bg-red-500 hover:bg-red-600 text-white'
-                      : 'bg-orange-500 hover:bg-orange-600 text-white'
+                      : 'bg-yellow-500 hover:bg-yellow-600 text-white'
                   }`}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -168,7 +171,7 @@ export default function MoradorDashboard() {
                         <Badge variant="info" size="sm">{c.categoria}</Badge>
                       </div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.titulo}</p>
-                      <p className="text-xs text-slate-400 mt-1">{c.dataCriacao}</p>
+                      <p className="text-xs text-slate-400 mt-1">{new Date(c.dataCriacao).toLocaleDateString('pt-BR')}</p>
                     </div>
                   </div>
                 </div>
