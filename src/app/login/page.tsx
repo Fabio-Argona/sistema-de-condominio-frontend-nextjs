@@ -61,8 +61,9 @@ export default function LoginPage() {
       
       setIsRecoverModalOpen(false);
       setRecoverEmail('');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erro ao recuperar senha');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Erro ao recuperar senha');
     } finally {
       setIsRecovering(false);
     }
