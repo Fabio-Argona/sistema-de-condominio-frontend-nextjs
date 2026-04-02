@@ -171,7 +171,12 @@ export default function MoradorDashboard() {
                         <Badge variant="info" size="sm">{c.categoria}</Badge>
                       </div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.titulo}</p>
-                      <p className="text-xs text-slate-400 mt-1">{new Date(c.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                      <p className="text-xs text-slate-400 mt-1">{c.conteudo}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-slate-400">Por {c.autor}</span>
+                        <span className="text-xs text-slate-300">•</span>
+                        <span className="text-xs text-slate-400">{new Date(c.dataCriacao).toLocaleDateString('pt-BR')}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
