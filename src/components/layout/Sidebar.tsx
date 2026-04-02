@@ -141,14 +141,8 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-6 border-b border-slate-200 dark:border-slate-200/10">
-        <div className="flex items-center gap-3">
-          <img src="/oceano-logo.png" alt="Logo Oceano Residences" className="w-24 h-24 object-contain rounded-xl shadow-lg shadow-blue-500/20 bg-transparent" />
-          <div className="flex flex-col justify-center">
-            <span className="text-[10px] font-bold tracking-[0.2em] text-blue-600 dark:text-blue-400 uppercase leading-none mb-[-3px] ml-[2px] z-10">Residencial</span>
-            <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight leading-none mt-0">OCEANO</h1>
-          </div>
-        </div>
+      <div className="p-4 border-b border-slate-200 dark:border-slate-200/10 flex justify-center">
+        <img src="/oceano-logo.png" alt="Logo Oceano Residences" className="h-20 w-auto object-contain" />
       </div>
 
       {/* User Info */}

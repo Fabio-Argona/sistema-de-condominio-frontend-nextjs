@@ -34,7 +34,8 @@ export default function GestaoPagamentosPage() {
     descricao: '', 
     valor: '', 
     dataVencimento: '',
-    pdfBase64: '' 
+    pdfBase64: '',
+    linhaDigitavel: ''
   });
   const [nomeArquivo, setNomeArquivo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -199,13 +200,12 @@ export default function GestaoPagamentosPage() {
          descricao: novoBoletoForm.descricao,
          dataVencimento: novoBoletoForm.dataVencimento,
          pdfBase64: novoBoletoForm.pdfBase64,
-         // Linha digitável falsa padrão p/ teste, pois o real ta no PDF
-         linhaDigitavel: 'PDF Anexado (Ver arquivo)'
+         linhaDigitavel: novoBoletoForm.linhaDigitavel || ''
        }) as Boleto | null;
        
        toast.success('Boleto emitido com sucesso!');
        setIsModalOpen(false);
-       setNovoBoletoForm({ moradorId: '', descricao: '', valor: '', dataVencimento: '', pdfBase64: '' });
+       setNovoBoletoForm({ moradorId: '', descricao: '', valor: '', dataVencimento: '', pdfBase64: '', linhaDigitavel: '' });
        setNomeArquivo('');
        loadBoletos(); // Atualiza a tabela
 
@@ -487,6 +487,13 @@ export default function GestaoPagamentosPage() {
               required
             />
           </div>
+
+          <Input
+            label="Número do Boleto (Linha Digitável)"
+            placeholder="Ex: 1234.5678 9012.345678 90123.456789 1 12340000010963"
+            value={novoBoletoForm.linhaDigitavel}
+            onChange={(e) => setNovoBoletoForm({...novoBoletoForm, linhaDigitavel: e.target.value})}
+          />
 
           <div className="pt-2">
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">

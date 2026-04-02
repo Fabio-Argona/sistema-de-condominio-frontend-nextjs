@@ -184,8 +184,6 @@ export default function MoradoresPage() {
       header: 'Unidade', 
       render: (m: Morador) => <span className="font-medium">Nº {m.apartamento} - {m.bloco}</span> 
     },
-    { key: 'telefone', header: 'Telefone', render: (m: Morador) => formatPhone(m.telefone || '') },
-    { key: 'cpf', header: 'CPF', render: (m: Morador) => formatCPF(m.cpf || '') },
     {
       key: 'ativo', 
       header: 'Status',

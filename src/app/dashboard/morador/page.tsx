@@ -71,7 +71,7 @@ export default function MoradorDashboard() {
       <div className="w-full flex justify-center">
         <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-8 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
       <div className="animate-slide-up">
-        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Olá, {user?.nome?.split(' ')[0] || 'Morador'}! 👋</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Olá, {user?.nome?.split(' ')[0] || 'Morador'}!</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">Bem-vindo ao portal do morador</p>
         {situacaoFinanceira === 'EM_DIA' && (
           <div className="flex items-center gap-2 mt-2">
