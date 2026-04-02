@@ -24,9 +24,7 @@ export default function MoradorComunicadosPage() {
   if (isLoading && comunicados.length === 0) return <div className="space-y-4 animate-pulse">{[...Array(3)].map((_, i) => <div key={i} className="h-24 bg-slate-200 dark:bg-slate-700 rounded-2xl" />)}</div>;
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen w-full">
-      <div className="w-full flex justify-center">
-        <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
+    <div className="space-y-6">
       <div className="animate-slide-up">
         <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Comunicados</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">Fique por dentro das novidades do condomínio</p>
@@ -50,8 +48,6 @@ export default function MoradorComunicadosPage() {
             </Card>
           ))
         )}
-      </div>
-        </div>
       </div>
     </div>
   );

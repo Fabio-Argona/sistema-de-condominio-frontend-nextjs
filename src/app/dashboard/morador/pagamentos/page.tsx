@@ -60,9 +60,7 @@ export default function BoletosPage() {
   };
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen w-full">
-      <div className="w-full flex justify-center">
-        <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Meus Boletos</h1>
@@ -159,8 +157,6 @@ export default function BoletosPage() {
           )}
         </CardContent>
       </Card>
-        </div>
-      </div>
     </div>
   );
 }

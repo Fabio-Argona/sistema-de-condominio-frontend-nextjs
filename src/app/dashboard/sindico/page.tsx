@@ -355,8 +355,6 @@ export default function SindicoDashboard() {
           </div>
         </CardContent>
       </Card>
-        </div>
-      </div>
     </div>
   );
 }
