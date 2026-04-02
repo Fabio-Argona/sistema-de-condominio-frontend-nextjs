@@ -7,7 +7,7 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import DataTable from '@/components/ui/DataTable';
-import { Morador } from '@/types';
+import { Morador, UserRole } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
 import { formatPhone, formatCPF } from '@/utils/formatters';
@@ -33,6 +33,8 @@ export default function MoradoresPage() {
   });
   const [sendingInvite, setSendingInvite] = useState<number | null>(null);
   const [moradorToDelete, setMoradorToDelete] = useState<Morador | null>(null);
+  const [moradorParaRole, setMoradorParaRole] = useState<Morador | null>(null);
+  const [novaRole, setNovaRole] = useState('');
   
   const { get, post, put, del, patch, isLoading } = useApi<Morador | Morador[] | void | CriarMoradorResponse>();
 
@@ -142,6 +144,17 @@ export default function MoradoresPage() {
     setMoradorToDelete(null);
   };
 
+  const handleRoleChange = async () => {
+    if (!moradorParaRole || !novaRole) return;
+    const updated = await patch(`/moradores/${moradorParaRole.id}/role`, { role: novaRole });
+    if (updated !== null) {
+      setMoradores(moradores.map((m) => m.id === moradorParaRole.id ? { ...m, role: novaRole as UserRole } : m));
+      toast.success('Perfil de acesso alterado com sucesso!');
+      setMoradorParaRole(null);
+      setNovaRole('');
+    }
+  };
+
   const handleToggleActive = async (id: number) => {
     const updated = await patch(`/moradores/${id}/status`) as Morador;
     if (updated) {
@@ -202,6 +215,15 @@ export default function MoradoresPage() {
               </svg>
             )}
           </button>
+          <button
+            onClick={() => { setMoradorParaRole(m); setNovaRole(m.role || 'MORADOR'); }}
+            className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors"
+            title="Alterar Perfil"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </button>
           <button onClick={() => handleOpenModal(m)} className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Editar">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
           </button>
@@ -217,7 +239,8 @@ export default function MoradoresPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
+      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-slide-up">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Moradores</h1>
@@ -304,6 +327,41 @@ export default function MoradoresPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Modal Alterar Perfil */}
+      <Modal isOpen={!!moradorParaRole} onClose={() => { setMoradorParaRole(null); setNovaRole(''); }} title="Alterar Perfil de Acesso" size="sm">
+        <div className="space-y-4">
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded-xl flex items-start gap-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg text-blue-600 dark:text-blue-400 shrink-0">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-blue-800 dark:text-blue-200">Alterar perfil de {moradorParaRole?.nome}</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">Esta ação mudará as permissões de acesso deste usuário no sistema.</p>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Novo Perfil de Acesso</label>
+            <select
+              value={novaRole}
+              onChange={(e) => setNovaRole(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            >
+              <option value="">Selecione um perfil...</option>
+              <option value="MORADOR">🏠 Morador</option>
+              <option value="PORTEIRO">🔑 Porteiro</option>
+              <option value="SINDICO">👑 Síndico</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => { setMoradorParaRole(null); setNovaRole(''); }} disabled={isLoading}>Cancelar</Button>
+            <Button onClick={handleRoleChange} disabled={isLoading || !novaRole}>Confirmar Alteração</Button>
+          </div>
+        </div>
+      </Modal>
+      </div>
     </div>
   );
 }

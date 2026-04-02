@@ -33,7 +33,8 @@ export default function PorteiroConsultaPage() {
     : moradores;
 
   return (
-    <div className="space-y-6">
+    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
+      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
       <div className="animate-slide-up">
         <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Consulta Rápida</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">Busque moradores e apartamentos do condomínio</p>
@@ -83,6 +84,7 @@ export default function PorteiroConsultaPage() {
           <p className="text-sm mt-1">Tente buscar por outro termo</p>
         </div>
       )}
+      </div>
     </div>
   );
 }

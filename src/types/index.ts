@@ -48,6 +48,7 @@ export interface Morador {
   dataNascimento?: string;
   dataEntrada?: string;
   ativo: boolean;
+  role?: UserRole;
   avatar?: string;
 }
 

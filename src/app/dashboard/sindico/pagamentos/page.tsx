@@ -343,7 +343,8 @@ export default function GestaoPagamentosPage() {
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
+      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 animate-fade-in bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestão Financeira</h1>
@@ -534,6 +535,7 @@ export default function GestaoPagamentosPage() {
           </div>
         </div>
       </Modal>
+      </div>
     </div>
   );
 }

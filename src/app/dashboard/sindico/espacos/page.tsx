@@ -119,7 +119,8 @@ export default function EspacosPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
+      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-slide-up">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Gerenciar Espaços</h1>
@@ -181,6 +182,7 @@ export default function EspacosPage() {
           </div>
         </div>
       </Modal>
+      </div>
     </div>
   );
 }
