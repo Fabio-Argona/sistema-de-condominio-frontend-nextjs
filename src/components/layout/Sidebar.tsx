@@ -107,8 +107,12 @@ const navItems: NavItem[] = [
   { label: 'Consulta', href: '/dashboard/porteiro/consulta', icon: icons.users, roles: ['PORTEIRO'] },
 ];
 
-export default function Sidebar() {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+interface SidebarProps {
+  isMobileOpen: boolean;
+  setIsMobileOpen: (open: boolean) => void;
+}
+
+export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
