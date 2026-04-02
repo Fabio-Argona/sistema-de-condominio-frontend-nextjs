@@ -99,7 +99,7 @@ export default function AcessosPage() {
 
         {/* Tabela */}
         <Card>
-          <CardHeader title={`${logsFiltrados.length} registro${logsFiltrados.length !== 1 ? 's' : ''}`} />
+          <CardHeader>{logsFiltrados.length} registro{logsFiltrados.length !== 1 ? 's' : ''}</CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="flex justify-center py-12">
