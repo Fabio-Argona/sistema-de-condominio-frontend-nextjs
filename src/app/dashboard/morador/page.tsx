@@ -67,8 +67,9 @@ export default function MoradorDashboard() {
   }
 
   return (
-    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-8 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
+    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen w-full">
+      <div className="w-full flex justify-center">
+        <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-8 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
       <div className="animate-slide-up">
         <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Olá, {user?.nome?.split(' ')[0] || 'Morador'}! 👋</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">Bem-vindo ao portal do morador</p>
@@ -245,6 +246,7 @@ export default function MoradorDashboard() {
         </Card>
       )}
 
+        </div>
       </div>
     </div>
   );
