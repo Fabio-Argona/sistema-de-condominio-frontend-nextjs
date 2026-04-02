@@ -196,6 +196,7 @@ export default function MoradoresPage() {
     {
       key: 'acoes', 
       header: 'Ações',
+      className: 'min-w-[195px]',
       render: (m: Morador) => (
         <div className="flex items-center gap-1.5">
           <button 

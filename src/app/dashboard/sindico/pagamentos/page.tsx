@@ -42,6 +42,7 @@ export default function GestaoPagamentosPage() {
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedBoletoId, setSelectedBoletoId] = useState<number | null>(null);
+  const [sendingEmail, setSendingEmail] = useState<number | null>(null);
   
   const { get, post, del, put } = useApi();
 
@@ -192,7 +193,7 @@ export default function GestaoPagamentosPage() {
     
     setIsSubmitting(true);
     try {
-       await post('/boletos', {
+       const criado = await post('/boletos', {
          moradorId: parseInt(novoBoletoForm.moradorId),
          valor: parseFloat(novoBoletoForm.valor),
          descricao: novoBoletoForm.descricao,
@@ -200,13 +201,23 @@ export default function GestaoPagamentosPage() {
          pdfBase64: novoBoletoForm.pdfBase64,
          // Linha digitável falsa padrão p/ teste, pois o real ta no PDF
          linhaDigitavel: 'PDF Anexado (Ver arquivo)'
-       });
+       }) as Boleto | null;
        
        toast.success('Boleto emitido com sucesso!');
        setIsModalOpen(false);
        setNovoBoletoForm({ moradorId: '', descricao: '', valor: '', dataVencimento: '', pdfBase64: '' });
        setNomeArquivo('');
        loadBoletos(); // Atualiza a tabela
+
+       // Envia e-mail automaticamente ao morador
+       if (criado?.id) {
+         try {
+           await post(`/boletos/${criado.id}/enviar-email`, {}, { showErrorToast: false });
+           toast.success('E-mail com boleto enviado automaticamente ao morador!', { duration: 4000, icon: '✉️' });
+         } catch {
+           toast('E-mail automático falhou. Use "Reenviar" na tabela.', { icon: '⚠️' });
+         }
+       }
     } catch (error) {
        toast.error('Erro ao emitir boleto.');
     } finally {
@@ -235,6 +246,18 @@ export default function GestaoPagamentosPage() {
   const handleDeleteBoleto = (id: number) => {
     setSelectedBoletoId(id);
     setIsDeleteModalOpen(true);
+  };
+
+  const handleEnviarEmailBoleto = async (id: number) => {
+    setSendingEmail(id);
+    try {
+      await post(`/boletos/${id}/enviar-email`, {}, { showErrorToast: false });
+      toast.success('E-mail com boleto enviado ao morador!');
+    } catch {
+      toast.error('Falha ao enviar e-mail. Tente novamente.');
+    } finally {
+      setSendingEmail(null);
+    }
   };
 
   const handleConfirmDelete = async () => {
@@ -315,9 +338,26 @@ export default function GestaoPagamentosPage() {
     {
       key: 'acoes',
       header: '',
-      className: 'text-right min-w-[250px]', // Mantém o cabeçalho espaçoso para caber 3 botões
+      className: 'text-right min-w-[260px]',
       render: (b: Boleto) => (
-        <div className="flex justify-end gap-2 flex-wrap">
+        <div className="flex justify-end items-center gap-2 flex-wrap">
+           <button
+             onClick={() => handleEnviarEmailBoleto(b.id)}
+             disabled={sendingEmail === b.id}
+             className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+             title="Reenviar boleto por e-mail"
+           >
+             {sendingEmail === b.id ? (
+               <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+               </svg>
+             ) : (
+               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+               </svg>
+             )}
+           </button>
            {b.status !== 'PAGO' && (
              <Button
                 size="sm"
