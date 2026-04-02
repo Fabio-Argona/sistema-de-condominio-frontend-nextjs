@@ -81,6 +81,7 @@ export default function LoginPage() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
             Digite seu e-mail de acesso. O sistema gerará uma nova senha temporária para você.
           </p>
+          
           <Input
             label="E-mail"
             type="email"
