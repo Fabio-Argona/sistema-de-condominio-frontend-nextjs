@@ -15,7 +15,7 @@ export default function MoradorDashboard() {
   const [minhasReservas, setMinhasReservas] = useState<Reserva[]>([]);
   const [situacaoFinanceira, setSituacaoFinanceira] = useState<'EM_DIA' | 'PENDENTE' | null>(null);
   const [boletosAbertos, setBoletosAbertos] = useState<Boleto[]>([]);
-  
+
   const { get } = useApi();
   const { user } = useAuth();
 
@@ -67,7 +67,8 @@ export default function MoradorDashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
+      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-8 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
       <div className="animate-slide-up">
         <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Olá, {user?.nome?.split(' ')[0] || 'Morador'}! 👋</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">Bem-vindo ao portal do morador</p>
@@ -244,6 +245,7 @@ export default function MoradorDashboard() {
         </Card>
       )}
 
+      </div>
     </div>
   );
 }
