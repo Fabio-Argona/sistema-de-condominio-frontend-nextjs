@@ -60,11 +60,12 @@ export default function BoletosPage() {
   };
 
   const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
   const boletosFiltrados = boletos.filter((b) => {
     if (b.status !== 'PENDENTE') return true; // PAGO e VENCIDO sempre aparecem
-    const venc = new Date(b.dataVencimento);
-    const diasAteVencimento = Math.ceil((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-    return diasAteVencimento <= 30; // Só mostra pendentes a é 30 dias do vencimento
+    const venc = new Date(`${b.dataVencimento}T00:00:00`);
+    const diasAteVencimento = Math.floor((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+    return diasAteVencimento <= 30; // Só mostra pendentes até 30 dias do vencimento
   });
 
   const statusOrder: Record<string, number> = { VENCIDO: 0, PENDENTE: 1, PAGO: 2 };

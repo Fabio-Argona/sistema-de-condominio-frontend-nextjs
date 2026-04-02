@@ -39,12 +39,27 @@ export default function MoradorDashboard() {
          
          const dataBoletos = await get(`/boletos/morador/${user.id}`) as Boleto[];
         if (dataBoletos && dataBoletos.length > 0) {
-          const pendentesEVencidos = dataBoletos.filter((b: Boleto) => b.status === 'PENDENTE' || b.status === 'VENCIDO');
-          pendentesEVencidos.sort((a, b) => new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime());
-          setBoletosAbertos(pendentesEVencidos);
-          // Só exibe "pendência" se houver boleto vencido (atrasado)
           const hoje = new Date();
           hoje.setHours(0, 0, 0, 0);
+
+          const pendentesEVencidos = dataBoletos.filter((b: Boleto) => {
+            const venc = new Date(`${b.dataVencimento}T00:00:00`);
+
+            // Vencidos sempre aparecem
+            if (b.status === 'VENCIDO' || venc < hoje) return true;
+
+            // Pendentes só aparecem se vencem em até 30 dias a partir de hoje
+            if (b.status === 'PENDENTE') {
+              const diasAteVencimento = Math.floor((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+              return diasAteVencimento <= 30;
+            }
+
+            return false;
+          });
+
+          pendentesEVencidos.sort((a, b) => new Date(`${a.dataVencimento}T00:00:00`).getTime() - new Date(`${b.dataVencimento}T00:00:00`).getTime());
+          setBoletosAbertos(pendentesEVencidos);
+          // Só exibe "pendência" se houver boleto vencido (atrasado)
           const existeVencido = pendentesEVencidos.some(b => {
             const venc = new Date(b.dataVencimento + 'T00:00:00');
             return (b.status === 'VENCIDO' || venc < hoje);
