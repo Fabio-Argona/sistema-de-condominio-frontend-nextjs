@@ -209,14 +209,13 @@ export default function GestaoPagamentosPage() {
        setNomeArquivo('');
        loadBoletos(); // Atualiza a tabela
 
-       // Envia e-mail automaticamente ao morador
+       // Tenta enviar e-mail automaticamente (silencioso se backend não suportar)
        if (criado?.id) {
-         try {
-           await post(`/boletos/${criado.id}/enviar-email`, {}, { showErrorToast: false });
-           toast.success('E-mail com boleto enviado automaticamente ao morador!', { duration: 4000, icon: '✉️' });
-         } catch {
-           toast('E-mail automático falhou. Use "Reenviar" na tabela.', { icon: '⚠️' });
+         const emailResult = await post(`/boletos/${criado.id}/enviar-email`, {}, { showErrorToast: false });
+         if (emailResult !== null) {
+           toast.success('E-mail com boleto enviado automaticamente ao morador!', { duration: 4000, icon: '\u2709\ufe0f' });
          }
+         // 403/404 silencioso — o s\u00edndico pode reenviar manualmente pela tabela
        }
     } catch (error) {
        toast.error('Erro ao emitir boleto.');
@@ -250,14 +249,13 @@ export default function GestaoPagamentosPage() {
 
   const handleEnviarEmailBoleto = async (id: number) => {
     setSendingEmail(id);
-    try {
-      await post(`/boletos/${id}/enviar-email`, {}, { showErrorToast: false });
-      toast.success('E-mail com boleto enviado ao morador!');
-    } catch {
-      toast.error('Falha ao enviar e-mail. Tente novamente.');
-    } finally {
-      setSendingEmail(null);
+    const result = await post(`/boletos/${id}/enviar-email`, {}, { showErrorToast: false });
+    if (result !== null) {
+      toast.success('E-mail com boleto enviado ao morador!', { icon: '\u2709\ufe0f' });
+    } else {
+      toast.error('Falha ao enviar e-mail. Verifique se o backend suporta este recurso.');
     }
+    setSendingEmail(null);
   };
 
   const handleConfirmDelete = async () => {
