@@ -59,6 +59,13 @@ export default function BoletosPage() {
     }
   };
 
+  const statusOrder: Record<string, number> = { VENCIDO: 0, PENDENTE: 1, PAGO: 2 };
+  const boletosOrdenados = [...boletos].sort((a, b) => {
+    const diff = (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
+    if (diff !== 0) return diff;
+    return new Date(b.dataVencimento).getTime() - new Date(a.dataVencimento).getTime();
+  });
+
   return (
     <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
       <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
@@ -89,7 +96,7 @@ export default function BoletosPage() {
             </div>
           ) : (
             <div className="flex flex-col gap-4 p-4 md:p-0 md:divide-y md:divide-slate-100 md:dark:divide-slate-800">
-              {boletos.map((boleto) => (
+              {boletosOrdenados.map((boleto) => (
                 <div 
                   key={boleto.id} 
                   className="p-5 md:p-6 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-2xl md:bg-transparent md:dark:bg-transparent md:border-none md:rounded-none flex flex-col md:flex-row justify-between md:items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200 shadow-sm md:shadow-none"
