@@ -326,12 +326,38 @@ export default function GestaoPagamentosPage() {
   ];
 
   const filteredBoletos = useMemo(() => {
-    return boletos.filter((b) => {
-      const matchSearch = b.moradorNome?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          b.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchStatus = statusFilter === '' || b.status === statusFilter;
-      return matchSearch && matchStatus;
+    const statusOrder: Record<string, number> = { VENCIDO: 0, PENDENTE: 1, PAGO: 2 };
+
+    // Para PAGO: manter apenas o mais recente por morador
+    const pagoMaisRecentePorMorador = new Map<number, Boleto>();
+    boletos
+      .filter(b => b.status === 'PAGO')
+      .sort((a, b) => new Date(b.dataVencimento).getTime() - new Date(a.dataVencimento).getTime())
+      .forEach(b => {
+        if (!pagoMaisRecentePorMorador.has(b.moradorId)) {
+          pagoMaisRecentePorMorador.set(b.moradorId, b);
+        }
+      });
+
+    const base = boletos.filter(b => {
+      if (b.status === 'PAGO') {
+        return pagoMaisRecentePorMorador.get(b.moradorId)?.id === b.id;
+      }
+      return true;
     });
+
+    return base
+      .filter((b) => {
+        const matchSearch = b.moradorNome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            b.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchStatus = statusFilter === '' || b.status === statusFilter;
+        return matchSearch && matchStatus;
+      })
+      .sort((a, b) => {
+        const statusDiff = (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
+        if (statusDiff !== 0) return statusDiff;
+        return (a.moradorNome || '').localeCompare(b.moradorNome || '', 'pt-BR');
+      });
   }, [boletos, searchTerm, statusFilter]);
 
   const columns = [
