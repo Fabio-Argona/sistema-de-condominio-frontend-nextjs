@@ -77,14 +77,53 @@ export default function SindicoDashboard() {
       // Buscar Boletos para calcular Receita e Adimplência
       const boletosData = await get('/boletos') as Boleto[];
       if (boletosData) {
-         const pagos = boletosData.filter(b => b.status === 'PAGO');
+         const now = new Date();
+         
+         // Filtrar boletos pagos
+         const todosPagos = boletosData.filter(b => b.status === 'PAGO');
          const vencidos = boletosData.filter(b => b.status === 'VENCIDO');
          
-         const receita = pagos.reduce((acc, curr) => acc + curr.valor, 0);
+         // Regra: Receita Condominial (Paga) do ciclo vigente
+         // Consideramos o vencimento mais recente que já passou + 1 dia como o "Ciclo Atual"
+         const receita = todosPagos.reduce((total, boleto) => {
+            const dataVenc = new Date(boleto.dataVencimento);
+            const umDiaAposVenc = new Date(dataVenc);
+            umDiaAposVenc.setDate(dataVenc.getDate() + 1);
+            
+            // Verificamos se o boleto pertence ao mês/ano atual para simplificar o "mês vigente"
+            // E se hoje estamos na janela correta (um dia após o vencimento)
+            const mesAtual = now.getMonth();
+            const anoAtual = now.getFullYear();
+            
+            if (dataVenc.getMonth() === mesAtual && dataVenc.getFullYear() === anoAtual) {
+               // Se hoje for >= um dia após o vencimento do boleto atual do mês
+               if (now >= umDiaAposVenc) {
+                  return total + boleto.valor;
+               }
+            } else if (dataVenc.getMonth() === mesAtual - 1 || (mesAtual === 0 && dataVenc.getMonth() === 11)) {
+               // Se hoje ainda NÃO passou do vencimento do mês atual, 
+               // ainda estamos vendo a receita do mês anterior (regra: até o dia do próximo pagamento)
+               const vencimentoMesAtual = boletosData.find(b => {
+                   const d = new Date(b.dataVencimento);
+                   return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+               });
+               
+               if (vencimentoMesAtual) {
+                   const dataVencAtual = new Date(vencimentoMesAtual.dataVencimento);
+                   if (now <= dataVencAtual) {
+                       return total + boleto.valor;
+                   }
+               }
+            }
+            
+            return total;
+         }, 0);
+
          setReceitaMensal(receita);
          
-         if (pagos.length + vencidos.length > 0) {
-            const taxa = (pagos.length / (pagos.length + vencidos.length)) * 100;
+         // Adimplência continua sendo calculada sobre a base total de pagos vs vencidos para saúde financeira geral
+         if (todosPagos.length + vencidos.length > 0) {
+            const taxa = (todosPagos.length / (todosPagos.length + vencidos.length)) * 100;
             setTaxaAdimplencia(taxa.toFixed(1));
          } else {
             setTaxaAdimplencia('100.0');
@@ -112,33 +151,35 @@ export default function SindicoDashboard() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="animate-slide-up">
-        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">
-          Dashboard do Síndico
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Visão geral do condomínio • {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
-      </div>
+    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen w-full">
+      <div className="w-full flex justify-center">
+        <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-8 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
+          {/* Header */}
+          <div className="animate-slide-up">
+            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">
+              Dashboard do Síndico
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">
+              Visão geral do condomínio • {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+          </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <div className="animate-slide-up stagger-1">
-          <StatsCard
-            title="Total de Moradores"
-            value={totalMoradores}
-            color="blue"
-            trend={{ value: 3, label: 'vs mês anterior' }}
-            icon={
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-              </svg>
-            }
-          />
-        </div>
-        <div className="animate-slide-up stagger-2">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="animate-slide-up stagger-1">
+              <StatsCard
+                title="Total de Moradores"
+                value={totalMoradores}
+                color="blue"
+                trend={{ value: 3, label: 'vs mês anterior' }}
+                icon={
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                  </svg>
+                }
+              />
+            </div>
+            <div className="animate-slide-up stagger-2">
           <StatsCard
             title="Ocorrências Abertas"
             value={ocorrenciasAbertas}
@@ -314,6 +355,8 @@ export default function SindicoDashboard() {
           </div>
         </CardContent>
       </Card>
+        </div>
+      </div>
     </div>
   );
 }

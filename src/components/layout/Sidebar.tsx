@@ -107,8 +107,12 @@ const navItems: NavItem[] = [
   { label: 'Consulta', href: '/dashboard/porteiro/consulta', icon: icons.users, roles: ['PORTEIRO'] },
 ];
 
-export default function Sidebar() {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+interface SidebarProps {
+  isMobileOpen: boolean;
+  setIsMobileOpen: (open: boolean) => void;
+}
+
+export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
@@ -130,25 +134,25 @@ export default function Sidebar() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-6 border-b border-slate-200/10">
+      <div className="p-6 border-b border-slate-200 dark:border-slate-200/10">
         <div className="flex items-center gap-3">
-          <img src="/oceano-logo.png" alt="Logo Oceano Residences" className="w-24 h-24 object-contain rounded-xl shadow-lg shadow-blue-500/20 bg-transparent" style={{ background: 'transparent' }} />
+          <img src="/oceano-logo.png" alt="Logo Oceano Residences" className="w-24 h-24 object-contain rounded-xl shadow-lg shadow-blue-500/20 bg-transparent" />
           <div className="flex flex-col justify-center">
-            <span className="text-[10px] font-bold tracking-[0.2em] text-blue-400 uppercase leading-none mb-[-3px] ml-[2px] z-10">Residencial</span>
-            <h1 className="text-2xl font-black text-white tracking-tight leading-none mt-0">OCEANO</h1>
+            <span className="text-[10px] font-bold tracking-[0.2em] text-blue-600 dark:text-blue-400 uppercase leading-none mb-[-3px] ml-[2px] z-10">Residencial</span>
+            <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight leading-none mt-0">OCEANO</h1>
           </div>
         </div>
       </div>
 
       {/* User Info */}
-      <div className="p-4 mx-3 mt-4 rounded-xl bg-white/5 border border-white/10">
+      <div className="p-4 mx-3 mt-4 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${user ? roleColors[user.role] : ''} flex items-center justify-center text-white font-bold text-sm shadow-lg`}>
             {user?.nome?.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{user?.nome}</p>
-            <p className="text-xs text-slate-400">{user ? roleLabel[user.role] : ''}</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{user?.nome}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{user ? roleLabel[user.role] : ''}</p>
           </div>
         </div>
       </div>
@@ -168,7 +172,7 @@ export default function Sidebar() {
                 ${
                   isActive
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white hover:bg-blue-50 dark:hover:bg-white/5'
                 }
               `}
             >
@@ -185,7 +189,7 @@ export default function Sidebar() {
       <div className="p-3 space-y-1 border-t border-slate-200/10">
         <button
           onClick={toggleTheme}
-          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-200"
+          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white hover:bg-blue-50 dark:hover:bg-white/5 transition-all duration-200"
         >
           {isDark ? icons.sun : icons.moon}
           {isDark ? 'Modo Claro' : 'Modo Escuro'}
@@ -217,8 +221,8 @@ export default function Sidebar() {
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-50
-          w-72 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950
-          border-r border-slate-800
+          w-72 bg-white dark:bg-gradient-to-b dark:from-slate-900 dark:via-slate-900 dark:to-slate-950
+          border-r border-slate-200 dark:border-slate-800
           transform transition-transform duration-300 ease-out
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}

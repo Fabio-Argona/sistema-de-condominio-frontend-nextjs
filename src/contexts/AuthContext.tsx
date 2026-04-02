@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
 import api from '@/lib/api';
+
 import { User, UserRole, DecodedToken, LoginRequest } from '@/types';
 
 interface AuthContextType {
@@ -54,11 +55,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const savedToken = Cookies.get('token');
-    if (savedToken) {
-      decodeAndSetUser(savedToken);
-    }
-    setIsLoading(false);
+    const initializeAuth = async () => {
+      const savedToken = Cookies.get('token');
+      if (savedToken) {
+        decodeAndSetUser(savedToken);
+      }
+      setIsLoading(false);
+    };
+    
+    initializeAuth();
   }, [decodeAndSetUser]);
 
   const login = async (credentials: LoginRequest) => {
@@ -128,4 +133,5 @@ export function useAuth() {
     throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
   return context;
+  
 }
