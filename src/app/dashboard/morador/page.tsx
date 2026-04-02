@@ -43,13 +43,17 @@ export default function MoradorDashboard() {
           hoje.setHours(0, 0, 0, 0);
 
           const pendentesEVencidos = dataBoletos.filter((b: Boleto) => {
+            const status = (b.status || '').toUpperCase().trim();
             const venc = new Date(`${b.dataVencimento}T00:00:00`);
 
+            // Pagos nunca aparecem no dashboard
+            if (status === 'PAGO') return false;
+
             // Vencidos sempre aparecem
-            if (b.status === 'VENCIDO' || venc < hoje) return true;
+            if (status === 'VENCIDO' || venc < hoje) return true;
 
             // Pendentes só aparecem se vencem em até 30 dias a partir de hoje
-            if (b.status === 'PENDENTE') {
+            if (status === 'PENDENTE') {
               const diasAteVencimento = Math.floor((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
               return diasAteVencimento <= 30;
             }
@@ -62,7 +66,8 @@ export default function MoradorDashboard() {
           // Só exibe "pendência" se houver boleto vencido (atrasado)
           const existeVencido = pendentesEVencidos.some(b => {
             const venc = new Date(b.dataVencimento + 'T00:00:00');
-            return (b.status === 'VENCIDO' || venc < hoje);
+            const status = (b.status || '').toUpperCase().trim();
+            return (status !== 'PAGO' && (status === 'VENCIDO' || venc < hoje));
           });
           setSituacaoFinanceira(existeVencido ? 'PENDENTE' : 'EM_DIA');
         } else {
