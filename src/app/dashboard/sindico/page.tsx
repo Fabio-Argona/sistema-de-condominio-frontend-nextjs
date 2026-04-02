@@ -77,14 +77,53 @@ export default function SindicoDashboard() {
       // Buscar Boletos para calcular Receita e Adimplência
       const boletosData = await get('/boletos') as Boleto[];
       if (boletosData) {
-         const pagos = boletosData.filter(b => b.status === 'PAGO');
+         const now = new Date();
+         
+         // Filtrar boletos pagos
+         const todosPagos = boletosData.filter(b => b.status === 'PAGO');
          const vencidos = boletosData.filter(b => b.status === 'VENCIDO');
          
-         const receita = pagos.reduce((acc, curr) => acc + curr.valor, 0);
+         // Regra: Receita Condominial (Paga) do ciclo vigente
+         // Consideramos o vencimento mais recente que já passou + 1 dia como o "Ciclo Atual"
+         const receita = todosPagos.reduce((total, boleto) => {
+            const dataVenc = new Date(boleto.dataVencimento);
+            const umDiaAposVenc = new Date(dataVenc);
+            umDiaAposVenc.setDate(dataVenc.getDate() + 1);
+            
+            // Verificamos se o boleto pertence ao mês/ano atual para simplificar o "mês vigente"
+            // E se hoje estamos na janela correta (um dia após o vencimento)
+            const mesAtual = now.getMonth();
+            const anoAtual = now.getFullYear();
+            
+            if (dataVenc.getMonth() === mesAtual && dataVenc.getFullYear() === anoAtual) {
+               // Se hoje for >= um dia após o vencimento do boleto atual do mês
+               if (now >= umDiaAposVenc) {
+                  return total + boleto.valor;
+               }
+            } else if (dataVenc.getMonth() === mesAtual - 1 || (mesAtual === 0 && dataVenc.getMonth() === 11)) {
+               // Se hoje ainda NÃO passou do vencimento do mês atual, 
+               // ainda estamos vendo a receita do mês anterior (regra: até o dia do próximo pagamento)
+               const vencimentoMesAtual = boletosData.find(b => {
+                   const d = new Date(b.dataVencimento);
+                   return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+               });
+               
+               if (vencimentoMesAtual) {
+                   const dataVencAtual = new Date(vencimentoMesAtual.dataVencimento);
+                   if (now <= dataVencAtual) {
+                       return total + boleto.valor;
+                   }
+               }
+            }
+            
+            return total;
+         }, 0);
+
          setReceitaMensal(receita);
          
-         if (pagos.length + vencidos.length > 0) {
-            const taxa = (pagos.length / (pagos.length + vencidos.length)) * 100;
+         // Adimplência continua sendo calculada sobre a base total de pagos vs vencidos para saúde financeira geral
+         if (todosPagos.length + vencidos.length > 0) {
+            const taxa = (todosPagos.length / (todosPagos.length + vencidos.length)) * 100;
             setTaxaAdimplencia(taxa.toFixed(1));
          } else {
             setTaxaAdimplencia('100.0');
