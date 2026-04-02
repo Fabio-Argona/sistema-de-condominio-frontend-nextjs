@@ -61,8 +61,9 @@ export default function LoginPage() {
       
       setIsRecoverModalOpen(false);
       setRecoverEmail('');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erro ao recuperar senha');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Erro ao recuperar senha');
     } finally {
       setIsRecovering(false);
     }
@@ -80,6 +81,7 @@ export default function LoginPage() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
             Digite seu e-mail de acesso. O sistema gerará uma nova senha temporária para você.
           </p>
+          
           <Input
             label="E-mail"
             type="email"
