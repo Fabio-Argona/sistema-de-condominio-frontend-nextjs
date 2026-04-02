@@ -12,10 +12,10 @@ const roleLabel: Record<string, string> = {
   PORTEIRO: 'Porteiro',
 };
 
-const roleColor: Record<string, 'purple' | 'blue' | 'green'> = {
+const roleColor: Record<string, 'purple' | 'info' | 'success'> = {
   SINDICO: 'purple',
-  MORADOR: 'blue',
-  PORTEIRO: 'green',
+  MORADOR: 'info',
+  PORTEIRO: 'success',
 };
 
 function formatDataHora(iso: string) {
@@ -126,7 +126,7 @@ export default function AcessosPage() {
                           <p className="text-xs text-slate-400">{log.usuarioEmail}</p>
                         </td>
                         <td className="py-3 px-3">
-                          <Badge variant={roleColor[log.role] ?? 'blue'}>
+                          <Badge variant={roleColor[log.role] ?? 'info'}>
                             {roleLabel[log.role] ?? log.role}
                           </Badge>
                         </td>
