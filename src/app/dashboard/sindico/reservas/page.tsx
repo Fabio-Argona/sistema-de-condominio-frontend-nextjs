@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Card, { CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import Modal from '@/components/ui/Modal';
 import DataTable from '@/components/ui/DataTable';
 import { Reserva, AreaComum, ReservaStatus } from '@/types';
 import { useApi } from '@/hooks/useApi';
@@ -127,6 +128,53 @@ export default function ReservasPage() {
           <DataTable columns={columns} data={filteredReservas} isLoading={isLoading && reservas.length === 0} keyExtractor={(r) => r.id} emptyMessage="Nenhuma reserva encontrada" />
         </CardContent>
       </Card>
+
+      {/* Modal de Confirmação de Status */}
+      <Modal isOpen={isStatusModalOpen} onClose={() => setIsStatusModalOpen(false)} title={statusToChange === 'APROVADA' ? 'Aprovar Reserva' : 'Rejeitar Reserva'} size="sm">
+        <div className="space-y-4">
+          <div className={`p-4 rounded-xl flex items-start gap-3 ${
+            statusToChange === 'APROVADA'
+              ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30'
+              : 'bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30'
+          }`}>
+            <div className={`p-2 rounded-lg shrink-0 ${
+              statusToChange === 'APROVADA'
+                ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
+                : 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400'
+            }`}>
+              {statusToChange === 'APROVADA' ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              )}
+            </div>
+            <div>
+              <p className={`text-sm font-bold ${
+                statusToChange === 'APROVADA' ? 'text-emerald-800 dark:text-emerald-200' : 'text-red-800 dark:text-red-200'
+              }`}>
+                {statusToChange === 'APROVADA' ? 'Deseja aprovar esta reserva?' : 'Deseja rejeitar esta reserva?'}
+              </p>
+              <p className={`text-xs mt-1 ${
+                statusToChange === 'APROVADA' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+              }`}>
+                {statusToChange === 'APROVADA'
+                  ? 'O morador será notificado da aprovação.'
+                  : 'O morador será notificado da rejeição.'}
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setIsStatusModalOpen(false)} disabled={isLoading}>Cancelar</Button>
+            <Button
+              variant={statusToChange === 'APROVADA' ? 'primary' : 'danger'}
+              onClick={handleConfirmStatus}
+              isLoading={isLoading}
+            >
+              {statusToChange === 'APROVADA' ? 'Aprovar' : 'Rejeitar'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

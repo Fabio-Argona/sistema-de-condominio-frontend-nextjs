@@ -48,45 +48,79 @@ export default function DataTable<T>({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-slate-100 dark:border-slate-700/50">
-            {columns.map((col) => (
-              <th
-                key={col.key}
-                className={`px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ${col.className || ''}`}
-              >
-                {col.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-50 dark:divide-slate-700/30">
-          {data.map((item) => (
-            <tr
-              key={keyExtractor(item)}
-              onClick={() => onRowClick?.(item)}
-              className={`
-                transition-colors duration-150
-                hover:bg-slate-50/80 dark:hover:bg-slate-700/20
-                ${onRowClick ? 'cursor-pointer' : ''}
-              `}
-            >
+    <div className="w-full">
+      {/* Visualização de Tabela (Desktop) */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-slate-100 dark:border-slate-700/50">
               {columns.map((col) => (
-                <td
-                  key={`${keyExtractor(item)}-${col.key}`}
-                  className={`px-4 py-3.5 text-sm text-slate-700 dark:text-slate-300 ${col.className || ''}`}
+                <th
+                  key={col.key}
+                  className={`px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ${col.className || ''}`}
                 >
-                  {col.render
-                    ? col.render(item)
-                    : String((item as Record<string, unknown>)[col.key] ?? '')}
-                </td>
+                  {col.header}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-slate-50 dark:divide-slate-700/30">
+            {data.map((item) => (
+              <tr
+                key={keyExtractor(item)}
+                onClick={() => onRowClick?.(item)}
+                className={`
+                  transition-colors duration-150
+                  hover:bg-slate-50/80 dark:hover:bg-slate-700/20
+                  ${onRowClick ? 'cursor-pointer' : ''}
+                `}
+              >
+                {columns.map((col) => (
+                  <td
+                    key={`${keyExtractor(item)}-${col.key}`}
+                    className={`px-6 py-4 text-sm text-slate-700 dark:text-slate-300 ${col.className || ''}`}
+                  >
+                    {col.render
+                      ? col.render(item)
+                      : String((item as Record<string, unknown>)[col.key] ?? '')}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Visualização de Cards (Mobile) */}
+      <div className="md:hidden space-y-4 p-4">
+        {data.map((item) => (
+          <div 
+            key={keyExtractor(item)}
+            onClick={() => onRowClick?.(item)}
+            className={`
+              bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 shadow-sm
+              ${onRowClick ? 'active:scale-[0.98] transition-transform cursor-pointer' : ''}
+            `}
+          >
+            <div className="space-y-4">
+              {columns.map((col) => (
+                <div key={`${keyExtractor(item)}-${col.key}`} className={col.className}>
+                  {col.header && (
+                    <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
+                      {col.header}
+                    </div>
+                  )}
+                  <div className="text-slate-900 dark:text-slate-200 font-medium">
+                    {col.render
+                      ? col.render(item)
+                      : String((item as Record<string, unknown>)[col.key] ?? '')}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

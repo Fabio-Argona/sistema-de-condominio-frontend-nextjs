@@ -87,12 +87,15 @@ export default function BoletosPage() {
               <p className="text-lg">Você não tem nenhum boleto registrado no momento.</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="flex flex-col gap-4 p-4 md:p-0 md:divide-y md:divide-slate-100 md:dark:divide-slate-800">
               {boletos.map((boleto) => (
-                <div key={boleto.id} className="p-6 flex flex-col md:flex-row justify-between md:items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <div 
+                  key={boleto.id} 
+                  className="p-5 md:p-6 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-2xl md:bg-transparent md:dark:bg-transparent md:border-none md:rounded-none flex flex-col md:flex-row justify-between md:items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200 shadow-sm md:shadow-none"
+                >
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-lg">
+                    <div className="flex flex-wrap items-center gap-3 mb-3 md:mb-2">
+                      <h3 className="font-bold text-slate-900 dark:text-slate-100 text-lg leading-tight">
                         {boleto.descricao}
                       </h3>
                       <Badge variant={getStatusBadgeVariant(boleto.status)}>
@@ -100,40 +103,50 @@ export default function BoletosPage() {
                       </Badge>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
-                      <div>
-                        <span className="font-medium mr-1">Vencimento:</span>
-                        {new Date(boleto.dataVencimento).toLocaleDateString('pt-BR')}
+                    <div className="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-x-8 text-sm">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-slate-500 dark:text-slate-500 text-xs uppercase tracking-wider font-bold">Vencimento</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">
+                          {new Date(boleto.dataVencimento).toLocaleDateString('pt-BR')}
+                        </span>
                       </div>
-                      <div className="font-semibold text-slate-900 dark:text-white text-base">
-                        R$ {boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      <div className="flex flex-col gap-1">
+                        <span className="text-slate-500 dark:text-slate-500 text-xs uppercase tracking-wider font-bold">Valor</span>
+                        <span className="font-black text-slate-900 dark:text-white text-lg">
+                          R$ {boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
                       </div>
                       
                       {boleto.status === 'PAGO' && boleto.dataPagamento && (
-                        <div className="text-emerald-600 dark:text-emerald-400">
-                          <span className="font-medium mr-1">Pago em:</span>
-                          {new Date(boleto.dataPagamento).toLocaleDateString('pt-BR')}
+                        <div className="col-span-2 flex flex-col gap-1 border-t border-emerald-100 dark:border-emerald-900/30 pt-2 mt-1">
+                          <span className="text-emerald-600/70 dark:text-emerald-500/70 text-xs uppercase tracking-wider font-bold">Pagamento Confirmado</span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                            Em {new Date(boleto.dataPagamento).toLocaleDateString('pt-BR')}
+                          </span>
                         </div>
                       )}
                     </div>
 
                     {/* Código de barras e PDF */}
                     {boleto.status !== 'PAGO' && (
-                      <div className="mt-4 p-3 bg-slate-100 dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                        <code className="text-xs sm:text-sm text-slate-800 dark:text-slate-300 break-all flex-1 font-mono">
-                          {boleto.linhaDigitavel || 'Boleto sem código de barras registrado.'}
-                        </code>
+                      <div className="mt-5 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50 flex flex-col gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Código de Barras</span>
+                          <code className="text-xs text-slate-700 dark:text-slate-300 break-all font-mono bg-white dark:bg-slate-900 px-2 py-1.5 rounded border border-slate-200 dark:border-slate-800">
+                            {boleto.linhaDigitavel || 'Aguardando registro...'}
+                          </code>
+                        </div>
                         <Button 
-                          variant="secondary" 
-                          size="sm"
-                          className="shrink-0 flex items-center justify-center gap-2"
-                          onClick={() => boleto.pdfBase64 ? abrirPDF(boleto.pdfBase64, boleto.descricao) : toast.error('O síndico não anexou nenhum PDF para este boleto.')}
+                          variant="primary" 
+                          size="md"
+                          className="w-full flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+                          onClick={() => boleto.pdfBase64 ? abrirPDF(boleto.pdfBase64, boleto.descricao) : toast.error('O síndico não anexou o PDF deste boleto.')}
                           disabled={!boleto.pdfBase64}
                         >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                           </svg>
-                          Baixar PDF
+                          Baixar Boleto (PDF)
                         </Button>
                       </div>
                     )}
