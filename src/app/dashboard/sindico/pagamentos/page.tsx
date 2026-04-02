@@ -39,6 +39,7 @@ export default function GestaoPagamentosPage() {
   });
   const [nomeArquivo, setNomeArquivo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [enviarEmailAutomatico, setEnviarEmailAutomatico] = useState(true);
   
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -224,8 +225,8 @@ export default function GestaoPagamentosPage() {
        setNomeArquivo('');
        loadBoletos(); // Atualiza a tabela
 
-       // Tenta enviar e-mail automaticamente (silencioso se backend não suportar)
-       if (criado?.id) {
+       // Envio automático opcional, controlado pelo toggle do síndico
+       if (enviarEmailAutomatico && criado?.id) {
          const emailResult = await post(`/boletos/${criado.id}/enviar-email`, {}, { showErrorToast: false });
          if (emailResult !== null) {
            toast.success('E-mail com boleto enviado automaticamente ao morador!', { duration: 4000, icon: '\u2709\ufe0f' });
@@ -572,6 +573,22 @@ export default function GestaoPagamentosPage() {
             value={novoBoletoForm.linhaDigitavel}
             onChange={(e) => setNovoBoletoForm({...novoBoletoForm, linhaDigitavel: e.target.value})}
           />
+
+          <div className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 bg-slate-50 dark:bg-slate-900/40">
+            <div>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Enviar e-mail automaticamente após criar</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Quando desativado, o boleto pode ser reenviado manualmente na tabela.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEnviarEmailAutomatico((prev) => !prev)}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${enviarEmailAutomatico ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'}`}
+              aria-pressed={enviarEmailAutomatico}
+              title={enviarEmailAutomatico ? 'Desativar envio automático de e-mail' : 'Ativar envio automático de e-mail'}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${enviarEmailAutomatico ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
 
           <div className="pt-2">
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
