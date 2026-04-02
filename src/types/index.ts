@@ -50,6 +50,17 @@ export interface Morador {
   ativo: boolean;
   role?: UserRole;
   avatar?: string;
+  ultimoAcesso?: string;
+}
+
+// Log de Acesso
+export interface LogAcesso {
+  id: number;
+  usuarioNome: string;
+  usuarioEmail: string;
+  role: string;
+  dataHora: string;
+  ip: string;
 }
 
 export interface MoradorFormData {

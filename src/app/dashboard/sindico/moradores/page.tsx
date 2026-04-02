@@ -168,8 +168,8 @@ export default function MoradoresPage() {
       key: 'nome', 
       header: 'Morador',
       render: (m: Morador) => (
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-md">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-md">
             {(m.nome || '?').charAt(0).toUpperCase()}
           </div>
           <div>
@@ -191,6 +191,17 @@ export default function MoradoresPage() {
       header: 'Status',
       render: (m: Morador) => (
         <Badge variant={m.ativo ? 'success' : 'danger'} dot>{m.ativo ? 'Ativo' : 'Inativo'}</Badge>
+      ),
+    },
+    {
+      key: 'ultimoAcesso',
+      header: 'Último Acesso',
+      render: (m: Morador) => m.ultimoAcesso ? (
+        <span className="text-xs text-slate-500 whitespace-nowrap">
+          {new Date(m.ultimoAcesso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+        </span>
+      ) : (
+        <span className="text-xs text-slate-300 italic">Nunca acessou</span>
       ),
     },
     {
