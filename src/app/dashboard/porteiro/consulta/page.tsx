@@ -32,6 +32,10 @@ export default function PorteiroConsultaPage() {
       )
     : moradores;
 
+  const moradoresOrdenados = [...filteredMoradores].sort((a, b) =>
+    (a.nome || '').localeCompare(b.nome || '', 'pt-BR')
+  );
+
   return (
     <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
       <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
@@ -55,7 +59,7 @@ export default function PorteiroConsultaPage() {
           [...Array(6)].map((_, i) => (
             <div key={i} className={`h-28 bg-slate-200 dark:bg-slate-700/50 rounded-2xl animate-pulse stagger-${Math.min(i + 1, 6)}`} />
           ))
-        ) : filteredMoradores.map((m, i) => (
+        ) : moradoresOrdenados.map((m, i) => (
           <Card key={m.id} hover gradient className={`animate-slide-up stagger-${Math.min(i + 1, 6)}`}>
             <CardContent className="p-5">
               <div className="flex items-start gap-4">
@@ -78,7 +82,7 @@ export default function PorteiroConsultaPage() {
         ))}
       </div>
 
-      {!isLoading && filteredMoradores.length === 0 && (
+      {!isLoading && moradoresOrdenados.length === 0 && (
         <div className="text-center py-12 text-slate-400 animate-slide-up">
           <p className="text-lg">Nenhum morador encontrado</p>
           <p className="text-sm mt-1">Tente buscar por outro termo</p>
