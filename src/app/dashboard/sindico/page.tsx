@@ -44,6 +44,7 @@ export default function SindicoDashboard() {
   const [totalMoradores, setTotalMoradores] = useState<number>(0);
   const [ocorrenciasAbertas, setOcorrenciasAbertas] = useState<number>(0);
   const [receitaMensal, setReceitaMensal] = useState<number>(0);
+  const [boletosVencidosMes, setBoletosVencidosMes] = useState<number>(0);
   const [taxaAdimplencia, setTaxaAdimplencia] = useState<string>('0.0');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -124,6 +125,14 @@ export default function SindicoDashboard() {
           const pagosBase = baseCobrancas.filter(b => (b.status || '').toUpperCase() === 'PAGO').length;
           const taxa = baseCobrancas.length > 0 ? (pagosBase / baseCobrancas.length) * 100 : 100;
           setTaxaAdimplencia(taxa.toFixed(1));
+
+          const vencidosMes = boletosData.filter(b => {
+            const venc = new Date(`${b.dataVencimento}T00:00:00`);
+            const status = (b.status || '').toUpperCase();
+            const mesmoMes = venc.getMonth() === mesAtual && venc.getFullYear() === anoAtual;
+            return mesmoMes && status !== 'PAGO' && venc < now;
+          }).length;
+          setBoletosVencidosMes(vencidosMes);
         }
       } finally {
         setIsLoading(false);
@@ -139,7 +148,7 @@ export default function SindicoDashboard() {
       <div className="space-y-6 animate-pulse">
         <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700 rounded-lg" />
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(7)].map((_, i) => (
             <div key={i} className="h-32 bg-slate-200 dark:bg-slate-700 rounded-2xl" />
           ))}
         </div>
@@ -233,6 +242,18 @@ export default function SindicoDashboard() {
                 }
               />
             </div>
+            <div className="animate-slide-up stagger-7">
+              <StatsCard
+                title="Boletos Vencidos (MÃªs)"
+                value={boletosVencidosMes}
+                color="amber"
+                icon={
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2.25m0 3.75h.008v.008H12v-.008zM10.29 3.86l-7.2 12.46A2.25 2.25 0 005.04 19.5h13.92a2.25 2.25 0 001.95-3.18l-7.2-12.46a2.25 2.25 0 00-3.42 0z" />
+                  </svg>
+                }
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -302,10 +323,10 @@ export default function SindicoDashboard() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: 'Novo Morador', href: '/dashboard/sindico/moradores', icon: 'í±¤', color: 'from-blue-500/10 to-indigo-500/10 hover:from-blue-500/20 hover:to-indigo-500/20 border-blue-200/30 dark:border-blue-700/30' },
+                  { label: 'Novo Morador', href: '/dashboard/sindico/moradores', icon: 'ï¿½ï¿½ï¿½', color: 'from-blue-500/10 to-indigo-500/10 hover:from-blue-500/20 hover:to-indigo-500/20 border-blue-200/30 dark:border-blue-700/30' },
                   { label: 'Nova OcorrÃªncia', href: '/dashboard/sindico/ocorrencias', icon: 'âš ï¸', color: 'from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border-amber-200/30 dark:border-amber-700/30' },
-                  { label: 'Novo Comunicado', href: '/dashboard/sindico/comunicados', icon: 'í³¢', color: 'from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 border-emerald-200/30 dark:border-emerald-700/30' },
-                  { label: 'RelatÃ³rios', href: '/dashboard/sindico/relatorios', icon: 'í³Š', color: 'from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 border-purple-200/30 dark:border-purple-700/30' },
+                  { label: 'Novo Comunicado', href: '/dashboard/sindico/comunicados', icon: 'ï¿½ï¿½ï¿½', color: 'from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 border-emerald-200/30 dark:border-emerald-700/30' },
+                  { label: 'RelatÃ³rios', href: '/dashboard/sindico/relatorios', icon: 'ï¿½ï¿½ï¿½', color: 'from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 border-purple-200/30 dark:border-purple-700/30' },
                 ].map((action) => (
                   <a
                     key={action.label}
