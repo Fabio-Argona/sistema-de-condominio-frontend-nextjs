@@ -151,33 +151,35 @@ export default function SindicoDashboard() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="animate-slide-up">
-        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">
-          Dashboard do Síndico
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Visão geral do condomínio • {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
-      </div>
+    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen w-full">
+      <div className="w-full flex justify-center">
+        <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-8 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
+          {/* Header */}
+          <div className="animate-slide-up">
+            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">
+              Dashboard do Síndico
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">
+              Visão geral do condomínio • {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+          </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <div className="animate-slide-up stagger-1">
-          <StatsCard
-            title="Total de Moradores"
-            value={totalMoradores}
-            color="blue"
-            trend={{ value: 3, label: 'vs mês anterior' }}
-            icon={
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-              </svg>
-            }
-          />
-        </div>
-        <div className="animate-slide-up stagger-2">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="animate-slide-up stagger-1">
+              <StatsCard
+                title="Total de Moradores"
+                value={totalMoradores}
+                color="blue"
+                trend={{ value: 3, label: 'vs mês anterior' }}
+                icon={
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                  </svg>
+                }
+              />
+            </div>
+            <div className="animate-slide-up stagger-2">
           <StatsCard
             title="Ocorrências Abertas"
             value={ocorrenciasAbertas}
