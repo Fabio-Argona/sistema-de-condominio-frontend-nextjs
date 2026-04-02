@@ -154,13 +154,24 @@ export default function GestaoPagamentosPage() {
                }
             }
 
-            if (dataEncontrada || valorMaximo || moradorDetectadoId) {
+            // Extrair linha digitável (47 ou 48 dígitos numéricos, com espaços/pontos típicos de boleto)
+            let linhaDigitavelEncontrada = null;
+            // Padrão: blocos separados por espaços/pontos, total ~47 dígitos
+            const linhaMatch = textCompleto.match(/\d{5}\.\d{5}\s+\d{5}\.\d{6}\s+\d{5}\.\d{6}\s+\d\s+\d{14}/) ||
+                               textCompleto.match(/\d{4,5}[\s.]\d{4,6}[\s.]\d{4,6}[\s.]\d{4,6}[\s.]\d{4,14}/) ||
+                               textCompleto.match(/\b\d{47,48}\b/);
+            if (linhaMatch) {
+              linhaDigitavelEncontrada = linhaMatch[0].trim();
+            }
+
+            if (dataEncontrada || valorMaximo || moradorDetectadoId || linhaDigitavelEncontrada) {
                setNovoBoletoForm((prev) => ({ 
                   ...prev, 
                   moradorId: moradorDetectadoId || prev.moradorId,
                   descricao: prev.descricao ? prev.descricao : 'Taxa Condominial',
                   dataVencimento: dataEncontrada || prev.dataVencimento, 
-                  valor: valorMaximo || prev.valor 
+                  valor: valorMaximo || prev.valor,
+                  linhaDigitavel: linhaDigitavelEncontrada || prev.linhaDigitavel
                }));
                toast.success('Pronto! O sistema puxou Valor, Data, Nome e Descrição p/ você.', { id: 'pdf-leitura', duration: 4000 });
             } else {
@@ -384,34 +395,38 @@ export default function GestaoPagamentosPage() {
                </svg>
              )}
            </button>
-           {b.status !== 'PAGO' && (
-             <Button
-                size="sm"
-                onClick={() => handleMarcarPago(b.id)}
-                title="Sinalizar que morador pagou este boleto"
-                className="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 dark:bg-emerald-500/20 dark:hover:bg-emerald-500/30 dark:text-emerald-400 font-medium shrink-0"
-             >
-                Dar Baixa
-             </Button>
-           )}
-           <Button
-             variant="outline"
-             size="sm"
+           {/* Editar linha digitável */}
+           <button
              onClick={() => handleEditBoleto(b)}
+             className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors shrink-0"
              title="Editar linha digitável"
-             className="shrink-0"
            >
-             Editar
-           </Button>
-           <Button 
-             variant="outline" 
-             size="sm" 
+             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+             </svg>
+           </button>
+           {/* Dar Baixa */}
+           {b.status !== 'PAGO' && (
+             <button
+               onClick={() => handleMarcarPago(b.id)}
+               className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors shrink-0"
+               title="Dar baixa (confirmar pagamento)"
+             >
+               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+               </svg>
+             </button>
+           )}
+           {/* Excluir */}
+           <button
              onClick={() => handleDeleteBoleto(b.id)}
-             title="Apagar Boleto"
-             className="!text-red-600 !border-red-200 hover:!bg-red-50 dark:!text-red-400 dark:hover:!bg-red-500/10 dark:!border-red-500/30 shrink-0"
+             className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors shrink-0"
+             title="Excluir boleto"
            >
-             Excluir
-           </Button>
+             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+             </svg>
+           </button>
         </div>
       ),
     },
