@@ -43,6 +43,10 @@ export default function GestaoPagamentosPage() {
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedBoletoId, setSelectedBoletoId] = useState<number | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingBoletoId, setEditingBoletoId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({ linhaDigitavel: '' });
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [sendingEmail, setSendingEmail] = useState<number | null>(null);
   
   const { get, post, del, put } = useApi();
@@ -247,6 +251,30 @@ export default function GestaoPagamentosPage() {
     setIsDeleteModalOpen(true);
   };
 
+  const handleEditBoleto = (boleto: Boleto) => {
+    setEditingBoletoId(boleto.id);
+    setEditForm({ linhaDigitavel: boleto.linhaDigitavel || '' });
+    setIsEditModalOpen(true);
+  };
+
+  const handleConfirmEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBoletoId) return;
+    setIsEditSubmitting(true);
+    try {
+      await put(`/boletos/${editingBoletoId}`, { linhaDigitavel: editForm.linhaDigitavel });
+      toast.success('Boleto atualizado com sucesso!');
+      setIsEditModalOpen(false);
+      setEditingBoletoId(null);
+      setEditForm({ linhaDigitavel: '' });
+      loadBoletos();
+    } catch {
+      toast.error('Erro ao atualizar boleto.');
+    } finally {
+      setIsEditSubmitting(false);
+    }
+  };
+
   const handleEnviarEmailBoleto = async (id: number) => {
     setSendingEmail(id);
     const result = await post(`/boletos/${id}/enviar-email`, {}, { showErrorToast: false });
@@ -366,6 +394,15 @@ export default function GestaoPagamentosPage() {
                 Dar Baixa
              </Button>
            )}
+           <Button
+             variant="outline"
+             size="sm"
+             onClick={() => handleEditBoleto(b)}
+             title="Editar linha digitável"
+             className="shrink-0"
+           >
+             Editar
+           </Button>
            <Button 
              variant="outline" 
              size="sm" 
@@ -579,6 +616,21 @@ export default function GestaoPagamentosPage() {
             <Button variant="danger" onClick={handleConfirmDelete}>Sim, Excluir Boleto</Button>
           </div>
         </div>
+      </Modal>
+      {/* Modal de Edição de Boleto */}
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Editar Boleto">
+        <form onSubmit={handleConfirmEdit} className="space-y-4">
+          <Input
+            label="Linha Digitável / Código de Barras"
+            placeholder="Ex: 1234.5678 9012.345678 90123.456789 1 12340000010963"
+            value={editForm.linhaDigitavel}
+            onChange={(e) => setEditForm({ linhaDigitavel: e.target.value })}
+          />
+          <div className="pt-4 flex justify-end gap-3 border-t dark:border-slate-700/50">
+            <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
+            <Button type="submit" isLoading={isEditSubmitting}>Salvar</Button>
+          </div>
+        </form>
       </Modal>
       </div>
     </div>
