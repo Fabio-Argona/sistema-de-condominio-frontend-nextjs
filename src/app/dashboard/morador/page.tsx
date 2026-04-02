@@ -14,6 +14,7 @@ export default function MoradorDashboard() {
   const [minhasOcorrencias, setMinhasOcorrencias] = useState<Ocorrencia[]>([]);
   const [minhasReservas, setMinhasReservas] = useState<Reserva[]>([]);
   const [situacaoFinanceira, setSituacaoFinanceira] = useState<'EM_DIA' | 'PENDENTE' | null>(null);
+  const [boletosAbertos, setBoletosAbertos] = useState<Boleto[]>([]);
   
   const { get } = useApi();
   const { user } = useAuth();
@@ -40,6 +41,8 @@ export default function MoradorDashboard() {
          if (dataBoletos && dataBoletos.length > 0) {
             const pendentesEVencidos = dataBoletos.filter((b: Boleto) => b.status === 'PENDENTE' || b.status === 'VENCIDO');
             if (pendentesEVencidos.length > 0) {
+               pendentesEVencidos.sort((a, b) => new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime());
+               setBoletosAbertos(pendentesEVencidos);
                setSituacaoFinanceira('PENDENTE');
             } else {
                setSituacaoFinanceira('EM_DIA');
@@ -78,6 +81,70 @@ export default function MoradorDashboard() {
           </div>
         )}
       </div>
+
+      {/* Boletos pendentes/vencidos */}
+      {boletosAbertos.length > 0 && (
+        <div className="space-y-3 animate-slide-up">
+          {boletosAbertos.map((boleto) => {
+            const vencimento = new Date(boleto.dataVencimento + 'T00:00:00');
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const diffMs = hoje.getTime() - vencimento.getTime();
+            const diasAtraso = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const isVencido = boleto.status === 'VENCIDO' || diasAtraso > 0;
+
+            return (
+              <div
+                key={boleto.id}
+                className={`flex items-center justify-between p-4 rounded-xl border ${
+                  isVencido
+                    ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
+                    : 'bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {isVencido ? (
+                    <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  )}
+                  <div>
+                    <p className={`text-sm font-semibold ${isVencido ? 'text-red-700 dark:text-red-400' : 'text-orange-700 dark:text-orange-400'}`}>
+                      {boleto.descricao} — R$ {boleto.valor.toFixed(2).replace('.', ',')}
+                    </p>
+                    <p className={`text-xs mt-0.5 ${isVencido ? 'text-red-500 dark:text-red-400' : 'text-orange-500 dark:text-orange-400'}`}>
+                      {isVencido
+                        ? `Vencido há ${diasAtraso} dia${diasAtraso !== 1 ? 's' : ''}`
+                        : `Vence em ${vencimento.toLocaleDateString('pt-BR')}`
+                      }
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (boleto.pdfBase64) {
+                      const link = document.createElement('a');
+                      link.href = boleto.pdfBase64;
+                      link.download = `Boleto_${boleto.descricao.replace(/\s+/g, '_')}.pdf`;
+                      link.click();
+                    } else {
+                      window.location.href = '/dashboard/morador/pagamentos';
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    isVencido
+                      ? 'bg-red-500 hover:bg-red-600 text-white'
+                      : 'bg-orange-500 hover:bg-orange-600 text-white'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  Baixar Boleto
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Comunicados */}
