@@ -45,6 +45,7 @@ export default function SindicoDashboard() {
   const [ocorrenciasAbertas, setOcorrenciasAbertas] = useState<number>(0);
   const [receitaMensal, setReceitaMensal] = useState<number>(0);
   const [boletosVencidosMes, setBoletosVencidosMes] = useState<number>(0);
+  const [boletosVencidosTotal, setBoletosVencidosTotal] = useState<number>(0);
   const [taxaAdimplencia, setTaxaAdimplencia] = useState<string>('0.0');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -133,6 +134,13 @@ export default function SindicoDashboard() {
             return mesmoMes && status !== 'PAGO' && venc < now;
           }).length;
           setBoletosVencidosMes(vencidosMes);
+
+          const vencidosTotal = boletosData.filter(b => {
+            const venc = new Date(`${b.dataVencimento}T00:00:00`);
+            const status = (b.status || '').toUpperCase();
+            return status !== 'PAGO' && venc < now;
+          }).length;
+          setBoletosVencidosTotal(vencidosTotal);
         }
       } finally {
         setIsLoading(false);
@@ -182,6 +190,7 @@ export default function SindicoDashboard() {
                 }
               />
             </div>
+            {ocorrenciasAbertas > 0 && (
             <div className="animate-slide-up stagger-2">
               <StatsCard
                 title="Ocorrências Abertas"
@@ -194,6 +203,8 @@ export default function SindicoDashboard() {
                 }
               />
             </div>
+            )}
+            {totalReservasHoje > 0 && (
             <div className="animate-slide-up stagger-3">
               <StatsCard
                 title="Reservas de Hoje"
@@ -206,6 +217,7 @@ export default function SindicoDashboard() {
                 }
               />
             </div>
+            )}
             <div className="animate-slide-up stagger-4">
               <StatsCard
                 title="Taxa de Adimplência"
@@ -218,6 +230,7 @@ export default function SindicoDashboard() {
                 }
               />
             </div>
+            {receitaMensal > 0 && (
             <div className="animate-slide-up stagger-5">
               <StatsCard
                 title="Receita Condominial (Mês)"
@@ -230,6 +243,8 @@ export default function SindicoDashboard() {
                 }
               />
             </div>
+            )}
+            {visitantesHoje > 0 && (
             <div className="animate-slide-up stagger-6">
               <StatsCard
                 title="Visitantes Hoje"
@@ -242,6 +257,8 @@ export default function SindicoDashboard() {
                 }
               />
             </div>
+            )}
+            {boletosVencidosMes > 0 && (
             <div className="animate-slide-up stagger-7">
               <StatsCard
                 title="Boletos Vencidos (Mês)"
@@ -254,6 +271,21 @@ export default function SindicoDashboard() {
                 }
               />
             </div>
+            )}
+            {boletosVencidosTotal > 0 && (
+            <div className="animate-slide-up stagger-8">
+              <StatsCard
+                title="Boletos Vencidos (Total)"
+                value={boletosVencidosTotal}
+                color="red"
+                icon={
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                }
+              />
+            </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -322,18 +354,58 @@ export default function SindicoDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { label: 'Novo Morador', href: '/dashboard/sindico/moradores', icon: '���', color: 'from-blue-500/10 to-indigo-500/10 hover:from-blue-500/20 hover:to-indigo-500/20 border-blue-200/30 dark:border-blue-700/30' },
-                  { label: 'Nova Ocorrência', href: '/dashboard/sindico/ocorrencias', icon: '⚠️', color: 'from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border-amber-200/30 dark:border-amber-700/30' },
-                  { label: 'Novo Comunicado', href: '/dashboard/sindico/comunicados', icon: '���', color: 'from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 border-emerald-200/30 dark:border-emerald-700/30' },
-                  { label: 'Relatórios', href: '/dashboard/sindico/relatorios', icon: '���', color: 'from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 border-purple-200/30 dark:border-purple-700/30' },
-                ].map((action) => (
+                {([
+                  {
+                    label: 'Novo Morador',
+                    href: '/dashboard/sindico/moradores',
+                    icon: (
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+                      </svg>
+                    ),
+                    color: 'from-blue-500/10 to-indigo-500/10 hover:from-blue-500/20 hover:to-indigo-500/20 border-blue-200/30 dark:border-blue-700/30',
+                    iconColor: 'text-blue-500',
+                  },
+                  {
+                    label: 'Nova Ocorrência',
+                    href: '/dashboard/sindico/ocorrencias',
+                    icon: (
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                      </svg>
+                    ),
+                    color: 'from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border-amber-200/30 dark:border-amber-700/30',
+                    iconColor: 'text-amber-500',
+                  },
+                  {
+                    label: 'Novo Comunicado',
+                    href: '/dashboard/sindico/comunicados',
+                    icon: (
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.5c.704 0 1.402.03 2.09.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46" />
+                      </svg>
+                    ),
+                    color: 'from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 border-emerald-200/30 dark:border-emerald-700/30',
+                    iconColor: 'text-emerald-500',
+                  },
+                  {
+                    label: 'Relatórios',
+                    href: '/dashboard/sindico/relatorios',
+                    icon: (
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                      </svg>
+                    ),
+                    color: 'from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 border-purple-200/30 dark:border-purple-700/30',
+                    iconColor: 'text-purple-500',
+                  },
+                ] as { label: string; href: string; icon: React.ReactNode; color: string; iconColor: string }[]).map((action) => (
                   <a
                     key={action.label}
                     href={action.href}
                     className={`flex flex-col items-center gap-3 p-6 rounded-2xl bg-gradient-to-br border transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${action.color}`}
                   >
-                    <span className="text-3xl">{action.icon}</span>
+                    <span className={action.iconColor}>{action.icon}</span>
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{action.label}</span>
                   </a>
                 ))}
