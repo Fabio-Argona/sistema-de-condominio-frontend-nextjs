@@ -11,13 +11,43 @@ import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 
+interface Poll {
+  id: number;
+  pergunta: string;
+  opcoes: { label: string; votos: number }[];
+}
+
+const POLLS_STORAGE_KEY = 'sindico-enquetes-v1';
+
+const initialPolls: Poll[] = [
+  {
+    id: 1,
+    pergunta: 'Reforco de seguranca no portao social?',
+    opcoes: [
+      { label: 'Sim', votos: 64 },
+      { label: 'Nao', votos: 20 },
+    ],
+  },
+  {
+    id: 2,
+    pergunta: 'Mudanca no horario da academia?',
+    opcoes: [
+      { label: 'A favor', votos: 32 },
+      { label: 'Contra', votos: 21 },
+    ],
+  },
+];
+
 export default function ComunicadosPage() {
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [selectedComunicado, setSelectedComunicado] = useState<Comunicado | null>(null);
   const [comunicadoToDelete, setComunicadoToDelete] = useState<number | null>(null);
   const [formData, setFormData] = useState({ titulo: '', conteudo: '', categoria: 'Geral', importante: false });
+  const [pollForm, setPollForm] = useState({ pergunta: '', opcao1: '', opcao2: '' });
+  const [polls, setPolls] = useState<Poll[]>(initialPolls);
   const { user } = useAuth();
   const { get, post, put, del, isLoading } = useApi<Comunicado | Comunicado[] | void>();
 
@@ -30,6 +60,29 @@ export default function ComunicadosPage() {
     loadComunicados();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(POLLS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Poll[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPolls(parsed);
+        }
+      }
+    } catch {
+      // Fallback silencioso para manter a tela leve e resiliente.
+    }
+  }, []);
+
+  const persistPolls = (next: Poll[]) => {
+    setPolls(next);
+    try {
+      localStorage.setItem(POLLS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // Evita travar a UX caso armazenamento esteja indisponivel.
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +140,42 @@ export default function ComunicadosPage() {
     setComunicadoToDelete(null);
   };
 
+  const handleCreatePoll = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pollForm.pergunta.trim() || !pollForm.opcao1.trim() || !pollForm.opcao2.trim()) {
+      toast.error('Preencha pergunta e duas opcoes');
+      return;
+    }
+
+    const nova: Poll = {
+      id: Date.now(),
+      pergunta: pollForm.pergunta.trim(),
+      opcoes: [
+        { label: pollForm.opcao1.trim(), votos: 0 },
+        { label: pollForm.opcao2.trim(), votos: 0 },
+      ],
+    };
+
+    persistPolls([nova, ...polls]);
+    setPollForm({ pergunta: '', opcao1: '', opcao2: '' });
+    setIsPollModalOpen(false);
+    toast.success('Enquete criada com sucesso');
+  };
+
+  const handleVote = (pollId: number, optionIndex: number) => {
+    const next = polls.map((poll) => {
+      if (poll.id !== pollId) return poll;
+      return {
+        ...poll,
+        opcoes: poll.opcoes.map((opcao, idx) =>
+          idx === optionIndex ? { ...opcao, votos: opcao.votos + 1 } : opcao
+        ),
+      };
+    });
+
+    persistPolls(next);
+  };
+
   if (isLoading && comunicados.length === 0) {
     return <div className="space-y-4 animate-pulse">{[...Array(3)].map((_, i) => <div key={i} className="h-32 bg-slate-200 dark:bg-slate-700 rounded-2xl" />)}</div>;
   }
@@ -134,6 +223,88 @@ export default function ComunicadosPage() {
           </Card>
         ))}
       </div>
+
+      <Card className="animate-slide-up">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Enquetes e Votações</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Acompanhe participação em tempo real nas decisões do condomínio</p>
+            </div>
+            <Button variant="outline" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
+            <Button variant="outline" onClick={() => setIsPollModalOpen(true)} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
+              Nova Enquete
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {polls.map((poll) => {
+              const total = poll.opcoes.reduce((acc, opcao) => acc + opcao.votos, 0);
+              return (
+                <div key={poll.id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{poll.pergunta}</p>
+                  <p className="text-xs text-slate-500 mt-1">Participacao: {total} voto{total === 1 ? '' : 's'}</p>
+                  <div className="mt-3 space-y-2">
+                    {poll.opcoes.map((opcao, idx) => {
+                      const percentual = total > 0 ? Math.round((opcao.votos / total) * 100) : 0;
+                      return (
+                        <div key={opcao.label}>
+                          <div className="flex items-center justify-between text-xs text-slate-500">
+                            <span>{opcao.label}</span>
+                            <span>{percentual}%</span>
+                          </div>
+                          <div className="h-2 rounded bg-slate-100 dark:bg-slate-800 mt-1">
+                            <div className="h-2 rounded bg-blue-500" style={{ width: `${percentual}%` }} />
+                          </div>
+                          <button
+                            onClick={() => handleVote(poll.id, idx)}
+                            className="mt-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                            type="button"
+                          >
+                            Registrar voto manual
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Modal isOpen={isPollModalOpen} onClose={() => setIsPollModalOpen(false)} title="Nova Enquete" size="md">
+        <form className="space-y-4" onSubmit={handleCreatePoll}>
+          <Input
+            label="Pergunta"
+            name="pergunta"
+            value={pollForm.pergunta}
+            onChange={(e) => setPollForm({ ...pollForm, pergunta: e.target.value })}
+            required
+            placeholder="Ex: Aprovar reforma da area gourmet?"
+          />
+          <Input
+            label="Opcao 1"
+            name="opcao1"
+            value={pollForm.opcao1}
+            onChange={(e) => setPollForm({ ...pollForm, opcao1: e.target.value })}
+            required
+            placeholder="Ex: Sim"
+          />
+          <Input
+            label="Opcao 2"
+            name="opcao2"
+            value={pollForm.opcao2}
+            onChange={(e) => setPollForm({ ...pollForm, opcao2: e.target.value })}
+            required
+            placeholder="Ex: Nao"
+          />
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" type="button" onClick={() => setIsPollModalOpen(false)}>Cancelar</Button>
+            <Button type="submit">Criar Enquete</Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Modal de Novo/Editar Comunicado */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={selectedComunicado ? "Editar Comunicado" : "Novo Comunicado"} size="lg">
