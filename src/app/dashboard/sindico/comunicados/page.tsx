@@ -17,26 +17,7 @@ interface Poll {
   opcoes: { label: string; votos: number }[];
 }
 
-const POLLS_STORAGE_KEY = 'sindico-enquetes-v1';
-
-const initialPolls: Poll[] = [
-  {
-    id: 1,
-    pergunta: 'Reforco de seguranca no portao social?',
-    opcoes: [
-      { label: 'Sim', votos: 64 },
-      { label: 'Nao', votos: 20 },
-    ],
-  },
-  {
-    id: 2,
-    pergunta: 'Mudanca no horario da academia?',
-    opcoes: [
-      { label: 'A favor', votos: 32 },
-      { label: 'Contra', votos: 21 },
-    ],
-  },
-];
+const POLLS_STORAGE_KEY = 'sindico-enquetes-v2';
 
 export default function ComunicadosPage() {
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
@@ -47,7 +28,7 @@ export default function ComunicadosPage() {
   const [comunicadoToDelete, setComunicadoToDelete] = useState<number | null>(null);
   const [formData, setFormData] = useState({ titulo: '', conteudo: '', categoria: 'Geral', importante: false });
   const [pollForm, setPollForm] = useState({ pergunta: '', opcao1: '', opcao2: '' });
-  const [polls, setPolls] = useState<Poll[]>(initialPolls);
+  const [polls, setPolls] = useState<Poll[]>([]);
   const { user } = useAuth();
   const { get, post, put, del, isLoading } = useApi<Comunicado | Comunicado[] | void>();
 
@@ -259,7 +240,7 @@ export default function ComunicadosPage() {
                             className="mt-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
                             type="button"
                           >
-                            Registrar voto manual
+                            + Votar
                           </button>
                         </div>
                       );
