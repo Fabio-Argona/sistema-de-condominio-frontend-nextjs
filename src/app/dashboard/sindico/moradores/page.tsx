@@ -100,8 +100,15 @@ export default function MoradoresPage() {
         
         if (result.conviteEnviado) {
           toast.success(
-            '🎉 Morador cadastrado e convite enviado por e-mail!',
-            { duration: 5000, icon: '✉️' }
+            'Morador cadastrado e convite enviado por e-mail!',
+            { 
+              duration: 5000, 
+              icon: (
+                <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                </svg>
+              ) 
+            }
           );
         } else {
           toast.error(
@@ -118,7 +125,14 @@ export default function MoradoresPage() {
     try {
       const result = await post(`/moradores/${morador.id}/reenviar-convite`) as { message: string; success: boolean } | null;
       if (result?.success) {
-        toast.success(result.message || 'Convite reenviado com sucesso!', { duration: 5000, icon: '✉️' });
+        toast.success(result.message || 'Convite reenviado com sucesso!', { 
+          duration: 5000, 
+          icon: (
+            <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+            </svg>
+          ) 
+        });
       } else {
         toast.error(result?.message || 'Falha ao reenviar convite.');
       }
@@ -293,7 +307,11 @@ export default function MoradoresPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {!editingMorador && (
             <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-700/30">
-              <span className="text-xl">📧</span>
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg text-blue-600 dark:text-blue-400 shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                </svg>
+              </div>
               <div>
                 <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">Convite por E-mail</p>
                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
@@ -360,9 +378,9 @@ export default function MoradoresPage() {
               className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             >
               <option value="">Selecione um perfil...</option>
-              <option value="MORADOR">🏠 Morador</option>
-              <option value="PORTEIRO">🔑 Porteiro</option>
-              <option value="SINDICO">👑 Síndico</option>
+              <option value="MORADOR">Morador</option>
+              <option value="PORTEIRO">Porteiro</option>
+              <option value="SINDICO">Síndico</option>
             </select>
           </div>
           <div className="flex justify-end gap-3 pt-2">

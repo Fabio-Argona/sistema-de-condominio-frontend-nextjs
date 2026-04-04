@@ -229,7 +229,14 @@ export default function GestaoPagamentosPage() {
        if (enviarEmailAutomatico && criado?.id) {
          const emailResult = await post(`/boletos/${criado.id}/enviar-email`, {}, { showErrorToast: false });
          if (emailResult !== null) {
-           toast.success('E-mail com boleto enviado automaticamente ao morador!', { duration: 4000, icon: '\u2709\ufe0f' });
+            toast.success('E-mail com boleto enviado automaticamente ao morador!', { 
+              duration: 4000, 
+              icon: (
+                <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                </svg>
+              ) 
+            });
          }
          // 403/404 silencioso — o s\u00edndico pode reenviar manualmente pela tabela
        }
@@ -291,7 +298,13 @@ export default function GestaoPagamentosPage() {
     setSendingEmail(id);
     const result = await post(`/boletos/${id}/enviar-email`, {}, { showErrorToast: false });
     if (result !== null) {
-      toast.success('E-mail com boleto enviado ao morador!', { icon: '\u2709\ufe0f' });
+      toast.success('E-mail com boleto enviado ao morador!', { 
+        icon: (
+          <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+          </svg>
+        ) 
+      });
     } else {
       toast.error('Falha ao enviar e-mail. Verifique se o backend suporta este recurso.');
     }
