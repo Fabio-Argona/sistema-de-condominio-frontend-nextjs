@@ -259,9 +259,9 @@ export default function SindicoDashboard() {
                   </svg>
                 }
               />
-                <div className="animate-slide-up stagger-6">
+            </div>
             {receitaMensal > 0 && (
-            <div className="animate-slide-up stagger-5">
+            <div className="animate-slide-up stagger-6">
               <StatsCard
                 title="Receita Condominial (Mês)"
                 value={`R$ ${receitaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
