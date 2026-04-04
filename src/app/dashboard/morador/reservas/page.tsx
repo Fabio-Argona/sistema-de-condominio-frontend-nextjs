@@ -135,9 +135,23 @@ export default function MoradorReservasPage() {
               </div>
               <p className="text-xs text-slate-500 mb-3 line-clamp-2">{area.descricao}</p>
               <div className="flex justify-between text-xs text-slate-400">
-                <span>🕐 {area.horarioAbertura}-{area.horarioFechamento}</span>
-                <span className="font-medium text-blue-600 dark:text-blue-400">
-                  {area.valorReserva > 0 ? `R$ ${area.valorReserva}` : '✅ Gratuito'}
+                <span className="flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                  {area.horarioAbertura}-{area.horarioFechamento}
+                </span>
+                <span className="font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                  {area.valorReserva > 0 ? (
+                    `R$ ${area.valorReserva}`
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0 1 18 0z" />
+                      </svg>
+                      Gratuito
+                    </>
+                  )}
                 </span>
               </div>
             </CardContent>

@@ -72,8 +72,18 @@ export default function PorteiroConsultaPage() {
                     <Badge variant={m.ativo ? 'success' : 'danger'} size="sm">{m.ativo ? 'Ativo' : 'Inativo'}</Badge>
                   </div>
                   <div className="space-y-1 text-sm text-slate-500 dark:text-slate-400">
-                    <p>🏠 Apt {m.apartamento} - Bloco {m.bloco}</p>
-                    <p>📞 {m.telefone || 'Sem telefone'}</p>
+                    <p className="flex items-center gap-1.5 capitalize">
+                      <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+                      </svg>
+                      Apt {m.apartamento} - Bloco {m.bloco}
+                    </p>
+                    <p className="flex items-center gap-1.5">
+                      <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.114-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
+                      </svg>
+                      {m.telefone || 'Sem telefone'}
+                    </p>
                   </div>
                 </div>
               </div>

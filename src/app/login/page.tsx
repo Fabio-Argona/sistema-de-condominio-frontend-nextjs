@@ -143,17 +143,47 @@ export default function LoginPage() {
           {/* Features */}
           <div className="space-y-4">
             {[
-              { icon: '🏠', text: 'Gestão completa de moradores e unidades' },
-              { icon: '📋', text: 'Controle de ocorrências e manutenções' },
-              { icon: '📅', text: 'Reservas de áreas comuns online' },
-              { icon: '💰', text: 'Relatórios financeiros e inadimplência' },
+              { 
+                icon: (
+                  <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+                  </svg>
+                ),
+                text: 'Gestão completa de moradores e unidades' 
+              },
+              { 
+                icon: (
+                  <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 18 4.5h-12.75a2.25 2.25 0 0 0-2.25 2.25v12.75a2.25 2.25 0 0 0 2.25 2.25h1.5m10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                  </svg>
+                ),
+                text: 'Controle de ocorrências e manutenções' 
+              },
+              { 
+                icon: (
+                  <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                  </svg>
+                ),
+                text: 'Reservas de áreas comuns online' 
+              },
+              { 
+                icon: (
+                  <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                  </svg>
+                ),
+                text: 'Relatórios financeiros e inadimplência' 
+              },
             ].map((feature, i) => (
                 <div
                 key={i}
                 className="flex items-center gap-3 text-slate-700 dark:text-slate-300 animate-slide-in-right"
                 style={{ animationDelay: `${0.2 + i * 0.1}s` }}
               >
-                <span className="text-xl">{feature.icon}</span>
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  {feature.icon}
+                </div>
                 <span className="text-sm font-medium">{feature.text}</span>
               </div>
             ))}

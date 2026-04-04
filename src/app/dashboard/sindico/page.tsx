@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import StatsCard from '@/components/ui/StatsCard';
 import Card, { CardHeader, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
-import { Ocorrencia, Reserva, Boleto } from '@/types';
+import { Ocorrencia, Reserva, Boleto, Comunicado } from '@/types';
 import { useApi } from '@/hooks/useApi';
 
 const statusColors: Record<string, 'success' | 'warning' | 'danger' | 'info'> = {
@@ -38,10 +39,12 @@ const prioridadeColors: Record<string, 'danger' | 'warning' | 'info' | 'success'
 
 export default function SindicoDashboard() {
   const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
+  const [comunicadosRecentes, setComunicadosRecentes] = useState<Comunicado[]>([]);
   const [reservasRecentes, setReservasRecentes] = useState<Reserva[]>([]);
   const [totalReservasHoje, setTotalReservasHoje] = useState<number>(0);
   const [visitantesHoje, setVisitantesHoje] = useState<number>(0);
   const [totalMoradores, setTotalMoradores] = useState<number>(0);
+  const [totalUnidades, setTotalUnidades] = useState<number>(0);
   const [ocorrenciasAbertas, setOcorrenciasAbertas] = useState<number>(0);
   const [receitaMensal, setReceitaMensal] = useState<number>(0);
   const [boletosVencidosMes, setBoletosVencidosMes] = useState<number>(0);
@@ -68,12 +71,13 @@ export default function SindicoDashboard() {
 
     const loadDashboardData = async () => {
       try {
-        const [ocData, resData, visData, morData, boletosData] = await Promise.all([
+        const [ocData, resData, visData, morData, boletosData, comunicadosData] = await Promise.all([
           get('/ocorrencias') as Promise<Ocorrencia[]>,
           get('/reservas') as Promise<Reserva[]>,
           get('/visitantes') as Promise<any[]>,
           get('/moradores') as Promise<any[]>,
           get('/boletos') as Promise<Boleto[]>,
+          get('/comunicados') as Promise<Comunicado[]>,
         ]);
 
         if (ocData) {
@@ -102,6 +106,18 @@ export default function SindicoDashboard() {
         if (morData) {
           const ativos = morData.filter(m => m?.ativo !== false);
           setTotalMoradores(ativos.length);
+
+          const unidadesUnicas = new Set(
+            ativos.map(m => `${m?.bloco || '-'}-${m?.apartamento || '-'}`)
+          );
+          setTotalUnidades(unidadesUnicas.size);
+        }
+
+        if (comunicadosData) {
+          const recentes = [...comunicadosData]
+            .sort((a, b) => new Date(b.dataCriacao || '').getTime() - new Date(a.dataCriacao || '').getTime())
+            .slice(0, 3);
+          setComunicadosRecentes(recentes);
         }
 
         if (boletosData) {
@@ -190,8 +206,22 @@ export default function SindicoDashboard() {
                 }
               />
             </div>
-            {ocorrenciasAbertas > 0 && (
+            {totalUnidades > 0 && (
             <div className="animate-slide-up stagger-2">
+              <StatsCard
+                title="Unidades Cadastradas"
+                value={totalUnidades}
+                color="indigo"
+                icon={
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+                  </svg>
+                }
+              />
+            </div>
+            )}
+            {ocorrenciasAbertas > 0 && (
+            <div className="animate-slide-up stagger-3">
               <StatsCard
                 title="Ocorrências Abertas"
                 value={ocorrenciasAbertas}
@@ -205,7 +235,7 @@ export default function SindicoDashboard() {
             </div>
             )}
             {totalReservasHoje > 0 && (
-            <div className="animate-slide-up stagger-3">
+            <div className="animate-slide-up stagger-4">
               <StatsCard
                 title="Reservas de Hoje"
                 value={totalReservasHoje}
@@ -218,7 +248,7 @@ export default function SindicoDashboard() {
               />
             </div>
             )}
-            <div className="animate-slide-up stagger-4">
+            <div className="animate-slide-up stagger-5">
               <StatsCard
                 title="Taxa de Adimplência"
                 value={`${taxaAdimplencia}%`}
@@ -229,7 +259,7 @@ export default function SindicoDashboard() {
                   </svg>
                 }
               />
-            </div>
+                <div className="animate-slide-up stagger-6">
             {receitaMensal > 0 && (
             <div className="animate-slide-up stagger-5">
               <StatsCard
@@ -245,7 +275,7 @@ export default function SindicoDashboard() {
             </div>
             )}
             {visitantesHoje > 0 && (
-            <div className="animate-slide-up stagger-6">
+            <div className="animate-slide-up stagger-7">
               <StatsCard
                 title="Visitantes Hoje"
                 value={visitantesHoje}
@@ -259,7 +289,7 @@ export default function SindicoDashboard() {
             </div>
             )}
             {boletosVencidosMes > 0 && (
-            <div className="animate-slide-up stagger-7">
+            <div className="animate-slide-up stagger-8">
               <StatsCard
                 title="Boletos Vencidos (Mês)"
                 value={boletosVencidosMes}
@@ -273,7 +303,7 @@ export default function SindicoDashboard() {
             </div>
             )}
             {boletosVencidosTotal > 0 && (
-            <div className="animate-slide-up stagger-8">
+            <div className="animate-slide-up stagger-9">
               <StatsCard
                 title="Boletos Vencidos (Total)"
                 value={boletosVencidosTotal}
@@ -293,7 +323,7 @@ export default function SindicoDashboard() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white">Ocorrências Recentes</h2>
-                  <a href="/dashboard/sindico/ocorrencias" className="text-sm text-blue-500 hover:text-blue-400 transition-colors font-medium">Ver todas →</a>
+                  <Link href="/dashboard/sindico/manutencao" className="text-sm text-blue-500 hover:text-blue-400 transition-colors font-medium">Ver manutenção →</Link>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
@@ -323,7 +353,7 @@ export default function SindicoDashboard() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white">Reservas Recentes</h2>
-                  <a href="/dashboard/sindico/reservas" className="text-sm text-blue-500 hover:text-blue-400 transition-colors font-medium">Ver todas →</a>
+                  <Link href="/dashboard/sindico/agenda" className="text-sm text-blue-500 hover:text-blue-400 transition-colors font-medium">Ver agenda →</Link>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
@@ -350,28 +380,75 @@ export default function SindicoDashboard() {
 
           <Card gradient className="animate-slide-up">
             <CardHeader>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Comunicados Recentes</h2>
+                <Link href="/dashboard/sindico/comunicados" className="text-sm text-blue-500 hover:text-blue-400 transition-colors font-medium">Ver histórico →</Link>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {comunicadosRecentes.map((comunicado) => (
+                <div key={comunicado.id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{comunicado.titulo}</p>
+                      <p className="text-xs text-slate-500 mt-1">{comunicado.categoria || 'Geral'} • {new Date(comunicado.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    {comunicado.importante && <Badge variant="danger">Importante</Badge>}
+                  </div>
+                </div>
+              ))}
+              {comunicadosRecentes.length === 0 && (
+                <p className="text-sm text-slate-500">Nenhum comunicado recente.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card gradient className="animate-slide-up">
+            <CardHeader>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Fluxo de Navegação do Síndico</h2>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {[
+                  { label: 'Dashboard Inicial', desc: 'Visão geral e decisões rápidas', href: '/dashboard/sindico', color: 'from-blue-500/10 to-indigo-500/10 border-blue-200/30' },
+                  { label: 'Gestão Financeira', desc: 'Receita, despesa e inadimplência', href: '/dashboard/sindico/financeiro', color: 'from-emerald-500/10 to-teal-500/10 border-emerald-200/30' },
+                  { label: 'Manutenção', desc: 'Chamados e agenda preventiva', href: '/dashboard/sindico/manutencao', color: 'from-amber-500/10 to-orange-500/10 border-amber-200/30' },
+                  { label: 'Comunicação', desc: 'Comunicados e enquetes', href: '/dashboard/sindico/comunicados', color: 'from-violet-500/10 to-fuchsia-500/10 border-violet-200/30' },
+                ].map((item) => (
+                  <Link key={item.label} href={item.href} className={`rounded-2xl border p-4 bg-gradient-to-br ${item.color} hover:scale-[1.01] transition-transform`}>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{item.label}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">{item.desc}</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-3 font-medium">Abrir módulo →</p>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card gradient className="animate-slide-up">
+            <CardHeader>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">Ações Rápidas</h2>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {([
                   {
-                    label: 'Novo Morador',
-                    href: '/dashboard/sindico/moradores',
+                    label: 'Financeiro',
+                    href: '/dashboard/sindico/financeiro',
                     icon: (
                       <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     ),
-                    color: 'from-blue-500/10 to-indigo-500/10 hover:from-blue-500/20 hover:to-indigo-500/20 border-blue-200/30 dark:border-blue-700/30',
-                    iconColor: 'text-blue-500',
+                    color: 'from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 border-emerald-200/30 dark:border-emerald-700/30',
+                    iconColor: 'text-emerald-500',
                   },
                   {
-                    label: 'Nova Ocorrência',
-                    href: '/dashboard/sindico/ocorrencias',
+                    label: 'Manutenção',
+                    href: '/dashboard/sindico/manutencao',
                     icon: (
                       <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.42 3.506a1.875 1.875 0 012.652 2.652l-3.08 3.08a5.625 5.625 0 01-3.898 9.523 5.625 5.625 0 01-1.815-10.95m8.565-2.54a5.625 5.625 0 017.384 7.383l-2.326 2.326a1.875 1.875 0 01-2.652-2.652l2.326-2.326a1.875 1.875 0 00-2.651-2.652l-2.327 2.327a1.875 1.875 0 11-2.651-2.652l2.326-2.326z" />
                       </svg>
                     ),
                     color: 'from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border-amber-200/30 dark:border-amber-700/30',
@@ -389,25 +466,25 @@ export default function SindicoDashboard() {
                     iconColor: 'text-emerald-500',
                   },
                   {
-                    label: 'Relatórios',
-                    href: '/dashboard/sindico/relatorios',
+                    label: 'Segurança',
+                    href: '/dashboard/sindico/seguranca',
                     icon: (
                       <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75m6 2.354c0 4.373-3.438 8.354-8.25 9.896C7.938 20.458 4.5 16.477 4.5 12.104V6.75A1.5 1.5 0 016 5.25c1.757 0 3.43-.514 4.852-1.476l.398-.268a1.5 1.5 0 011.7 0l.398.268A8.25 8.25 0 0018 5.25a1.5 1.5 0 011.5 1.5v5.354z" />
                       </svg>
                     ),
-                    color: 'from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 border-purple-200/30 dark:border-purple-700/30',
-                    iconColor: 'text-purple-500',
+                    color: 'from-sky-500/10 to-indigo-500/10 hover:from-sky-500/20 hover:to-indigo-500/20 border-sky-200/30 dark:border-sky-700/30',
+                    iconColor: 'text-sky-500',
                   },
                 ] as { label: string; href: string; icon: React.ReactNode; color: string; iconColor: string }[]).map((action) => (
-                  <a
+                  <Link
                     key={action.label}
                     href={action.href}
                     className={`flex flex-col items-center gap-3 p-6 rounded-2xl bg-gradient-to-br border transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${action.color}`}
                   >
                     <span className={action.iconColor}>{action.icon}</span>
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{action.label}</span>
-                  </a>
+                  </Link>
                 ))}
               </div>
             </CardContent>
