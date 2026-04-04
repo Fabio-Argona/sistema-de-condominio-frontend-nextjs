@@ -231,7 +231,6 @@ export default function ComunicadosPage() {
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">Enquetes e Votações</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">Acompanhe participação em tempo real nas decisões do condomínio</p>
             </div>
-            <Button variant="outline" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
             <Button variant="outline" onClick={() => setIsPollModalOpen(true)} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
               Nova Enquete
             </Button>
