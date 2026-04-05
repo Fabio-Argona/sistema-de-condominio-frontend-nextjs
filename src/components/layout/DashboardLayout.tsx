@@ -1,14 +1,24 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageLoading } from '@/components/ui/LoadingSpinner';
-import { useState } from 'react';
+import api from '@/lib/api';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { isLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const pathname = usePathname();
+  const lastTrackedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (lastTrackedRef.current === pathname) return;
+    lastTrackedRef.current = pathname;
+    api.post('/log-acessos', { pagina: pathname }).catch(() => { /* silencioso */ });
+  }, [pathname, isLoading]);
 
   if (isLoading) {
     return <PageLoading />;

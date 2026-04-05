@@ -61,6 +61,7 @@ export interface LogAcesso {
   role: string;
   dataHora: string;
   ip: string;
+  pagina?: string;
 }
 
 export interface MoradorFormData {

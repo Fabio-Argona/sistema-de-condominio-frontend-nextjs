@@ -18,6 +18,34 @@ const roleColor: Record<string, 'purple' | 'info' | 'success'> = {
   PORTEIRO: 'success',
 };
 
+const pageLabel: Record<string, string> = {
+  '/dashboard/sindico': 'Dashboard',
+  '/dashboard/sindico/financeiro': 'Financeiro',
+  '/dashboard/sindico/manutencao': 'Manutenção',
+  '/dashboard/sindico/agenda': 'Agenda',
+  '/dashboard/sindico/seguranca': 'Segurança',
+  '/dashboard/sindico/pagamentos': 'Pagamentos',
+  '/dashboard/sindico/moradores': 'Moradores',
+  '/dashboard/sindico/espacos': 'Espaços',
+  '/dashboard/sindico/ocorrencias': 'Ocorrências',
+  '/dashboard/sindico/reservas': 'Reservas',
+  '/dashboard/sindico/comunicados': 'Comunicados',
+  '/dashboard/sindico/relatorios': 'Relatórios',
+  '/dashboard/sindico/acessos': 'Acessos',
+  '/dashboard/sindico/visitantes': 'Visitantes',
+  '/dashboard/sindico/consulta': 'Consulta',
+  '/dashboard/morador': 'Dashboard',
+  '/dashboard/morador/pagamentos': 'Pagamentos',
+  '/dashboard/morador/ocorrencias': 'Ocorrências',
+  '/dashboard/morador/reservas': 'Reservas',
+  '/dashboard/morador/comunicados': 'Comunicados',
+  '/dashboard/morador/consulta': 'Consulta',
+  '/dashboard/porteiro': 'Dashboard',
+  '/dashboard/porteiro/visitantes': 'Visitantes',
+  '/dashboard/porteiro/consulta': 'Consulta',
+  'Login': 'Login',
+};
+
 function formatDataHora(iso: string) {
   try {
     const d = new Date(iso);
@@ -51,7 +79,8 @@ export default function AcessosPage() {
     l.usuarioNome.toLowerCase().includes(filtro.toLowerCase()) ||
     l.usuarioEmail.toLowerCase().includes(filtro.toLowerCase()) ||
     l.role.toLowerCase().includes(filtro.toLowerCase()) ||
-    (l.ip || '').includes(filtro)
+    (l.ip || '').includes(filtro) ||
+    (pageLabel[l.pagina ?? ''] || l.pagina || '').toLowerCase().includes(filtro.toLowerCase())
   );
 
   return (
@@ -115,6 +144,7 @@ export default function AcessosPage() {
                       <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Usuário</th>
                       <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Perfil</th>
                       <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Data / Hora</th>
+                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Página</th>
                       <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">IP</th>
                     </tr>
                   </thead>
@@ -132,6 +162,15 @@ export default function AcessosPage() {
                         </td>
                         <td className="py-3 px-3 text-slate-600 whitespace-nowrap">
                           {formatDataHora(log.dataHora)}
+                        </td>
+                        <td className="py-3 px-3">
+                          {log.pagina ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg px-2 py-0.5">
+                              {pageLabel[log.pagina] ?? log.pagina}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-xs">—</span>
+                          )}
                         </td>
                         <td className="py-3 px-3 text-slate-400 font-mono text-xs">
                           {log.ip || '—'}

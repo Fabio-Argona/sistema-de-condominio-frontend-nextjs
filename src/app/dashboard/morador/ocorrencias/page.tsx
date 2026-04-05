@@ -17,6 +17,7 @@ const statusLabels: Record<OcorrenciaStatus, string> = { ABERTA: 'Aberta', EM_AN
 
 export default function MoradorOcorrenciasPage() {
   const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
+  const [manutencaoCondominio, setManutencaoCondominio] = useState<Ocorrencia[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ titulo: '', descricao: '', categoria: '', prioridade: 'MEDIA' as OcorrenciaPrioridade });
   const { user } = useAuth();
@@ -24,8 +25,19 @@ export default function MoradorOcorrenciasPage() {
 
   const loadOcorrencias = async () => {
     if (!user) return;
-    const data = await get(`/ocorrencias/morador/${user.id}`) as Ocorrencia[];
-    if (data) setOcorrencias(data);
+    const [minhas, todas] = await Promise.all([
+      get(`/ocorrencias/morador/${user.id}`) as Promise<Ocorrencia[]>,
+      get('/ocorrencias') as Promise<Ocorrencia[]>,
+    ]);
+    if (minhas) setOcorrencias(minhas);
+    if (todas) {
+      const condominio = todas.filter(
+        (o) => o.moradorId !== user.id &&
+               (o.categoria === 'MANUTENCAO' || o.categoria === 'Manutenção') &&
+               (o.status === 'ABERTA' || o.status === 'EM_ANDAMENTO')
+      );
+      setManutencaoCondominio(condominio);
+    }
   };
 
   useEffect(() => {
@@ -111,6 +123,25 @@ export default function MoradorOcorrenciasPage() {
           </div>
         </form>
       </Modal>
+
+      {manutencaoCondominio.length > 0 && (
+        <div className="space-y-3 animate-slide-up">
+          <h2 className="text-base font-bold text-slate-700 dark:text-slate-300">Serviços em Andamento no Condomínio</h2>
+          {manutencaoCondominio.map((o) => (
+            <Card key={o.id} gradient>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{o.titulo}</p>
+                    <p className="text-xs text-slate-500 mt-1">{o.descricao}</p>
+                  </div>
+                  <Badge variant={statusColors[o.status] || 'info'} dot>{statusLabels[o.status]}</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
       </div>
     </div>
   );
