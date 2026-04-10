@@ -227,9 +227,21 @@ export default function GestaoPagamentosPage() {
 
        // Envio automático opcional, controlado pelo toggle do síndico
        if (enviarEmailAutomatico && criado?.id) {
-         const emailResult = await post(`/boletos/${criado.id}/enviar-email`, {}, { showErrorToast: false });
+         const hoje = new Date();
+         hoje.setHours(0, 0, 0, 0);
+         const venc = new Date(`${criado.dataVencimento}T00:00:00`);
+         const isVencido = venc < hoje;
+
+         const endpoint = isVencido
+           ? `/boletos/${criado.id}/enviar-cobranca`
+           : `/boletos/${criado.id}/enviar-email`;
+
+         const emailResult = await post(endpoint, {}, { showErrorToast: false });
          if (emailResult !== null) {
-            toast.success('E-mail com boleto enviado automaticamente ao morador!', { 
+            const msg = isVencido
+              ? 'E-mail de cobrança enviado automaticamente ao morador!'
+              : 'E-mail com boleto enviado automaticamente ao morador!';
+            toast.success(msg, { 
               duration: 4000, 
               icon: (
                 <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -238,7 +250,7 @@ export default function GestaoPagamentosPage() {
               ) 
             });
          }
-         // 403/404 silencioso — o s\u00edndico pode reenviar manualmente pela tabela
+         // 403/404 silencioso — o síndico pode reenviar manualmente pela tabela
        }
     } catch (error) {
        toast.error('Erro ao emitir boleto.');
@@ -294,11 +306,24 @@ export default function GestaoPagamentosPage() {
     }
   };
 
-  const handleEnviarEmailBoleto = async (id: number) => {
-    setSendingEmail(id);
-    const result = await post(`/boletos/${id}/enviar-email`, {}, { showErrorToast: false });
+  const handleEnviarEmailBoleto = async (boleto: Boleto) => {
+    setSendingEmail(boleto.id);
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const venc = new Date(`${boleto.dataVencimento}T00:00:00`);
+    const isVencido = venc < hoje;
+
+    const endpoint = isVencido
+      ? `/boletos/${boleto.id}/enviar-cobranca`
+      : `/boletos/${boleto.id}/enviar-email`;
+
+    const result = await post(endpoint, {}, { showErrorToast: false });
     if (result !== null) {
-      toast.success('E-mail com boleto enviado ao morador!', { 
+      const msg = isVencido
+        ? 'E-mail de cobrança enviado ao morador!'
+        : 'E-mail com boleto enviado ao morador!';
+      toast.success(msg, { 
         icon: (
           <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
@@ -419,7 +444,7 @@ export default function GestaoPagamentosPage() {
       render: (b: Boleto) => (
         <div className="flex justify-end items-center gap-2 flex-wrap">
            <button
-             onClick={() => handleEnviarEmailBoleto(b.id)}
+             onClick={() => handleEnviarEmailBoleto(b)}
              disabled={sendingEmail === b.id}
              className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
              title="Reenviar boleto por e-mail"
