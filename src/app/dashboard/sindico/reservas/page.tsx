@@ -28,7 +28,25 @@ export default function ReservasPage() {
     if (areasData) setAreas(areasData);
 
     const reservasData = await get('/reservas') as Reserva[];
-    if (reservasData) setReservas(reservasData);
+    if (reservasData) {
+      // Auto-aprovar reservas PENDENTES cuja data/hora de início é futura
+      const now = new Date();
+      const pendenteFuturas = reservasData.filter((r: Reserva) => {
+        if (r.status !== 'PENDENTE') return false;
+        const [year, month, day] = r.dataReserva.split('-').map(Number);
+        const [hour, minute] = (r.horaInicio || '00:00').split(':').map(Number);
+        const reservaStart = new Date(year, month - 1, day, hour, minute);
+        return reservaStart > now;
+      });
+
+      if (pendenteFuturas.length > 0) {
+        await Promise.all(pendenteFuturas.map((r: Reserva) => patch(`/reservas/${r.id}/status`, { status: 'APROVADA' })));
+        const updatedReservas = await get('/reservas') as Reserva[];
+        if (updatedReservas) setReservas(updatedReservas as Reserva[]);
+      } else {
+        setReservas(reservasData);
+      }
+    }
   };
 
   useEffect(() => {

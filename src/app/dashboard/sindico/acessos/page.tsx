@@ -75,7 +75,7 @@ export default function AcessosPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const logsFiltrados = logs.filter(l =>
+  const logsFiltrados = logs.filter(l => l.role !== 'SINDICO').filter(l =>
     l.usuarioNome.toLowerCase().includes(filtro.toLowerCase()) ||
     l.usuarioEmail.toLowerCase().includes(filtro.toLowerCase()) ||
     l.role.toLowerCase().includes(filtro.toLowerCase()) ||
@@ -103,8 +103,8 @@ export default function AcessosPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          {(['SINDICO', 'MORADOR', 'PORTEIRO'] as const).map(role => {
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          {(['MORADOR', 'PORTEIRO'] as const).map(role => {
             const count = logs.filter(l => l.role === role).length;
             return (
               <div key={role} className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">

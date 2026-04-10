@@ -103,20 +103,22 @@ export default function OcorrenciasPage() {
           <button onClick={() => { setSelectedOcorrencia(o); setIsDetailOpen(true); }} className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Ver detalhes">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
           </button>
-          <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-1">
             {o.status === 'ABERTA' && (
-              <button disabled={isLoading} onClick={() => handleStatusChange(o.id, 'EM_ANDAMENTO')} className="px-2 py-1.5 text-xs font-semibold text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors border-r border-slate-200 dark:border-slate-700" title="Iniciar atendimento">
-                 INICIAR
+              <button disabled={isLoading} onClick={() => handleStatusChange(o.id, 'EM_ANDAMENTO')} className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors" title="Iniciar atendimento">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </button>
             )}
             {o.status === 'EM_ANDAMENTO' && (
-              <button disabled={isLoading} onClick={() => handleStatusChange(o.id, 'RESOLVIDA')} className="px-2 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors border-r border-slate-200 dark:border-slate-700" title="Marcar como resolvida">
-                 RESOLVER
+              <button disabled={isLoading} onClick={() => handleStatusChange(o.id, 'RESOLVIDA')} className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors" title="Marcar como resolvida">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </button>
             )}
-            <button disabled={isLoading} onClick={() => handleStatusChange(o.id, 'FECHADA')} className="px-2 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="Fechar chamado">
-               FECHAR
-            </button>
+            {o.status !== 'FECHADA' && (
+              <button disabled={isLoading} onClick={() => handleStatusChange(o.id, 'FECHADA')} className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Fechar chamado">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </button>
+            )}
           </div>
         </div>
       ),
@@ -149,6 +151,47 @@ export default function OcorrenciasPage() {
           <DataTable columns={columns} data={filteredOcorrencias} isLoading={isLoading && ocorrencias.length === 0} keyExtractor={(o) => o.id} emptyMessage="Nenhuma ocorrência encontrada." />
         </CardContent>
       </Card>
+
+      {/* Status Confirmation Modal */}
+      <Modal isOpen={isStatusModalOpen} onClose={() => { setIsStatusModalOpen(false); setOcorrenciaToChange(null); setStatusToChange(null); }} title="Confirmar Alteração" size="sm">
+        <div className="space-y-4">
+          <div className={`p-4 rounded-xl flex items-start gap-3 ${
+            statusToChange === 'RESOLVIDA'
+              ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30'
+              : 'bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600/30'
+          }`}>
+            <div className={`p-2 rounded-lg shrink-0 ${
+              statusToChange === 'RESOLVIDA'
+                ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
+                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+            }`}>
+              {statusToChange === 'RESOLVIDA' ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              )}
+            </div>
+            <div>
+              <p className={`text-sm font-bold ${
+                statusToChange === 'RESOLVIDA' ? 'text-emerald-800 dark:text-emerald-200' : 'text-slate-800 dark:text-slate-200'
+              }`}>
+                {statusToChange === 'RESOLVIDA' ? 'Marcar como resolvida?' : 'Fechar este chamado?'}
+              </p>
+              <p className={`text-xs mt-1 ${
+                statusToChange === 'RESOLVIDA' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'
+              }`}>
+                {statusToChange === 'RESOLVIDA' ? 'A ocorrência será marcada como resolvida.' : 'O chamado será encerrado e não poderá ser reaberto.'}
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => { setIsStatusModalOpen(false); setOcorrenciaToChange(null); setStatusToChange(null); }} disabled={isLoading}>Cancelar</Button>
+            <Button variant={statusToChange === 'RESOLVIDA' ? 'primary' : 'secondary'} onClick={handleConfirmStatus} isLoading={isLoading}>
+              {statusToChange === 'RESOLVIDA' ? 'Confirmar' : 'Fechar Chamado'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Detail Modal */}
       <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} title="Detalhes da Ocorrência" size="lg">
