@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 import StatsCard from '@/components/ui/StatsCard';
 import Card, { CardHeader, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 import { Ocorrencia, Reserva, Boleto, Comunicado } from '@/types';
 import { useApi } from '@/hooks/useApi';
 
@@ -41,6 +43,8 @@ export default function SindicoDashboard() {
   const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
   const [comunicadosRecentes, setComunicadosRecentes] = useState<Comunicado[]>([]);
   const [reservasRecentes, setReservasRecentes] = useState<Reserva[]>([]);
+  const [boletosVencidos, setBoletosVencidos] = useState<Boleto[]>([]);
+  const [sendingCobranca, setSendingCobranca] = useState<number | null>(null);
   const [totalReservasHoje, setTotalReservasHoje] = useState<number>(0);
   const [visitantesHoje, setVisitantesHoje] = useState<number>(0);
   const [totalMoradores, setTotalMoradores] = useState<number>(0);
@@ -52,7 +56,7 @@ export default function SindicoDashboard() {
   const [taxaAdimplencia, setTaxaAdimplencia] = useState<string>('0.0');
   const [isLoading, setIsLoading] = useState(true);
 
-  const { get } = useApi();
+  const { get, post } = useApi();
 
   useEffect(() => {
     const toDateOnly = (value?: string) => {
@@ -82,6 +86,7 @@ export default function SindicoDashboard() {
 
         if (ocData) {
           const recentes = [...ocData]
+            .filter(o => o.status !== 'RESOLVIDA' && o.status !== 'FECHADA')
             .sort((a, b) => new Date(b.dataCriacao || '').getTime() - new Date(a.dataCriacao || '').getTime())
             .slice(0, 3);
           setOcorrencias(recentes);
@@ -93,7 +98,8 @@ export default function SindicoDashboard() {
           setTotalReservasHoje(reservasHoje.length);
 
           const recentes = [...resData]
-            .sort((a, b) => new Date(b.dataReserva || '').getTime() - new Date(a.dataReserva || '').getTime())
+            .filter(r => r.status === 'PENDENTE')
+            .sort((a, b) => new Date(a.dataReserva || '').getTime() - new Date(b.dataReserva || '').getTime())
             .slice(0, 2);
           setReservasRecentes(recentes);
         }
@@ -155,8 +161,13 @@ export default function SindicoDashboard() {
             const venc = new Date(`${b.dataVencimento}T00:00:00`);
             const status = (b.status || '').toUpperCase();
             return status !== 'PAGO' && venc < now;
-          }).length;
-          setBoletosVencidosTotal(vencidosTotal);
+          });
+          setBoletosVencidosTotal(vencidosTotal.length);
+
+          const vencidosList = [...vencidosTotal]
+            .sort((a, b) => new Date(`${a.dataVencimento}T00:00:00`).getTime() - new Date(`${b.dataVencimento}T00:00:00`).getTime())
+            .slice(0, 5);
+          setBoletosVencidos(vencidosList);
         }
       } finally {
         setIsLoading(false);
@@ -166,6 +177,20 @@ export default function SindicoDashboard() {
     loadDashboardData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleEnviarCobranca = async (boleto: Boleto) => {
+    setSendingCobranca(boleto.id);
+    try {
+      const res = await post(`/boletos/${boleto.id}/enviar-cobranca`, {});
+      if (res !== null) {
+        toast.success(`E-mail de cobrança enviado para ${boleto.moradorNome}!`);
+      }
+    } catch {
+      toast.error('Falha ao enviar e-mail de cobrança.');
+    } finally {
+      setSendingCobranca(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -343,16 +368,17 @@ export default function SindicoDashboard() {
                     </div>
                   ))}
                   {ocorrencias.length === 0 && (
-                    <div className="px-6 py-8 text-center text-slate-400 text-sm">Nenhuma ocorrência recente</div>
+                    <div className="px-6 py-8 text-center text-slate-400 text-sm">Nenhuma ocorrência aberta</div>
                   )}
                 </div>
               </CardContent>
             </Card>
 
+            {reservasRecentes.length > 0 && (
             <Card gradient className="animate-slide-up">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Reservas Recentes</h2>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Reservas Pendentes</h2>
                   <Link href="/dashboard/sindico/agenda" className="text-sm text-blue-500 hover:text-blue-400 transition-colors font-medium">Ver agenda →</Link>
                 </div>
               </CardHeader>
@@ -370,13 +396,60 @@ export default function SindicoDashboard() {
                       </div>
                     </div>
                   ))}
-                  {reservasRecentes.length === 0 && (
-                    <div className="px-6 py-8 text-center text-slate-400 text-sm">Nenhuma reserva recente</div>
-                  )}
                 </div>
               </CardContent>
             </Card>
+            )}
           </div>
+
+          {boletosVencidos.length > 0 && (
+          <Card gradient className="animate-slide-up border-red-200 dark:border-red-900/40">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-red-100 dark:bg-red-900/40">
+                    <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2.25m0 3.75h.008v.008H12v-.008zM10.29 3.86l-7.2 12.46A2.25 2.25 0 005.04 19.5h13.92a2.25 2.25 0 001.95-3.18l-7.2-12.46a2.25 2.25 0 00-3.42 0z" />
+                    </svg>
+                  </span>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Boletos Vencidos em Aberto</h2>
+                  <Badge variant="danger">{boletosVencidos.length}</Badge>
+                </div>
+                <Link href="/dashboard/sindico/financeiro" className="text-sm text-blue-500 hover:text-blue-400 transition-colors font-medium">Ver financeiro →</Link>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-slate-100 dark:divide-slate-700/30">
+                {boletosVencidos.map((b) => (
+                  <div key={b.id} className="px-6 py-4 hover:bg-red-50/30 dark:hover:bg-red-900/10 transition-colors">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{b.moradorNome}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{b.descricao}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-xs font-bold text-red-600 dark:text-red-400">
+                            Venceu em {new Date(`${b.dataVencimento}T00:00:00`).toLocaleDateString('pt-BR')}
+                          </span>
+                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            R$ {(b.valor ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </div>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleEnviarCobranca(b)}
+                        disabled={sendingCobranca === b.id}
+                      >
+                        {sendingCobranca === b.id ? 'Enviando...' : 'Enviar Cobrança'}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          )}
 
           <Card gradient className="animate-slide-up">
             <CardHeader>

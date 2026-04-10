@@ -5,6 +5,26 @@
 // Roles
 export type UserRole = 'SINDICO' | 'MORADOR' | 'PORTEIRO';
 
+// Fornecedor / Contrato
+export interface Fornecedor {
+  id: number;
+  nome: string;
+  comentario?: string;
+  vigencia?: string;
+  contato?: string;
+  valor?: string;
+  dataCriacao?: string;
+  dataAtualizacao?: string;
+}
+
+export interface FornecedorFormData {
+  nome: string;
+  comentario: string;
+  vigencia: string;
+  contato: string;
+  valor: string;
+}
+
 // Auth
 export interface User {
   id: number;

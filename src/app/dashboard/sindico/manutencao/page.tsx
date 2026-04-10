@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import { Ocorrencia, OcorrenciaPrioridade, Reserva } from '@/types';
+import { Fornecedor, FornecedorFormData, Ocorrencia, OcorrenciaPrioridade, Reserva } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -20,21 +20,15 @@ const statusCor: Record<string, 'danger' | 'warning' | 'success' | 'info'> = {
   FECHADA: 'info',
 };
 
-const FORNECEDORES_KEY = 'manutencao_fornecedores';
-
-interface Fornecedor {
-  id: string;
-  nome: string;
-  vigencia: string;
-  contato: string;
-  valor: string;
-}
-
 interface NovoChamadoForm {
   titulo: string;
   descricao: string;
   categoria: string;
   prioridade: OcorrenciaPrioridade;
+  // vinculo de fornecedor
+  fornecedorMode: 'nenhum' | 'existente' | 'novo';
+  fornecedorId: string;
+  novoFornecedor: FornecedorFormData;
 }
 
 const formVazio: NovoChamadoForm = {
@@ -42,10 +36,14 @@ const formVazio: NovoChamadoForm = {
   descricao: '',
   categoria: 'MANUTENCAO',
   prioridade: 'MEDIA',
+  fornecedorMode: 'nenhum',
+  fornecedorId: '',
+  novoFornecedor: { nome: '', comentario: '', vigencia: '', contato: '', valor: '' },
 };
 
-const fornecedorVazio: Omit<Fornecedor, 'id'> = {
+const fornecedorVazio: FornecedorFormData = {
   nome: '',
+  comentario: '',
   vigencia: '',
   contato: '',
   valor: '',
@@ -57,26 +55,20 @@ export default function ManutencaoPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [modalChamado, setModalChamado] = useState(false);
   const [modalFornecedor, setModalFornecedor] = useState(false);
+  const [fornecedorEditando, setFornecedorEditando] = useState<Fornecedor | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [salvandoFornecedor, setSalvandoFornecedor] = useState(false);
   const [form, setForm] = useState<NovoChamadoForm>(formVazio);
-  const [formFornecedor, setFormFornecedor] = useState<Omit<Fornecedor, 'id'>>(fornecedorVazio);
+  const [formFornecedor, setFormFornecedor] = useState<FornecedorFormData>(fornecedorVazio);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
-  const { get, post } = useApi();
+  const { get, post, put, del, isLoading: apiLoading } = useApi();
   const { user } = useAuth();
 
-  // Carrega fornecedores do localStorage
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(FORNECEDORES_KEY);
-      if (saved) setFornecedores(JSON.parse(saved));
-    } catch {
-      // ignora erro de parse
-    }
-  }, []);
-
-  const salvarFornecedores = useCallback((lista: Fornecedor[]) => {
-    setFornecedores(lista);
-    localStorage.setItem(FORNECEDORES_KEY, JSON.stringify(lista));
+  // Carrega fornecedores da API
+  const loadFornecedores = useCallback(async () => {
+    const data = await get('/fornecedores') as Fornecedor[] | null;
+    if (data) setFornecedores(data);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -89,6 +81,7 @@ export default function ManutencaoPage() {
 
         setOcorrencias(ocData || []);
         setReservas(reservaData || []);
+        await loadFornecedores();
       } finally {
         setIsLoading(false);
       }
@@ -116,9 +109,19 @@ export default function ManutencaoPage() {
       toast.error('Preencha título e descrição');
       return;
     }
+    // Se optou por adicionar novo fornecedor, cadastra antes
+    if (form.fornecedorMode === 'novo') {
+      if (!form.novoFornecedor.nome.trim()) {
+        toast.error('Informe o nome do novo fornecedor');
+        return;
+      }
+      const criado = await post('/fornecedores', form.novoFornecedor) as Fornecedor | null;
+      if (criado) setFornecedores((prev) => [...prev, criado]);
+    }
     setSalvando(true);
     try {
-      const nova = await post(`/ocorrencias/morador/${user?.id}`, form, { showSuccessToast: true, successMessage: 'Chamado criado com sucesso!' }) as Ocorrencia | null;
+      const payload = { titulo: form.titulo, descricao: form.descricao, categoria: form.categoria, prioridade: form.prioridade };
+      const nova = await post(`/ocorrencias/morador/${user?.id}`, payload, { showSuccessToast: true, successMessage: 'Chamado criado com sucesso!' }) as Ocorrencia | null;
       if (nova) {
         setOcorrencias((prev) => [nova, ...prev]);
         setModalChamado(false);
@@ -129,21 +132,52 @@ export default function ManutencaoPage() {
     }
   };
 
-  const handleAdicionarFornecedor = () => {
+  const handleAdicionarFornecedor = async () => {
     if (!formFornecedor.nome.trim()) {
       toast.error('Informe o nome do fornecedor');
       return;
     }
-    const novoFornecedor: Fornecedor = { ...formFornecedor, id: Date.now().toString() };
-    salvarFornecedores([...fornecedores, novoFornecedor]);
-    setModalFornecedor(false);
-    setFormFornecedor(fornecedorVazio);
-    toast.success('Fornecedor adicionado');
+    setSalvandoFornecedor(true);
+    try {
+      const criado = await post('/fornecedores', formFornecedor) as Fornecedor | null;
+      if (criado) {
+        setFornecedores((prev) => [...prev, criado]);
+        setModalFornecedor(false);
+        setFormFornecedor(fornecedorVazio);
+        toast.success('Fornecedor adicionado');
+      }
+    } finally {
+      setSalvandoFornecedor(false);
+    }
   };
 
-  const handleRemoverFornecedor = (id: string) => {
-    salvarFornecedores(fornecedores.filter((f) => f.id !== id));
-    toast.success('Fornecedor removido');
+  const handleRemoverFornecedor = async (id: number) => {
+    await del(`/fornecedores/${id}`, { showSuccessToast: true, successMessage: 'Fornecedor removido' });
+    setFornecedores((prev) => prev.filter((f) => f.id !== id));
+  };
+
+  const handleAbrirEdicao = (f: Fornecedor) => {
+    setFornecedorEditando(f);
+    setFormFornecedor({ nome: f.nome, comentario: f.comentario || '', vigencia: f.vigencia || '', contato: f.contato || '', valor: f.valor || '' });
+  };
+
+  const handleSalvarEdicao = async () => {
+    if (!fornecedorEditando || !formFornecedor.nome.trim()) {
+      toast.error('Informe o nome do fornecedor');
+      return;
+    }
+    setSalvandoFornecedor(true);
+    try {
+      const atualizado = await put(`/fornecedores/${fornecedorEditando.id}`, formFornecedor) as Fornecedor | null;
+      if (atualizado) {
+        setFornecedores((prev) => prev.map((f) => f.id === atualizado.id ? atualizado : f));
+        setFornecedorEditando(null);
+        setFormFornecedor(fornecedorVazio);
+        toast.success('Fornecedor atualizado');
+      }
+    } finally {
+      setSalvandoFornecedor(false);
+    }
   };
 
   if (isLoading) {
@@ -205,6 +239,77 @@ export default function ManutencaoPage() {
               { value: 'URGENTE', label: 'Urgente' },
             ]}
           />
+
+          {/* Seção de Fornecedor */}
+          <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Fornecedor / Contratado (opcional)</p>
+            <div className="flex gap-2 mb-3">
+              {(['nenhum', 'existente', 'novo'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, fornecedorMode: mode, fornecedorId: '', novoFornecedor: { nome: '', comentario: '', vigencia: '', contato: '', valor: '' } }))}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    form.fornecedorMode === mode
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                  }`}
+                >
+                  {mode === 'nenhum' ? 'Nenhum' : mode === 'existente' ? 'Selecionar existente' : 'Adicionar novo'}
+                </button>
+              ))}
+            </div>
+
+            {form.fornecedorMode === 'existente' && (
+              fornecedores.length === 0
+                ? <p className="text-xs text-slate-500">Nenhum fornecedor cadastrado ainda.</p>
+                : <Select
+                    label=""
+                    name="fornecedorId"
+                    value={form.fornecedorId}
+                    onChange={(e) => setForm((p) => ({ ...p, fornecedorId: e.target.value }))}
+                    options={[
+                      { value: '', label: '-- Selecione um fornecedor --' },
+                      ...fornecedores.map((f) => ({ value: String(f.id), label: `${f.nome}${f.contato ? ' • ' + f.contato : ''}` })),
+                    ]}
+                  />
+            )}
+
+            {form.fornecedorMode === 'novo' && (
+              <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Novo Fornecedor</p>
+                <Input
+                  label="Nome *"
+                  placeholder="Ex: Hidráulica Silva"
+                  value={form.novoFornecedor.nome}
+                  onChange={(e) => setForm((p) => ({ ...p, novoFornecedor: { ...p.novoFornecedor, nome: e.target.value } }))}
+                />
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">O que faz / Descrição</label>
+                  <textarea className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none" rows={2} placeholder="Ex: Especialista em hidráulica predial, atende emergencias..." value={form.novoFornecedor.comentario} onChange={(e) => setForm((p) => ({ ...p, novoFornecedor: { ...p.novoFornecedor, comentario: e.target.value } }))} />
+                </div>
+                <Input
+                  label="Vigência do Contrato"
+                  placeholder="Ex: 12/2026"
+                  value={form.novoFornecedor.vigencia}
+                  onChange={(e) => setForm((p) => ({ ...p, novoFornecedor: { ...p.novoFornecedor, vigencia: e.target.value } }))}
+                />
+                <Input
+                  label="Contato"
+                  placeholder="Ex: (11) 99999-0000"
+                  value={form.novoFornecedor.contato}
+                  onChange={(e) => setForm((p) => ({ ...p, novoFornecedor: { ...p.novoFornecedor, contato: e.target.value } }))}
+                />
+                <Input
+                  label="Valor do Contrato"
+                  placeholder="Ex: R$ 1.500,00/mês"
+                  value={form.novoFornecedor.valor}
+                  onChange={(e) => setForm((p) => ({ ...p, novoFornecedor: { ...p.novoFornecedor, valor: e.target.value } }))}
+                />
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-3 pt-2">
             <Button className="flex-1" onClick={handleCriarChamado} disabled={salvando}>
               {salvando ? 'Salvando...' : 'Criar Chamado'}
@@ -216,15 +321,24 @@ export default function ManutencaoPage() {
         </div>
       </Modal>
 
-      {/* Modal: Novo Fornecedor */}
-      <Modal isOpen={modalFornecedor} onClose={() => { setModalFornecedor(false); setFormFornecedor(fornecedorVazio); }} title="Adicionar Fornecedor" size="sm">
+      {/* Modal: Fornecedor (Adicionar / Editar) */}
+      <Modal
+        isOpen={modalFornecedor || fornecedorEditando !== null}
+        onClose={() => { setModalFornecedor(false); setFornecedorEditando(null); setFormFornecedor(fornecedorVazio); }}
+        title={fornecedorEditando ? 'Editar Fornecedor' : 'Adicionar Fornecedor'}
+        size="sm"
+      >
         <div className="space-y-4 pt-2">
           <Input
-            label="Nome do Fornecedor"
+            label="Nome do Fornecedor *"
             placeholder="Ex: Elevadores Atlas"
             value={formFornecedor.nome}
             onChange={(e) => setFormFornecedor((p) => ({ ...p, nome: e.target.value }))}
           />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">O que faz / Descrição</label>
+            <textarea className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none" rows={3} placeholder="Ex: Empresa especializada em elevação predial, manutenção preventiva e corretiva..." value={formFornecedor.comentario} onChange={(e) => setFormFornecedor((p) => ({ ...p, comentario: e.target.value }))} />
+          </div>
           <Input
             label="Vigência do Contrato"
             placeholder="Ex: 12/2026"
@@ -244,8 +358,10 @@ export default function ManutencaoPage() {
             onChange={(e) => setFormFornecedor((p) => ({ ...p, valor: e.target.value }))}
           />
           <div className="flex gap-3 pt-2">
-            <Button className="flex-1" onClick={handleAdicionarFornecedor}>Adicionar</Button>
-            <Button variant="outline" className="flex-1" onClick={() => { setModalFornecedor(false); setFormFornecedor(fornecedorVazio); }}>Cancelar</Button>
+            <Button className="flex-1" onClick={fornecedorEditando ? handleSalvarEdicao : handleAdicionarFornecedor} isLoading={salvandoFornecedor}>
+              {fornecedorEditando ? 'Salvar Alterações' : 'Adicionar'}
+            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => { setModalFornecedor(false); setFornecedorEditando(null); setFormFornecedor(fornecedorVazio); }}>Cancelar</Button>
           </div>
         </div>
       </Modal>
@@ -329,14 +445,24 @@ export default function ManutencaoPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {fornecedores.map((fornecedor) => (
                     <div key={fornecedor.id} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 relative group">
-                      <button
-                        onClick={() => handleRemoverFornecedor(fornecedor.id)}
-                        className="absolute top-2 right-2 text-slate-300 hover:text-rose-500 dark:text-slate-600 dark:hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100 text-lg leading-none"
-                        title="Remover fornecedor"
-                      >
-                        ×
-                      </button>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white pr-5">{fornecedor.nome}</p>
+                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleAbrirEdicao(fornecedor)}
+                          className="p-1.5 rounded-lg text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+                          title="Editar fornecedor"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </button>
+                        <button
+                          onClick={() => handleRemoverFornecedor(fornecedor.id)}
+                          className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                          title="Remover fornecedor"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white pr-16">{fornecedor.nome}</p>
+                      {fornecedor.comentario && <p className="text-xs text-slate-500 mt-1 italic line-clamp-2">{fornecedor.comentario}</p>}
                       {fornecedor.vigencia && <p className="text-xs text-slate-500 mt-1">Vigência: {fornecedor.vigencia}</p>}
                       {fornecedor.contato && <p className="text-xs text-slate-500">Contato: {fornecedor.contato}</p>}
                       {fornecedor.valor && <p className="text-sm font-semibold text-emerald-600 mt-2">{fornecedor.valor}</p>}
