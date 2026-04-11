@@ -103,7 +103,7 @@ export default function MoradorFornecedoresPage() {
         <div className="animate-slide-up flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Fornecedores Recomendados</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">Profissionais e empresas de confiança do condomínio</p>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">Profissionais e empresas de confiança do condomínio. Fique à vontade para fazer suas indicações!</p>
           </div>
           <Button variant="primary" onClick={openCreate} className="shrink-0">
             <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
