@@ -9,6 +9,7 @@ export type UserRole = 'SINDICO' | 'MORADOR' | 'PORTEIRO';
 export interface Fornecedor {
   id: number;
   nome: string;
+  moradorId?: number | null;
   comentario?: string;
   vigencia?: string;
   contato?: string;
