@@ -109,7 +109,7 @@ export default function AcessosPage() {
             return (
               <div key={role} className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600/50 rounded-xl p-4 text-center">
                 <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{count}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{roleLabel[role]}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Acessos de {roleLabel[role]}s</p>
               </div>
             );
           })}
