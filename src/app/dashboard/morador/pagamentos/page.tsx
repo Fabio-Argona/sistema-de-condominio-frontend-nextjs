@@ -72,7 +72,7 @@ export default function BoletosPage() {
   const boletosOrdenados = [...boletosFiltrados].sort((a, b) => {
     const diff = (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
     if (diff !== 0) return diff;
-    return new Date(b.dataVencimento).getTime() - new Date(a.dataVencimento).getTime();
+    return new Date(`${b.dataVencimento}T00:00:00`).getTime() - new Date(`${a.dataVencimento}T00:00:00`).getTime();
   });
 
   return (
@@ -124,7 +124,7 @@ export default function BoletosPage() {
                       <div className="flex flex-col gap-1">
                         <span className="text-slate-500 dark:text-slate-500 text-xs uppercase tracking-wider font-bold">Vencimento</span>
                         <span className="font-semibold text-slate-700 dark:text-slate-300">
-                          {new Date(boleto.dataVencimento).toLocaleDateString('pt-BR')}
+                          {new Date(`${boleto.dataVencimento}T00:00:00`).toLocaleDateString('pt-BR')}
                         </span>
                       </div>
                       <div className="flex flex-col gap-1">
@@ -138,7 +138,7 @@ export default function BoletosPage() {
                         <div className="col-span-2 flex flex-col gap-1 border-t border-emerald-100 dark:border-emerald-900/30 pt-2 mt-1">
                           <span className="text-emerald-600/70 dark:text-emerald-500/70 text-xs uppercase tracking-wider font-bold">Pagamento Confirmado</span>
                           <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                            Em {new Date(boleto.dataPagamento).toLocaleDateString('pt-BR')}
+                            Em {new Date(`${boleto.dataPagamento}T00:00:00`).toLocaleDateString('pt-BR')}
                           </span>
                         </div>
                       )}

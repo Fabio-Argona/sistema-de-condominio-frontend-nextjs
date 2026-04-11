@@ -371,7 +371,7 @@ export default function GestaoPagamentosPage() {
     const pagoMaisRecentePorMorador = new Map<number, Boleto>();
     boletos
       .filter(b => b.status === 'PAGO')
-      .sort((a, b) => new Date(b.dataVencimento).getTime() - new Date(a.dataVencimento).getTime())
+      .sort((a, b) => new Date(`${b.dataVencimento}T00:00:00`).getTime() - new Date(`${a.dataVencimento}T00:00:00`).getTime())
       .forEach(b => {
         if (!pagoMaisRecentePorMorador.has(b.moradorId)) {
           pagoMaisRecentePorMorador.set(b.moradorId, b);
@@ -426,7 +426,7 @@ export default function GestaoPagamentosPage() {
     {
       key: 'dataVencimento',
       header: 'Vencimento',
-      render: (b: Boleto) => new Date(b.dataVencimento).toLocaleDateString('pt-BR'),
+      render: (b: Boleto) => new Date(`${b.dataVencimento}T00:00:00`).toLocaleDateString('pt-BR'),
     },
     {
       key: 'status',
