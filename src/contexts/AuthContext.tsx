@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { token: jwt, user: userData } = response.data;
 
       // Em produção use secure: true, em localhost deixamos false para o middleware ler no HTTP
-      Cookies.set('token', jwt, { expires: 7, secure: false, sameSite: 'lax' });
+      Cookies.set('token', jwt, { expires: 7, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
       setToken(jwt);
       setUser(userData);
 
