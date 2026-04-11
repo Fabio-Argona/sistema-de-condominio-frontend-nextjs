@@ -84,8 +84,8 @@ export default function AcessosPage() {
   );
 
   return (
-    <div className="w-full flex justify-center bg-slate-50 min-h-screen">
-      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 bg-white rounded-2xl shadow-sm border border-slate-100 my-8">
+    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
+      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 my-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-1">
@@ -96,8 +96,8 @@ export default function AcessosPage() {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Log de Acessos</h1>
-              <p className="text-sm text-slate-500">Histórico de entradas no portal do condomínio</p>
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Log de Acessos</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Histórico de entradas no portal do condomínio</p>
             </div>
           </div>
         </div>
@@ -107,9 +107,9 @@ export default function AcessosPage() {
           {(['MORADOR', 'PORTEIRO'] as const).map(role => {
             const count = logs.filter(l => l.role === role).length;
             return (
-              <div key={role} className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
-                <p className="text-2xl font-bold text-slate-800">{count}</p>
-                <p className="text-xs text-slate-500 mt-1">{roleLabel[role]}</p>
+              <div key={role} className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600/50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{count}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{roleLabel[role]}</p>
               </div>
             );
           })}
@@ -122,57 +122,61 @@ export default function AcessosPage() {
             placeholder="Filtrar por nome, e-mail, perfil ou IP..."
             value={filtro}
             onChange={e => setFiltro(e.target.value)}
-            className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            className="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-700 placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
         </div>
 
         {/* Tabela */}
         <Card>
-          <CardHeader>{logsFiltrados.length} registro{logsFiltrados.length !== 1 ? 's' : ''}</CardHeader>
+          <CardHeader>
+            <span className="text-slate-700 dark:text-slate-200 font-medium">
+              {logsFiltrados.length} registro{logsFiltrados.length !== 1 ? 's' : ''}
+            </span>
+          </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="flex justify-center py-12">
                 <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : logsFiltrados.length === 0 ? (
-              <p className="text-center text-slate-500 py-10 text-sm">Nenhum acesso registrado.</p>
+              <p className="text-center text-slate-500 dark:text-slate-400 py-10 text-sm">Nenhum acesso registrado.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100">
-                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Usuário</th>
-                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Perfil</th>
-                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Data / Hora</th>
-                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Página</th>
-                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">IP</th>
+                    <tr className="border-b border-slate-100 dark:border-slate-700/50">
+                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Usuário</th>
+                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Perfil</th>
+                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Data / Hora</th>
+                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Página</th>
+                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">IP</th>
                     </tr>
                   </thead>
                   <tbody>
                     {logsFiltrados.map(log => (
-                      <tr key={log.id} className="border-b border-slate-50 hover:bg-slate-50/60 transition-colors">
+                      <tr key={log.id} className="border-b border-slate-50 dark:border-slate-700/30 hover:bg-slate-50/60 dark:hover:bg-slate-700/30 transition-colors">
                         <td className="py-3 px-3">
-                          <p className="font-medium text-slate-800">{log.usuarioNome}</p>
-                          <p className="text-xs text-slate-400">{log.usuarioEmail}</p>
+                          <p className="font-medium text-slate-800 dark:text-slate-200">{log.usuarioNome}</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500">{log.usuarioEmail}</p>
                         </td>
                         <td className="py-3 px-3">
                           <Badge variant={roleColor[log.role] ?? 'info'}>
                             {roleLabel[log.role] ?? log.role}
                           </Badge>
                         </td>
-                        <td className="py-3 px-3 text-slate-600 whitespace-nowrap">
+                        <td className="py-3 px-3 text-slate-600 dark:text-slate-300 whitespace-nowrap">
                           {formatDataHora(log.dataHora)}
                         </td>
                         <td className="py-3 px-3">
                           {log.pagina ? (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg px-2 py-0.5">
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-lg px-2 py-0.5">
                               {pageLabel[log.pagina] ?? log.pagina}
                             </span>
                           ) : (
-                            <span className="text-slate-400 text-xs">—</span>
+                            <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>
                           )}
                         </td>
-                        <td className="py-3 px-3 text-slate-400 font-mono text-xs">
+                        <td className="py-3 px-3 text-slate-400 dark:text-slate-500 font-mono text-xs">
                           {log.ip || '—'}
                         </td>
                       </tr>
