@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Card, { CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -12,7 +11,6 @@ import toast from 'react-hot-toast';
 export default function MoradorPerfilPage() {
   const { user, updateAuth } = useAuth();
   const { patch, isLoading } = useApi();
-  const router = useRouter();
 
   const [form, setForm] = useState({ senhaAtual: '', novaSenha: '', confirmarSenha: '' });
   const [showSenhas, setShowSenhas] = useState({ atual: false, nova: false, confirmar: false });
@@ -43,7 +41,7 @@ export default function MoradorPerfilPage() {
       setForm({ senhaAtual: '', novaSenha: '', confirmarSenha: '' });
       if (res.token) {
         updateAuth(res.token);
-        router.push('/dashboard/morador');
+        window.location.href = '/dashboard/morador';
       }
     }
   };
