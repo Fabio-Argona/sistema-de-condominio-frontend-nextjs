@@ -108,6 +108,30 @@ html {
   background-clip: text;
 }
 
+/* ============================================
+   Chrome Autofill — Corrige fundo branco no dark mode
+   ============================================ */
+
+/* Modo claro: fundo branco, texto escuro */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a;
+}
+
+/* Modo escuro: fundo slate-800, texto slate-100 */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #1e293b inset !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+  caret-color: #f1f5f9;
+}
+
 /* Glass card */
 .glass-card {
   background: rgba(255, 255, 255, 0.06);
