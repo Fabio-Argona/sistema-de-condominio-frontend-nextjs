@@ -16,6 +16,7 @@ interface AuthContextType {
   login: (credentials: LoginRequest) => Promise<void>;
   logout: () => void;
   hasRole: (role: UserRole | UserRole[]) => boolean;
+  updateAuth: (jwt: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         nome: decoded.nome,
         email: decoded.sub,
         role: decoded.role,
+        primeiroAcesso: decoded.primeiroAcesso,
       });
       setToken(jwt);
       return true;
@@ -77,6 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userData);
 
       // Redireciona com base no role
+      if (userData.role === 'MORADOR' && userData.primeiroAcesso) {
+        router.push('/dashboard/morador/perfil');
+        return;
+      }
       switch (userData.role) {
         case 'SINDICO':
           router.push('/dashboard/sindico');
@@ -94,6 +100,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error;
     }
   };
+
+  const updateAuth = useCallback((jwt: string) => {
+    Cookies.set('token', jwt, { expires: 7, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
+    setToken(jwt);
+    decodeAndSetUser(jwt);
+  }, [decodeAndSetUser]);
 
   const logout = () => {
     Cookies.remove('token');
@@ -120,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         hasRole,
+        updateAuth,
       }}
     >
       {children}

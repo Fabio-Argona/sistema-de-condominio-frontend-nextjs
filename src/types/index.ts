@@ -36,6 +36,7 @@ export interface User {
   bloco?: string;
   telefone?: string;
   avatar?: string;
+  primeiroAcesso?: boolean;
 }
 
 export interface LoginRequest {
@@ -55,6 +56,7 @@ export interface DecodedToken {
   nome: string;
   exp: number;
   iat: number;
+  primeiroAcesso?: boolean;
 }
 
 // Morador (Resident)

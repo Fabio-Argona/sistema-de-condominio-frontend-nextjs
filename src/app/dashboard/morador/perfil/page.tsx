@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Card, { CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -9,8 +10,9 @@ import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
 
 export default function MoradorPerfilPage() {
-  const { user } = useAuth();
+  const { user, updateAuth } = useAuth();
   const { patch, isLoading } = useApi();
+  const router = useRouter();
 
   const [form, setForm] = useState({ senhaAtual: '', novaSenha: '', confirmarSenha: '' });
   const [showSenhas, setShowSenhas] = useState({ atual: false, nova: false, confirmar: false });
@@ -34,11 +36,15 @@ export default function MoradorPerfilPage() {
     const res = await patch(`/usuarios/${user.id}/senha`, {
       senhaAtual: form.senhaAtual,
       novaSenha: form.novaSenha,
-    }) as { message?: string } | null;
+    }) as { message?: string; token?: string } | null;
 
     if (res) {
       toast.success('Senha alterada com sucesso!');
       setForm({ senhaAtual: '', novaSenha: '', confirmarSenha: '' });
+      if (res.token) {
+        updateAuth(res.token);
+        router.push('/dashboard/morador');
+      }
     }
   };
 
@@ -59,9 +65,24 @@ export default function MoradorPerfilPage() {
 
         {/* Cabeçalho */}
         <div className="animate-slide-up">
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Meu Perfil</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Gerencie suas informações e segurança</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Trocar Senha</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Atualize sua senha de acesso</p>
         </div>
+
+        {/* Banner de aviso — primeira entrada */}
+        {user?.primeiroAcesso && (
+          <div className="animate-slide-up flex gap-3 items-start bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4">
+            <div className="shrink-0 mt-0.5">
+              <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-amber-800 dark:text-amber-300">Você está usando uma senha temporária</p>
+              <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5">Por segurança, defina uma senha pessoal antes de continuar usando o sistema.</p>
+            </div>
+          </div>
+        )}
 
         {/* Card dados do usuário */}
         <Card className="animate-slide-up">

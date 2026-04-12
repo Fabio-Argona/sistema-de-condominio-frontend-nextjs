@@ -54,6 +54,10 @@ export function middleware(request: NextRequest) {
     if (pathname.startsWith('/dashboard/morador') && role !== 'MORADOR') {
        return NextResponse.redirect(new URL('/dashboard/sindico', request.url));
     }
+    // Força troca de senha na primeira entrada do morador
+    if (role === 'MORADOR' && payload.primeiroAcesso === true && !pathname.startsWith('/dashboard/morador/perfil')) {
+      return NextResponse.redirect(new URL('/dashboard/morador/perfil', request.url));
+    }
   }
 
   return NextResponse.next();

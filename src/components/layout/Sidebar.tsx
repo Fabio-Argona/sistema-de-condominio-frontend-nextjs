@@ -135,7 +135,7 @@ const navItems: NavItem[] = [
   { label: 'Comunicados', href: '/dashboard/morador/comunicados', icon: icons.announcement, roles: ['MORADOR'] },
   { label: 'Consulta', href: '/dashboard/morador/consulta', icon: icons.users, roles: ['MORADOR'] },
   { label: 'Fornecedores', href: '/dashboard/morador/fornecedores', icon: icons.supplier, roles: ['MORADOR'] },
-  { label: 'Perfil', href: '/dashboard/morador/perfil', icon: icons.profile, roles: ['MORADOR'] },
+  { label: 'Trocar Senha', href: '/dashboard/morador/perfil', icon: icons.profile, roles: ['MORADOR'] },
   { label: 'Relatórios', href: '/dashboard/sindico/relatorios', icon: icons.report, roles: ['SINDICO'] },
   { label: 'Acessos', href: '/dashboard/sindico/acessos', icon: icons.access, roles: ['SINDICO'] },
   // Libera visão do porteiro para SÍNDICO (consulta)
