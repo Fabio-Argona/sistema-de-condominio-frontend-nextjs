@@ -31,7 +31,7 @@ export default function Select({
       <select
         id={selectId}
         className={`
-          w-full rounded-xl border bg-white dark:bg-slate-800/50
+          w-full rounded-xl border bg-white dark:bg-slate-800
           text-slate-900 dark:text-slate-100
           transition-all duration-200
           focus:outline-none focus:ring-2 focus:ring-blue-500/50

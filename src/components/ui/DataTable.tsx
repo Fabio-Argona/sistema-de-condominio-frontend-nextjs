@@ -98,7 +98,7 @@ export default function DataTable<T>({
             key={keyExtractor(item)}
             onClick={() => onRowClick?.(item)}
             className={`
-              bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 shadow-sm
+              bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 shadow-sm
               ${onRowClick ? 'active:scale-[0.98] transition-transform cursor-pointer' : ''}
             `}
           >
