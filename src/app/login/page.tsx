@@ -212,7 +212,7 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="p-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[1.5rem] shadow-2xl dark:shadow-black/50 transition-colors duration-500">
+          <div className="p-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-[1.5rem] shadow-[0_8px_40px_rgba(0,0,0,0.18)] dark:shadow-[0_8px_60px_rgba(0,0,0,0.7)] ring-1 ring-slate-200/80 dark:ring-slate-600/60 transition-colors duration-500">
             {/* Mobile Logo */}
             <div className="lg:hidden flex items-center gap-3 mb-6">
               <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
