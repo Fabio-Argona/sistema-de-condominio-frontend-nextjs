@@ -126,9 +126,10 @@ export default function LoginPage() {
       {/* Left Side - Branding */}
       <div className="hidden lg:flex flex-1 items-center justify-center relative z-10 p-12">
         <div className="max-w-lg animate-slide-up">
-          {/* Logo */}
-          <div className="flex flex-col items-center gap-1 mb-[5px]">
-            <img src="/oceano-logo.png" alt="Logo Oceano Residences" className="w-[300px] h-[300px] object-contain" />
+          {/* Logo texto */}
+          <div className="flex flex-col items-start mb-8">
+            <h1 className="text-7xl font-black text-slate-900 dark:text-white tracking-tight leading-none">OCEANO</h1>
+            <span className="text-xl font-medium tracking-[0.25em] text-blue-600 dark:text-blue-400 uppercase mt-1">Residencial</span>
           </div>
 
           <h2 className="text-4xl font-bold text-slate-800 dark:text-white leading-tight mb-4">
@@ -212,7 +213,7 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="p-8 bg-white/90 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 border backdrop-blur-xl rounded-[1.5rem] shadow-2xl dark:shadow-black/50 transition-colors duration-500">
+          <div className="p-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[1.5rem] shadow-2xl dark:shadow-black/50 transition-colors duration-500">
             {/* Mobile Logo */}
             <div className="lg:hidden flex items-center gap-3 mb-6">
               <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
