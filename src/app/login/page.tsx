@@ -288,7 +288,7 @@ export default function LoginPage() {
                 </label>
                 <button 
                   type="button" 
-                  onClick={() => setIsRecoverModalOpen(true)}
+                  onClick={() => { setRecoverEmail(email); setIsRecoverModalOpen(true); }}
                   className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
                 >
                   Esqueceu a senha?
