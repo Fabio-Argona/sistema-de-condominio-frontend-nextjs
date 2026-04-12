@@ -170,7 +170,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="px-4 py-5 border-b border-slate-200 dark:border-slate-200/10 flex justify-center overflow-hidden dark:bg-white">
+      <div className="px-4 py-5 border-b border-slate-200 dark:border-slate-200/10 flex justify-center overflow-hidden">
         <img src="/oceano-logo.png" alt="Logo Oceano Residences" className="w-full max-w-[180px] h-auto object-contain scale-125 transition-transform" />
       </div>
 
