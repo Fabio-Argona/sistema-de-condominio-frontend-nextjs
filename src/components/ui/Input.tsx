@@ -59,7 +59,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               id={inputId}
               onChange={handleChange}
               className={`
-                w-full rounded-xl border bg-white dark:bg-slate-800/50
+                w-full rounded-xl border bg-white dark:bg-slate-800
                 text-slate-900 dark:text-slate-100
                 placeholder:text-slate-400 dark:placeholder:text-slate-500
                 transition-all duration-200
