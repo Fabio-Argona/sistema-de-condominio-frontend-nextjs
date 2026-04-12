@@ -107,6 +107,11 @@ const icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
     </svg>
   ),
+  profile: (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+    </svg>
+  ),
 };
 
 const navItems: NavItem[] = [
@@ -130,6 +135,7 @@ const navItems: NavItem[] = [
   { label: 'Comunicados', href: '/dashboard/morador/comunicados', icon: icons.announcement, roles: ['MORADOR'] },
   { label: 'Consulta', href: '/dashboard/morador/consulta', icon: icons.users, roles: ['MORADOR'] },
   { label: 'Fornecedores', href: '/dashboard/morador/fornecedores', icon: icons.supplier, roles: ['MORADOR'] },
+  { label: 'Perfil', href: '/dashboard/morador/perfil', icon: icons.profile, roles: ['MORADOR'] },
   { label: 'Relatórios', href: '/dashboard/sindico/relatorios', icon: icons.report, roles: ['SINDICO'] },
   { label: 'Acessos', href: '/dashboard/sindico/acessos', icon: icons.access, roles: ['SINDICO'] },
   // Libera visão do porteiro para SÍNDICO (consulta)
