@@ -146,7 +146,7 @@ export default function BoletosPage() {
 
                     {/* Código de barras e PDF */}
                     {boleto.status !== 'PAGO' && (
-                      <div className="mt-5 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50 flex flex-col gap-4">
+                      <div className="mt-5 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700/50 flex flex-col gap-4">
                         <div className="flex flex-col gap-1.5">
                           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Código de Barras</span>
                           <code className="text-xs text-slate-700 dark:text-slate-300 break-all font-mono bg-white dark:bg-slate-900 px-2 py-1.5 rounded border border-slate-200 dark:border-slate-800">

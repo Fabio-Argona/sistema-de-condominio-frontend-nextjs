@@ -207,7 +207,7 @@ export default function ManutencaoPage() {
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Descrição</label>
             <textarea
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none"
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none"
               rows={3}
               placeholder="Descreva o problema com detalhes..."
               value={form.descricao}
@@ -276,7 +276,7 @@ export default function ManutencaoPage() {
             )}
 
             {form.fornecedorMode === 'novo' && (
-              <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+              <div className="space-y-3 bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Novo Fornecedor</p>
                 <Input
                   label="Nome *"
@@ -286,7 +286,7 @@ export default function ManutencaoPage() {
                 />
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">O que faz / Descrição</label>
-                  <textarea className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none" rows={2} placeholder="Ex: Especialista em hidráulica predial, atende emergencias..." value={form.novoFornecedor.comentario} onChange={(e) => setForm((p) => ({ ...p, novoFornecedor: { ...p.novoFornecedor, comentario: e.target.value } }))} />
+                  <textarea className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none" rows={2} placeholder="Ex: Especialista em hidráulica predial, atende emergencias..." value={form.novoFornecedor.comentario} onChange={(e) => setForm((p) => ({ ...p, novoFornecedor: { ...p.novoFornecedor, comentario: e.target.value } }))} />
                 </div>
                 <Input
                   label="Vigência do Contrato"
@@ -337,7 +337,7 @@ export default function ManutencaoPage() {
           />
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">O que faz / Descrição</label>
-            <textarea className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none" rows={3} placeholder="Ex: Empresa especializada em elevação predial, manutenção preventiva e corretiva..." value={formFornecedor.comentario} onChange={(e) => setFormFornecedor((p) => ({ ...p, comentario: e.target.value }))} />
+            <textarea className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none" rows={3} placeholder="Ex: Empresa especializada em elevação predial, manutenção preventiva e corretiva..." value={formFornecedor.comentario} onChange={(e) => setFormFornecedor((p) => ({ ...p, comentario: e.target.value }))} />
           </div>
           <Input
             label="Vigência do Contrato"
