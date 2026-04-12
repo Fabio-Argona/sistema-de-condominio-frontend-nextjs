@@ -126,10 +126,9 @@ export default function LoginPage() {
       {/* Left Side - Branding */}
       <div className="hidden lg:flex flex-1 items-center justify-center relative z-10 p-12">
         <div className="max-w-lg animate-slide-up">
-          {/* Logo texto */}
-          <div className="flex flex-col items-start mb-8">
-            <h1 className="text-7xl font-black text-slate-900 dark:text-white tracking-tight leading-none">OCEANO</h1>
-            <span className="text-xl font-medium tracking-[0.25em] text-blue-600 dark:text-blue-400 uppercase mt-1">Residencial</span>
+          {/* Logo */}
+          <div className="flex flex-col items-center gap-1 mb-[5px]">
+            <img src="/oceano-logo.png" alt="Logo Oceano Residences" className="w-[300px] h-[300px] object-contain" />
           </div>
 
           <h2 className="text-4xl font-bold text-slate-800 dark:text-white leading-tight mb-4">
