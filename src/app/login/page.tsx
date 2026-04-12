@@ -128,7 +128,7 @@ export default function LoginPage() {
         <div className="max-w-lg animate-slide-up">
           {/* Logo */}
           <div className="flex flex-col items-center gap-1 mb-[5px]">
-            <img src="/oceano-logo.png" alt="Logo Oceano Residences" className="w-[300px] h-[300px] object-contain dark:bg-white dark:rounded-2xl dark:p-4" />
+            <img src="/oceano-logo.png" alt="Logo Oceano Residences" className="w-[300px] h-[300px] object-contain" />
           </div>
 
           <h2 className="text-4xl font-bold text-slate-800 dark:text-white leading-tight mb-4">
