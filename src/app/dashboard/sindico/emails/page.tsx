@@ -81,6 +81,44 @@ const TIPO_LABELS: Record<string, string> = {
   STATUS_RESERVA: 'Status de Reserva',
 };
 
+const TIPO_CARD_STYLES: Record<string, { icon: string; selected: string; hover: string }> = {
+  ENVIO_BOLETO: {
+    icon: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    selected: 'border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/20',
+    hover: 'hover:border-blue-300 dark:hover:border-blue-600',
+  },
+  COBRANCA_BOLETO_VENCIDO: {
+    icon: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    selected: 'border-red-500 bg-red-50 dark:border-red-500 dark:bg-red-900/20',
+    hover: 'hover:border-red-300 dark:hover:border-red-600',
+  },
+  RECUPERACAO_SENHA: {
+    icon: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    selected: 'border-amber-500 bg-amber-50 dark:border-amber-500 dark:bg-amber-900/20',
+    hover: 'hover:border-amber-300 dark:hover:border-amber-600',
+  },
+  SENHA_ALTERADA: {
+    icon: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    selected: 'border-emerald-500 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-900/20',
+    hover: 'hover:border-emerald-300 dark:hover:border-emerald-600',
+  },
+  CONVITE_MORADOR: {
+    icon: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    selected: 'border-emerald-500 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-900/20',
+    hover: 'hover:border-emerald-300 dark:hover:border-emerald-600',
+  },
+  NOVA_RESERVA: {
+    icon: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+    selected: 'border-slate-500 bg-slate-50 dark:border-slate-500 dark:bg-slate-800/50',
+    hover: 'hover:border-slate-300 dark:hover:border-slate-600',
+  },
+  STATUS_RESERVA: {
+    icon: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+    selected: 'border-slate-500 bg-slate-50 dark:border-slate-500 dark:bg-slate-800/50',
+    hover: 'hover:border-slate-300 dark:hover:border-slate-600',
+  },
+};
+
 export default function HistoricoEmailsPage() {
   const [logs, setLogs] = useState<LogEmail[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -168,11 +206,11 @@ export default function HistoricoEmailsPage() {
               onClick={() => setTipoFilter(tipoFilter === opt.value ? '' : opt.value)}
               className={`text-left p-3 rounded-xl border transition-all ${
                 tipoFilter === opt.value
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600'
+                  ? TIPO_CARD_STYLES[opt.value]?.selected ?? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : `border-slate-200 dark:border-slate-700 ${TIPO_CARD_STYLES[opt.value]?.hover ?? 'hover:border-blue-300 dark:hover:border-blue-600'}`
               }`}
             >
-              <div className="mb-2 inline-flex items-center justify-center rounded-lg bg-slate-100 p-2 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <div className={`mb-2 inline-flex items-center justify-center rounded-lg p-2 ${TIPO_CARD_STYLES[opt.value]?.icon ?? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>
                 {TIPO_ICONS[opt.value]}
               </div>
               <p className="text-xl font-bold text-slate-900 dark:text-white">{totais[opt.value] || 0}</p>
