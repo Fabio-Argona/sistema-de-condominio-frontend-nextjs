@@ -8,6 +8,7 @@ interface StatsCardProps {
   icon: ReactNode;
   trend?: { value: number; label: string };
   color: 'blue' | 'emerald' | 'amber' | 'red' | 'purple' | 'indigo';
+  subtitle?: string;
 }
 
 const colorMap = {
@@ -49,17 +50,20 @@ const colorMap = {
   },
 };
 
-export default function StatsCard({ title, value, icon, trend, color }: StatsCardProps) {
+export default function StatsCard({ title, value, icon, trend, color, subtitle }: StatsCardProps) {
   const colors = colorMap[color];
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 shadow-sm hover:shadow-md transition-all duration-300 group">
+    <div className={`rounded-2xl border border-slate-200/50 bg-white p-5 shadow-sm transition-all duration-300 group hover:shadow-md dark:border-slate-700/50 dark:bg-slate-800 ${colors.light}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2 tracking-tight">
+          <p className="mt-2 text-2xl font-bold leading-tight tracking-tight text-slate-900 break-words dark:text-white sm:text-3xl">
             {value}
           </p>
+          {subtitle ? (
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">{subtitle}</p>
+          ) : null}
           {trend && (
             <div className="flex items-center gap-1.5 mt-2">
               <span
@@ -74,7 +78,7 @@ export default function StatsCard({ title, value, icon, trend, color }: StatsCar
           )}
         </div>
         <div
-          className={`p-3 rounded-xl bg-gradient-to-br ${colors.bg} text-white shadow-lg ${colors.shadow} group-hover:scale-110 transition-transform duration-300`}
+          className={`ml-4 rounded-xl bg-gradient-to-br p-3 text-white shadow-lg transition-transform duration-300 group-hover:scale-110 ${colors.bg} ${colors.shadow}`}
         >
           {icon}
         </div>

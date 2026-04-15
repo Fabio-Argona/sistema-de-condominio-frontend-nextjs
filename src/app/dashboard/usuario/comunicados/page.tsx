@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Card, { CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
+import EmptyState from '@/components/ui/EmptyState';
 import { Comunicado } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
@@ -99,7 +100,10 @@ export default function UsuarioComunicadosPage() {
 
         <div className="space-y-4">
           {comunicados.length === 0 ? (
-            <p className="text-slate-500 py-8 text-center text-lg">Nenhum comunicado no momento.</p>
+            <EmptyState
+              title="Nenhum comunicado no momento"
+              description="Novidades, avisos importantes e atualizações do condomínio aparecerão aqui assim que forem publicadas."
+            />
           ) : (
             comunicados.map((c, i) => (
               <Card key={c.id} hover gradient className={`animate-slide-up stagger-${i % 5 + 1}`}>

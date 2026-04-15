@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Card, { CardHeader, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -8,6 +8,8 @@ import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import DataTable from '@/components/ui/DataTable';
+import StatsCard from '@/components/ui/StatsCard';
+import { DashboardHero, DashboardPage, DashboardSectionTitle } from '@/components/layout/RoleDashboard';
 import { Usuario, Ocorrencia, OcorrenciaStatus, OcorrenciaPrioridade } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
@@ -49,6 +51,13 @@ export default function OcorrenciasPage() {
     loadProfissionais();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const resumo = useMemo(() => ({
+    abertas: ocorrencias.filter((o) => o.status === 'ABERTA').length,
+    andamento: ocorrencias.filter((o) => o.status === 'EM_ANDAMENTO').length,
+    resolvidas: ocorrencias.filter((o) => o.status === 'RESOLVIDA').length,
+    urgentes: ocorrencias.filter((o) => o.prioridade === 'URGENTE' || o.prioridade === 'ALTA').length,
+  }), [ocorrencias]);
 
   const filteredOcorrencias = ocorrencias.filter((o) => {
     const matchesSearch = o.titulo.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -219,26 +228,60 @@ export default function OcorrenciasPage() {
   ];
 
   return (
-    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
-      <div className="animate-slide-up">
-        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Ocorrências</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Gerencie as ocorrências do condomínio</p>
+    <DashboardPage>
+      <DashboardHero
+        eyebrow="Ocorrências"
+        title="Triagem, encaminhamento e fechamento em um único painel"
+        description="Gerencie a fila completa do condomínio, filtre rapidamente por status e acompanhe o que exige resposta imediata ou já pode ser encerrado."
+        status={
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge variant={resumo.urgentes > 0 ? 'danger' : 'success'} dot>
+              {resumo.urgentes > 0 ? `${resumo.urgentes} casos prioritários` : 'Sem casos prioritários'}
+            </Badge>
+            <Badge variant="info">{profissionais.length} mantenedores disponíveis</Badge>
+          </div>
+        }
+        aside={
+          <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Visão rápida</p>
+            <div className="mt-4 space-y-3">
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Fila filtrada</p>
+                <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{filteredOcorrencias.length}</p>
+              </div>
+              <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                Use busca e status para reduzir a fila antes de encaminhar ou concluir atendimentos.
+              </p>
+            </div>
+          </div>
+        }
+      />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatsCard title="Abertas" value={resumo.abertas} subtitle="Ainda aguardando início" color="red" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m0 3.75h.008v.008H12v-.008zm-8.355 2.648h16.71c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L1.913 16c-.77 1.333.192 3 1.732 3z" /></svg>} />
+        <StatsCard title="Em andamento" value={resumo.andamento} subtitle="Demandam acompanhamento" color="amber" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6l4 2.5m5-2.5a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
+        <StatsCard title="Resolvidas" value={resumo.resolvidas} subtitle="Prontas para fechamento ou histórico" color="emerald" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
+        <StatsCard title="Alta prioridade" value={resumo.urgentes} subtitle="Impacto mais sensível" color="indigo" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3c2.755 0 5.26 1.12 7.07 2.93A9.969 9.969 0 0122 13c0 2.28-.762 4.381-2.047 6.063L12 21l-7.953-1.937A9.964 9.964 0 012 13c0-2.755 1.12-5.26 2.93-7.07A9.969 9.969 0 0112 3z" /></svg>} />
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-slide-up">
+      <section className="space-y-4">
+        <DashboardSectionTitle title="Filtro operacional" description="Refine a fila por status ou texto antes de atuar nos chamados." />
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {(['ABERTA', 'EM_ANDAMENTO', 'RESOLVIDA', 'FECHADA'] as OcorrenciaStatus[]).map((status) => (
           <button key={status} onClick={() => setFilterStatus(filterStatus === status ? '' : status)} className={`p-4 rounded-xl border transition-all duration-200 ${filterStatus === status ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'}`}>
             <Badge variant={statusColors[status] || 'info'} dot>{statusLabels[status] || status}</Badge>
             <p className="text-2xl font-bold text-slate-900 dark:text-white mt-2">{ocorrencias.filter((o) => o.status === status).length}</p>
           </button>
         ))}
-      </div>
+        </div>
+      </section>
 
       <Card className="animate-slide-up">
         <CardHeader>
-          <Input placeholder="Buscar por título ou usuário..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="max-w-sm" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>} />
+          <div className="space-y-4">
+            <DashboardSectionTitle title="Fila completa" description="Lista detalhada com busca, encaminhamento e alteração de status." />
+            <Input placeholder="Buscar por título ou usuário..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="max-w-sm" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>} />
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <DataTable columns={columns} data={filteredOcorrencias} isLoading={isLoading && ocorrencias.length === 0} keyExtractor={(o) => o.id} emptyMessage="Nenhuma ocorrência encontrada." />
@@ -366,7 +409,6 @@ export default function OcorrenciasPage() {
           </div>
         </div>
       </Modal>
-      </div>
-    </div>
+    </DashboardPage>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -220,6 +221,8 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
   const { user, logout } = useAuth();
   const { toggleTheme, isDark } = useTheme();
 
+  const isItemActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
   const filteredGroups = navGroups
     .map((group) => ({
       ...group,
@@ -245,7 +248,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-4 py-5 border-b border-slate-200 dark:border-slate-200/10 flex justify-center overflow-hidden bg-white dark:bg-slate-900">
-        <img src="/oceano-logo.png" alt="Logo Oceano Residences" className="w-full max-w-[180px] h-auto object-contain scale-125 transition-transform" />
+        <Image src="/oceano-logo.png" alt="Logo Oceano Residences" width={180} height={180} className="h-auto w-full max-w-[180px] object-contain scale-125 transition-transform" priority />
       </div>
 
       {/* User Info */}
@@ -256,7 +259,10 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{user?.nome}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{user ? roleLabel[user.role] : ''}</p>
+            <div className="mt-1 flex items-center gap-2">
+              <p className="text-xs text-slate-500 dark:text-slate-400">{user ? roleLabel[user.role] : ''}</p>
+              {user ? <span className={`rounded-full bg-gradient-to-r px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white ${roleColors[user.role]}`}>ativo</span> : null}
+            </div>
           </div>
         </div>
       </div>
@@ -272,7 +278,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
             )}
             <div className="space-y-0.5">
               {group.items.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive = isItemActive(item.href);
                 return (
                   <Link
                     key={item.href}

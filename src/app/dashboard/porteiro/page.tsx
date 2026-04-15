@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import Card, { CardHeader, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -8,6 +9,7 @@ import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import StatsCard from '@/components/ui/StatsCard';
 import DataTable from '@/components/ui/DataTable';
+import { DashboardActions, DashboardHero, DashboardPage, DashboardSectionTitle } from '@/components/layout/RoleDashboard';
 import { Visitante } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,8 +34,26 @@ export default function PorteiroDashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const getDateOnly = (value?: string) => {
+    if (!value) return null;
+    const sliced = value.length >= 10 ? value.slice(0, 10) : value;
+    return new Date(`${sliced}T00:00:00`);
+  };
+
+  const isToday = (value?: string) => {
+    const date = getDateOnly(value);
+    if (!date || Number.isNaN(date.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date.getTime() === today.getTime();
+  };
+
   const visitantesPresentes = visitantes.filter((v) => !v.dataSaida);
-  const visitantesHoje = visitantes.length; // Aqui poderiamos filtrar por data de hoje real
+  const visitantesHoje = visitantes.filter((v) => isToday(v.dataEntrada));
+  const saidasHoje = visitantes.filter((v) => v.dataSaida && isToday(v.dataSaida));
+  const ultimasMovimentacoes = [...visitantes]
+    .sort((a, b) => new Date(b.dataEntrada || '').getTime() - new Date(a.dataEntrada || '').getTime())
+    .slice(0, 5);
 
   const filteredVisitantes = visitantes.filter((v) =>
     (v.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -97,24 +117,89 @@ export default function PorteiroDashboard() {
   ];
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen w-full">
-      <div className="w-full flex justify-center">
-        <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-slide-up">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Portaria</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Controle de entrada e saída de visitantes</p>
-        </div>
-        <Button onClick={() => setIsModalOpen(true)} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
-          Registrar Entrada
-        </Button>
+    <DashboardPage>
+      <DashboardHero
+        eyebrow="Portaria"
+        title="Controle de fluxo de visitantes"
+        description="Acompanhe quem entrou hoje, quem ainda está no condomínio e resolva rapidamente novas entradas e saídas."
+        status={
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge variant="success" dot>{visitantesPresentes.length} presentes agora</Badge>
+            <Badge variant="info">Turno em {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Badge>
+          </div>
+        }
+        aside={
+          <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Situação do turno</p>
+            <div className="mt-4 space-y-3">
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Entradas hoje</p>
+                <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{visitantesHoje.length}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Saídas hoje</p>
+                <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{saidasHoje.length}</p>
+              </div>
+              <Button onClick={() => setIsModalOpen(true)} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
+                Registrar entrada
+              </Button>
+            </div>
+          </div>
+        }
+      />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <StatsCard title="Entradas hoje" value={visitantesHoje.length} color="blue" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>} />
+        <StatsCard title="Presentes agora" value={visitantesPresentes.length} color="emerald" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
+        <StatsCard title="Saídas registradas" value={saidasHoje.length} color="amber" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-slide-up">
-        <StatsCard title="Visitantes Total" value={visitantesHoje} color="blue" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>} />
-        <StatsCard title="Presentes Agora" value={visitantesPresentes.length} color="emerald" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
-        <StatsCard title="Saídas Registradas" value={visitantes.filter((v) => v.dataSaida).length} color="amber" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>} />
-      </div>
+      <DashboardActions
+        actions={[
+          {
+            href: '/dashboard/porteiro/visitantes',
+            title: 'Fluxo de visitantes',
+            description: 'Abra a rotina principal da portaria com o histórico de entradas.',
+            accent: 'border-emerald-200/70 bg-gradient-to-br from-emerald-50 to-white dark:border-emerald-900/40 dark:from-emerald-950/20 dark:to-slate-900',
+            icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>,
+          },
+          {
+            href: '/dashboard/porteiro/consulta',
+            title: 'Consulta rápida',
+            description: 'Pesquise moradores e valide destino antes de liberar acesso.',
+            accent: 'border-sky-200/70 bg-gradient-to-br from-sky-50 to-white dark:border-sky-900/40 dark:from-sky-950/20 dark:to-slate-900',
+            icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+          },
+        ]}
+      />
+
+      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <Card className="animate-slide-up">
+          <CardHeader>
+            <DashboardSectionTitle title="Movimentações recentes" description="Últimos registros do turno." action={<Link href="/dashboard/porteiro/visitantes" className="text-sm font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400">Ver histórico</Link>} />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {ultimasMovimentacoes.map((visitante) => (
+              <div key={visitante.id} className="rounded-2xl border border-slate-200/80 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{visitante.nome}</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Destino Apt {visitante.apartamento} - Bloco {visitante.bloco}</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Entrada {visitante.dataEntrada ? new Date(visitante.dataEntrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-'}</p>
+                  </div>
+                  {visitante.dataSaida ? (
+                    <Badge variant="info">Saiu {new Date(visitante.dataSaida).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Badge>
+                  ) : (
+                    <Badge variant="success" dot>Dentro do condomínio</Badge>
+                  )}
+                </div>
+              </div>
+            ))}
+            {ultimasMovimentacoes.length === 0 && (
+              <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma movimentação registrada ainda.</p>
+            )}
+          </CardContent>
+        </Card>
 
       <Card className="animate-slide-up">
         <CardHeader>
@@ -124,6 +209,8 @@ export default function PorteiroDashboard() {
           <DataTable columns={columns} data={filteredVisitantes} isLoading={isLoading && visitantes.length === 0} keyExtractor={(v) => v.id} emptyMessage="Nenhum visitante registrado" />
         </CardContent>
       </Card>
+
+      </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Registrar Entrada de Visitante" size="lg">
         <form onSubmit={handleEntry} className="space-y-4">
@@ -146,8 +233,6 @@ export default function PorteiroDashboard() {
           </div>
         </form>
       </Modal>
-        </div>
-      </div>
-    </div>
+    </DashboardPage>
   );
 }

@@ -9,6 +9,9 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import StatsCard from '@/components/ui/StatsCard';
+import EmptyState from '@/components/ui/EmptyState';
+import { DashboardActions, DashboardHero, DashboardPage, DashboardSectionTitle } from '@/components/layout/RoleDashboard';
 import { Fornecedor, FornecedorFormData, Usuario, Ocorrencia, OcorrenciaPrioridade, Reserva } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
@@ -107,13 +110,14 @@ export default function ManutencaoPage() {
     const abertas = ocorrencias.filter((o) => o.status === 'ABERTA').length;
     const andamento = ocorrencias.filter((o) => o.status === 'EM_ANDAMENTO').length;
     const concluidas = ocorrencias.filter((o) => o.status === 'RESOLVIDA' || o.status === 'FECHADA').length;
+    const urgentes = ocorrencias.filter((o) => o.prioridade === 'ALTA' || o.prioridade === 'URGENTE').length;
 
     const agenda = reservas
       .filter((r) => ['PENDENTE', 'APROVADA'].includes(r.status))
       .sort((a, b) => new Date(`${a.dataReserva}T00:00:00`).getTime() - new Date(`${b.dataReserva}T00:00:00`).getTime())
       .slice(0, 7);
 
-    return { abertas, andamento, concluidas, agenda };
+    return { abertas, andamento, concluidas, urgentes, agenda };
   }, [ocorrencias, reservas]);
 
   const handleCriarChamado = async () => {
@@ -394,32 +398,62 @@ export default function ManutencaoPage() {
         </div>
       </Modal>
 
-      <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
-        <div className="w-full max-w-6xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 animate-slide-up">
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Manutenção e Serviços</h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-1">Chamados, agenda preventiva e gestão de fornecedores</p>
+      <DashboardPage>
+        <DashboardHero
+          eyebrow="Manutenção"
+          title="Chamados, fornecedores e agenda técnica no mesmo fluxo"
+          description="Acompanhe a fila operacional, identifique o que exige resposta rápida e mantenha próximos compromissos e contratos acessíveis sem trocar de contexto."
+          status={
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge variant={resumo.urgentes > 0 ? 'danger' : 'success'} dot>
+                {resumo.urgentes > 0 ? `${resumo.urgentes} chamados de alta prioridade` : 'Sem chamados críticos'}
+              </Badge>
+              <Badge variant="info">{fornecedores.length} fornecedores cadastrados</Badge>
             </div>
-            <div className="flex gap-3">
-              <Button onClick={() => setModalChamado(true)}>Novo Chamado</Button>
-              <Link href="/dashboard/sindico/agenda"><Button variant="outline">Agenda Completa</Button></Link>
+          }
+          aside={
+            <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Ação imediata</p>
+              <div className="mt-4 space-y-3">
+                <Button onClick={() => setModalChamado(true)} className="w-full">Novo Chamado</Button>
+                <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                  Encaminhe direto para um mantenedor quando já houver responsável claro para ganhar tempo de resposta.
+                </p>
+              </div>
             </div>
-          </div>
+          }
+        />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card><CardContent className="py-5"><p className="text-sm text-slate-500">Pendentes</p><p className="text-3xl font-bold text-rose-600">{resumo.abertas}</p></CardContent></Card>
-            <Card><CardContent className="py-5"><p className="text-sm text-slate-500">Em Andamento</p><p className="text-3xl font-bold text-amber-600">{resumo.andamento}</p></CardContent></Card>
-            <Card><CardContent className="py-5"><p className="text-sm text-slate-500">Concluídos</p><p className="text-3xl font-bold text-emerald-600">{resumo.concluidas}</p></CardContent></Card>
-          </div>
+        <DashboardActions
+          actions={[
+            {
+              href: '/dashboard/sindico/agenda',
+              title: 'Agenda técnica',
+              description: 'Abra o calendário completo de eventos, manutenções e alertas.',
+              accent: 'border-blue-200/70 bg-gradient-to-br from-blue-50 to-white dark:border-blue-900/40 dark:from-blue-950/20 dark:to-slate-900',
+              icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.25 2.25v3m7.5-3v3M3.75 8.25h16.5M4.5 21h15A1.5 1.5 0 0021 19.5v-12A1.5 1.5 0 0019.5 6h-15A1.5 1.5 0 003 7.5v12A1.5 1.5 0 004.5 21z" /></svg>,
+            },
+            {
+              href: '/dashboard/sindico/ocorrencias',
+              title: 'Todas as ocorrências',
+              description: 'Acesse a lista completa para triagem, filtros e acompanhamento amplo.',
+              accent: 'border-amber-200/70 bg-gradient-to-br from-amber-50 to-white dark:border-amber-900/40 dark:from-amber-950/20 dark:to-slate-900',
+              icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h10.5" /></svg>,
+            },
+          ]}
+        />
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <StatsCard title="Pendentes" value={resumo.abertas} subtitle="Chamados ainda sem início" color="red" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m0 3.75h.008v.008H12v-.008zm-8.355 2.648h16.71c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L1.913 16c-.77 1.333.192 3 1.732 3z" /></svg>} />
+          <StatsCard title="Em andamento" value={resumo.andamento} subtitle="Intervenções já em execução" color="amber" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6l4 2.5m5-2.5a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
+          <StatsCard title="Concluídos" value={resumo.concluidas} subtitle="Histórico já fechado" color="emerald" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
+          <StatsCard title="Fornecedores" value={fornecedores.length} subtitle="Base ativa para contratação" color="indigo" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7.5A2.25 2.25 0 015.25 5.25h13.5A2.25 2.25 0 0121 7.5v9A2.25 2.25 0 0118.75 18.75H5.25A2.25 2.25 0 013 16.5v-9z" /></svg>} />
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
             <Card gradient className="xl:col-span-2">
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Chamados Abertos Recentes</h2>
-                  <Link href="/dashboard/sindico/ocorrencias" className="text-sm text-blue-500 hover:text-blue-400 font-medium">Ver todos →</Link>
-                </div>
+                <DashboardSectionTitle title="Chamados abertos recentes" description="Fila de atendimento com foco no que ainda exige ação ou acompanhamento." action={<Link href="/dashboard/sindico/ocorrencias" className="text-sm font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400">Ver todos</Link>} />
               </CardHeader>
               <CardContent className="space-y-3">
                 {ocorrencias
@@ -440,14 +474,17 @@ export default function ManutencaoPage() {
                     </div>
                   ))}
                 {ocorrencias.filter((o) => o.status === 'ABERTA' || o.status === 'EM_ANDAMENTO').length === 0 && (
-                  <p className="text-sm text-slate-500">Sem chamados abertos no momento.</p>
+                  <EmptyState
+                    title="Sem chamados abertos"
+                    description="A fila operacional está limpa neste momento. Novos chamados aparecerão aqui assim que forem registrados ou encaminhados."
+                  />
                 )}
               </CardContent>
             </Card>
 
             <Card gradient>
               <CardHeader>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Próximas Reservas</h2>
+                <DashboardSectionTitle title="Próximas reservas" description="Uso das áreas que pode impactar equipes, acesso e manutenção preventiva." />
               </CardHeader>
               <CardContent className="space-y-3">
                 {resumo.agenda.map((evento) => (
@@ -464,14 +501,15 @@ export default function ManutencaoPage() {
 
           <Card gradient>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Fornecedores e Contratos</h2>
-                <Button variant="outline" onClick={() => setModalFornecedor(true)}>+ Adicionar</Button>
-              </div>
+              <DashboardSectionTitle title="Fornecedores e contratos" description="Rede de apoio para execução, renovação e contato rápido." action={<Button variant="outline" onClick={() => setModalFornecedor(true)}>+ Adicionar</Button>} />
             </CardHeader>
             <CardContent>
               {fornecedores.length === 0 ? (
-                <p className="text-sm text-slate-500">Nenhum fornecedor cadastrado. Clique em &quot;+ Adicionar&quot; para incluir.</p>
+                <EmptyState
+                  title="Nenhum fornecedor cadastrado"
+                  description="Monte aqui a base de apoio para acelerar contratação, contato e renovação dos serviços recorrentes."
+                  action={<Button variant="outline" onClick={() => setModalFornecedor(true)}>+ Adicionar</Button>}
+                />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {fornecedores.map((fornecedor) => (
@@ -503,8 +541,7 @@ export default function ManutencaoPage() {
               )}
             </CardContent>
           </Card>
-        </div>
-      </div>
+      </DashboardPage>
     </>
   );
 }

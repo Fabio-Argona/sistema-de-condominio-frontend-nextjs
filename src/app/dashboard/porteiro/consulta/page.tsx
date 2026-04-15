@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Card, { CardContent } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
+import EmptyState from '@/components/ui/EmptyState';
 import { Usuario } from '@/types';
 import { useApi } from '@/hooks/useApi';
 
@@ -93,9 +94,11 @@ export default function PorteiroConsultaPage() {
       </div>
 
       {!isLoading && usuariosOrdenados.length === 0 && (
-        <div className="text-center py-12 text-slate-400 animate-slide-up">
-          <p className="text-lg">Nenhum usuário encontrado</p>
-          <p className="text-sm mt-1">Tente buscar por outro termo</p>
+        <div className="animate-slide-up">
+          <EmptyState
+            title="Nenhum usuário encontrado"
+            description="Tente buscar por nome, apartamento, bloco ou telefone para localizar outra unidade."
+          />
         </div>
       )}
       </div>

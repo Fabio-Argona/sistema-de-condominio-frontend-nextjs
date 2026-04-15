@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Card, { CardContent, CardHeader } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
+import EmptyState from '@/components/ui/EmptyState';
 import { useApi } from '@/hooks/useApi';
 import { Ocorrencia, Visitante } from '@/types';
 
@@ -90,7 +91,10 @@ export default function SegurancaPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {resumo.ocSeguranca.length === 0 ? (
-                <p className="text-sm text-slate-500">Nenhuma ocorrência de segurança em aberto.</p>
+                <EmptyState
+                  title="Nenhuma ocorrência de segurança em aberto"
+                  description="Incidentes críticos de acesso, ronda ou suspeita aparecerão aqui enquanto estiverem ativos."
+                />
               ) : resumo.ocSeguranca.slice(0, 8).map((o) => (
                 <div key={o.id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
                   <div className="flex items-center justify-between gap-2">
@@ -124,7 +128,12 @@ export default function SegurancaPage() {
                   <p className="text-xs text-slate-500">Entrada: {new Date(visitante.dataEntrada).toLocaleString('pt-BR')}</p>
                 </div>
               ))}
-              {visitantes.length === 0 && <p className="text-sm text-slate-500">Sem visitantes registrados.</p>}
+              {visitantes.length === 0 && (
+                <EmptyState
+                  title="Sem visitantes registrados"
+                  description="Entradas e saídas de visitantes e prestadores serão listadas aqui conforme forem registradas na portaria."
+                />
+              )}
             </CardContent>
           </Card>
         </div>

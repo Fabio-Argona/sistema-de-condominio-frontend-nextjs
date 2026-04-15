@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -56,7 +57,7 @@ export default function LoginPage() {
 
     setIsRecovering(true);
     try {
-      const response = await api.post('/auth/recuperar-senha', { email: recoverEmail });
+      await api.post('/auth/recuperar-senha', { email: recoverEmail });
       toast.success('Nova senha enviada para seu e-mail!');
       
       setIsRecoverModalOpen(false);
@@ -128,7 +129,7 @@ export default function LoginPage() {
         <div className="max-w-lg animate-slide-up">
           {/* Logo */}
           <div className="flex flex-col items-center gap-1 mb-[5px]">
-            <img src="/oceano-logo.png" alt="Logo Oceano Residences" className="w-[300px] h-[300px] object-contain" />
+            <Image src="/oceano-logo.png" alt="Logo Oceano Residences" width={300} height={300} className="h-[300px] w-[300px] object-contain" priority />
           </div>
 
           <h2 className="text-4xl font-bold text-slate-800 dark:text-white leading-tight mb-4">

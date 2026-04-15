@@ -6,6 +6,8 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Pagination from '@/components/ui/Pagination';
+import StatsCard from '@/components/ui/StatsCard';
+import { DashboardHero, DashboardPage, DashboardSectionTitle } from '@/components/layout/RoleDashboard';
 import { Boleto } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
@@ -100,6 +102,20 @@ export default function BoletosPage() {
     return boletosOrdenados.slice(start, start + pageSize);
   }, [currentPage, boletosOrdenados, pageSize]);
 
+  const resumo = useMemo(() => {
+    const pagos = boletos.filter((boleto) => boleto.status === 'PAGO');
+    const vencidos = boletosOrdenados.filter((boleto) => boleto.status === 'VENCIDO');
+    const pendentes = boletosOrdenados.filter((boleto) => boleto.status === 'PENDENTE');
+    const valorAberto = [...vencidos, ...pendentes].reduce((total, boleto) => total + boleto.valor, 0);
+
+    return {
+      pagos: pagos.length,
+      vencidos: vencidos.length,
+      pendentes: pendentes.length,
+      valorAberto,
+    };
+  }, [boletos, boletosOrdenados]);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [pageSize, boletos.length]);
@@ -112,20 +128,42 @@ export default function BoletosPage() {
   }, [boletosOrdenados.length, currentPage, pageSize]);
 
   return (
-    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Meus Boletos</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Gerencie suas cotas condominiais e boletos
-          </p>
-        </div>
+    <DashboardPage>
+      <DashboardHero
+        eyebrow="Pagamentos"
+        title="Controle das suas cotas e vencimentos"
+        description="Veja rapidamente o que está pago, o que vence em breve e o que já exige ação imediata, com download direto do boleto em PDF."
+        status={
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge variant={resumo.vencidos > 0 ? 'danger' : 'success'} dot>
+              {resumo.vencidos > 0 ? `${resumo.vencidos} boletos vencidos` : 'Nenhum boleto vencido'}
+            </Badge>
+            <Badge variant="info">{boletosOrdenados.length} boletos visíveis</Badge>
+          </div>
+        }
+        aside={
+          <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Posição atual</p>
+            <div className="mt-4 space-y-3">
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Valor em aberto</p>
+                <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">R$ {resumo.valorAberto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              </div>
+            </div>
+          </div>
+        }
+      />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatsCard title="Pendentes" value={resumo.pendentes} subtitle="Boletos a vencer em breve" color="amber" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
+        <StatsCard title="Vencidos" value={resumo.vencidos} subtitle="Exigem regularização imediata" color="red" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m0 3.75h.008v.008H12v-.008zm-8.355 2.648h16.71c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L1.913 16c-.77 1.333.192 3 1.732 3z" /></svg>} />
+        <StatsCard title="Pagos" value={resumo.pagos} subtitle="Histórico já conciliado" color="emerald" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
+        <StatsCard title="Valor em aberto" value={`R$ ${resumo.valorAberto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} subtitle="Soma de vencidos e pendentes" color="indigo" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" /></svg>} />
       </div>
 
       <Card>
         <CardHeader>
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Histórico e Pendências</h2>
+          <DashboardSectionTitle title="Histórico e pendências" description="Todos os boletos ordenados por prioridade de pagamento e vencimento." />
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -220,7 +258,6 @@ export default function BoletosPage() {
           />
         )}
       </Card>
-      </div>
-    </div>
+    </DashboardPage>
   );
 }

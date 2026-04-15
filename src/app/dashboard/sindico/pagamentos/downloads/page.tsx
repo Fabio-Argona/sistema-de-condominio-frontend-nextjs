@@ -126,7 +126,7 @@ export default function HistoricoDownloadsBoletosPage() {
   }, [pageSize, roleFilter, searchTerm]);
 
   useEffect(() => {
-    const totalPages = Math.max(1, Math.ceil(filteredLogs.length / pageSize));
+    const totalPages = Math.max(1, Math.ceil(filteredGroups.length / pageSize));
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
     }

@@ -1,16 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Card, { CardHeader, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import StatsCard from '@/components/ui/StatsCard';
-import Select from '@/components/ui/Select';
+import { DashboardActions, DashboardHero, DashboardPage, DashboardSectionTitle } from '@/components/layout/RoleDashboard';
 import toast from 'react-hot-toast';
 import { Boleto } from '@/types';
 import { useApi } from '@/hooks/useApi';
 
 export default function RelatoriosPage() {
-  const [periodo, setPeriodo] = useState('2026');
+  const [periodo] = useState('2026');
   const [monthlyData, setMonthlyData] = useState<{ mes: string, recebido: number, pendente: number, atrasado: number }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { get } = useApi();
@@ -54,7 +54,7 @@ export default function RelatoriosPage() {
         }
         
         setMonthlyData(dataArr);
-      } catch(e) {
+      } catch {
         toast.error('Erro ao buscar os relatórios financeiros');
       } finally {
         setIsLoading(false);
@@ -106,6 +106,12 @@ export default function RelatoriosPage() {
   const totalRecebido = monthlyData.reduce((sum, d) => sum + d.recebido, 0);
   const totalPendente = monthlyData.reduce((sum, d) => sum + d.pendente, 0);
   const totalAtrasado = monthlyData.reduce((sum, d) => sum + d.atrasado, 0);
+  const totalGeral = totalRecebido + totalPendente + totalAtrasado;
+  const picoMes = useMemo(() => monthlyData.reduce((melhor, atual) => {
+    const melhorTotal = melhor.recebido + melhor.pendente + melhor.atrasado;
+    const atualTotal = atual.recebido + atual.pendente + atual.atrasado;
+    return atualTotal > melhorTotal ? atual : melhor;
+  }, monthlyData[0] ?? { mes: 'Sem Dados', recebido: 0, pendente: 0, atrasado: 0 }), [monthlyData]);
 
   if (isLoading) {
     return (
@@ -117,34 +123,59 @@ export default function RelatoriosPage() {
   }
 
   return (
-    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-slide-up">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Relatórios</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Relatórios financeiros e exportação</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={handleExportPDF} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}>
-            Exportar PDF
-          </Button>
-          <Button variant="outline" onClick={handleExportExcel} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}>
-            Exportar Excel
-          </Button>
-        </div>
+    <DashboardPage>
+      <DashboardHero
+        eyebrow="Relatórios"
+        title="Leitura financeira pronta para decisão e exportação"
+        description="Consolide recebido, pendente e atrasado em uma visão anual, com base mensal e atalhos para exportar o material em PDF ou planilha."
+        status={
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" onClick={handleExportPDF} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}>
+              Exportar PDF
+            </Button>
+            <Button variant="outline" onClick={handleExportExcel} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}>
+              Exportar Excel
+            </Button>
+          </div>
+        }
+        aside={
+          <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Destaque anual</p>
+            <div className="mt-4 space-y-3">
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Maior volume</p>
+                <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{picoMes.mes}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Volume total</p>
+                <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">R$ {totalGeral.toLocaleString('pt-BR')}</p>
+              </div>
+            </div>
+          </div>
+        }
+      />
+
+      <DashboardActions
+        actions={[
+          {
+            href: '/dashboard/sindico/financeiro',
+            title: 'Visão financeira',
+            description: 'Volte ao painel financeiro operacional com inadimplência e saldo do mês.',
+            accent: 'border-emerald-200/70 bg-gradient-to-br from-emerald-50 to-white dark:border-emerald-900/40 dark:from-emerald-950/20 dark:to-slate-900',
+            icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>,
+          },
+        ]}
+      />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 animate-slide-up">
+        <StatsCard title="Total recebido" value={`R$ ${totalRecebido.toLocaleString('pt-BR')}`} subtitle="Pagamentos compensados no ano" color="emerald" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
+        <StatsCard title="Total pendente" value={`R$ ${totalPendente.toLocaleString('pt-BR')}`} subtitle="Ainda dentro do prazo" color="amber" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
+        <StatsCard title="Total atrasado" value={`R$ ${totalAtrasado.toLocaleString('pt-BR')}`} subtitle="Pressão de inadimplência acumulada" color="red" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>} />
       </div>
 
-      {/* Resumo Anual */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-slide-up">
-        <StatsCard title="Total Recebido (Ano)" value={`R$ ${totalRecebido.toLocaleString('pt-BR')}`} color="emerald" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
-        <StatsCard title="Total Pendente" value={`R$ ${totalPendente.toLocaleString('pt-BR')}`} color="amber" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
-        <StatsCard title="Total Atrasado" value={`R$ ${totalAtrasado.toLocaleString('pt-BR')}`} color="red" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>} />
-      </div>
-
-      {/* Tabela Mensal */}
       <Card gradient className="animate-slide-up">
         <CardHeader>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Receitas por Mês</h2>
+          <DashboardSectionTitle title="Receitas por mês" description="Base mensal para recebido, pendente, atrasado e total consolidado." />
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -183,15 +214,13 @@ export default function RelatoriosPage() {
         </CardContent>
       </Card>
 
-      {/* Chart placeholder */}
       <Card gradient className="animate-slide-up">
         <CardHeader>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Gráfico de Receitas</h2>
+          <DashboardSectionTitle title="Gráfico de receitas" description="Distribuição visual do volume mensal por situação de cobrança." />
         </CardHeader>
         <CardContent>
           <div className="h-64 flex items-end justify-around gap-4 pb-4">
             {monthlyData.map((d) => {
-              const total = d.recebido + d.pendente + d.atrasado;
               const maxVal = Math.max(...monthlyData.map((m) => m.recebido + m.pendente + m.atrasado));
               return (
                 <div key={d.mes} className="flex flex-col items-center gap-2 flex-1 max-w-24">
@@ -212,7 +241,6 @@ export default function RelatoriosPage() {
           </div>
         </CardContent>
       </Card>
-      </div>
-    </div>
+    </DashboardPage>
   );
 }

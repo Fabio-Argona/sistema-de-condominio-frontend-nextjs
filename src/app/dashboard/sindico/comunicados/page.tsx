@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
+import EmptyState from '@/components/ui/EmptyState';
 import { Comunicado } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
@@ -176,7 +177,11 @@ export default function ComunicadosPage() {
 
       <div className="space-y-4">
         {comunicados.length === 0 ? (
-           <p className="text-slate-500 text-center py-8">Nenhum comunicado encontrado no banco de dados.</p>
+           <EmptyState
+             title="Nenhum comunicado publicado"
+             description="Crie o primeiro comunicado para iniciar a comunicação oficial com moradores, porteiros e demais perfis."
+             action={<Button onClick={() => { setSelectedComunicado(null); setFormData({ titulo: '', conteudo: '', categoria: 'Geral', importante: false }); setIsModalOpen(true); }}>Novo Comunicado</Button>}
+           />
         ) : comunicados.map((comunicado, i) => (
           <Card key={comunicado.id} hover gradient className={`animate-slide-up stagger-${i % 5 + 1}`}>
             <CardContent className="p-6">

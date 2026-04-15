@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Textarea from '@/components/ui/Textarea';
 import Badge from '@/components/ui/Badge';
+import EmptyState from '@/components/ui/EmptyState';
 import { Fornecedor, FornecedorFormData } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
@@ -133,14 +134,11 @@ export default function UsuarioFornecedoresPage() {
             ))}
           </div>
         ) : filtrados.length === 0 ? (
-          <div className="text-center py-16">
-            <svg className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
-              {searchTerm ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado ainda.'}
-            </p>
-          </div>
+          <EmptyState
+            title={searchTerm ? 'Nenhum fornecedor encontrado' : 'Nenhum fornecedor cadastrado'}
+            description={searchTerm ? 'Tente ajustar a busca por nome, contato ou período de vigência para localizar outro fornecedor.' : 'Quando novos fornecedores forem cadastrados, eles aparecerão aqui para consulta e gestão.'}
+            action={!searchTerm ? <Button onClick={() => setIsModalOpen(true)}>Adicionar fornecedor</Button> : undefined}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-slide-up">
             {filtrados.map((f) => (

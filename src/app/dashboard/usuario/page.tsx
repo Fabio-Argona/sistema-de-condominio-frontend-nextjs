@@ -1,20 +1,37 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import Card, { CardHeader, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
-import { Comunicado, Reserva, Ocorrencia, Boleto } from '@/types';
+import Button from '@/components/ui/Button';
+import StatsCard from '@/components/ui/StatsCard';
+import { DashboardActions, DashboardHero, DashboardPage, DashboardSectionTitle } from '@/components/layout/RoleDashboard';
+import { Boleto, Comunicado, Ocorrencia, Reserva } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
 
 import { useAuth } from '@/contexts/AuthContext';
+
+const statusConfig = {
+  ABERTA: { label: 'Aberta', variant: 'danger' as const },
+  EM_ANDAMENTO: { label: 'Em andamento', variant: 'warning' as const },
+  RESOLVIDA: { label: 'Resolvida', variant: 'success' as const },
+  FECHADA: { label: 'Fechada', variant: 'info' as const },
+};
+
+const reservaStatusConfig = {
+  PENDENTE: { label: 'Pendente', variant: 'warning' as const },
+  APROVADA: { label: 'Aprovada', variant: 'success' as const },
+  REJEITADA: { label: 'Rejeitada', variant: 'danger' as const },
+  CANCELADA: { label: 'Cancelada', variant: 'info' as const },
+};
 
 export default function UsuarioDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [minhasOcorrencias, setMinhasOcorrencias] = useState<Ocorrencia[]>([]);
   const [minhasReservas, setMinhasReservas] = useState<Reserva[]>([]);
-  const [situacaoFinanceira, setSituacaoFinanceira] = useState<'EM_DIA' | 'PENDENTE' | null>(null);
   const [boletosAbertos, setBoletosAbertos] = useState<Boleto[]>([]);
 
   const { get, post } = useApi();
@@ -47,21 +64,24 @@ export default function UsuarioDashboard() {
     const loadDashboardData = async () => {
       const dataComunicados = await get('/comunicados') as Comunicado[];
       if (dataComunicados) {
-        setComunicados(dataComunicados.slice(0, 3));
+        setComunicados(dataComunicados);
       }
       
       if (user) {
-        const dataOcorrencias = await get(`/ocorrencias/usuario/${user.id}`) as Ocorrencia[];
-         if (dataOcorrencias) {
-            setMinhasOcorrencias(dataOcorrencias);
-         }
-         
-        const dataReservas = await get(`/reservas/usuario/${user.id}`) as Reserva[];
-         if (dataReservas) {
-            setMinhasReservas(dataReservas);
-         }
-         
-        const dataBoletos = await get(`/boletos/usuario/${user.id}`) as Boleto[];
+        const [dataOcorrencias, dataReservas, dataBoletos] = await Promise.all([
+          get(`/ocorrencias/usuario/${user.id}`) as Promise<Ocorrencia[]>,
+          get(`/reservas/usuario/${user.id}`) as Promise<Reserva[]>,
+          get(`/boletos/usuario/${user.id}`) as Promise<Boleto[]>,
+        ]);
+
+        if (dataOcorrencias) {
+          setMinhasOcorrencias(dataOcorrencias);
+        }
+
+        if (dataReservas) {
+          setMinhasReservas(dataReservas);
+        }
+
         if (dataBoletos && dataBoletos.length > 0) {
           const hoje = new Date();
           hoje.setHours(0, 0, 0, 0);
@@ -87,15 +107,6 @@ export default function UsuarioDashboard() {
 
           pendentesEVencidos.sort((a, b) => new Date(`${a.dataVencimento}T00:00:00`).getTime() - new Date(`${b.dataVencimento}T00:00:00`).getTime());
           setBoletosAbertos(pendentesEVencidos);
-          // Só exibe "pendência" se houver boleto vencido (atrasado)
-          const existeVencido = pendentesEVencidos.some(b => {
-            const venc = new Date(b.dataVencimento + 'T00:00:00');
-            const status = (b.status || '').toUpperCase().trim();
-            return (status !== 'PAGO' && (status === 'VENCIDO' || venc < hoje));
-          });
-          setSituacaoFinanceira(existeVencido ? 'PENDENTE' : 'EM_DIA');
-        } else {
-          setSituacaoFinanceira('EM_DIA');
         }
       }
     };
@@ -106,183 +117,214 @@ export default function UsuarioDashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  const resumo = useMemo(() => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const ocorrenciasAbertas = minhasOcorrencias.filter((item) => item.status === 'ABERTA' || item.status === 'EM_ANDAMENTO');
+    const reservasAtivas = minhasReservas.filter((item) => item.status === 'APROVADA' || item.status === 'PENDENTE');
+    const proximasReservas = [...reservasAtivas]
+      .filter((item) => new Date(`${item.dataReserva}T00:00:00`).getTime() >= hoje.getTime())
+      .sort((a, b) => new Date(`${a.dataReserva}T00:00:00`).getTime() - new Date(`${b.dataReserva}T00:00:00`).getTime());
+    const comunicadosImportantes = comunicados.filter((item) => item.importante).length;
+    const boletosVencidos = boletosAbertos.filter((item) => {
+      const vencimento = new Date(`${item.dataVencimento}T00:00:00`);
+      return (item.status || '').toUpperCase() === 'VENCIDO' || vencimento < hoje;
+    });
+
+    return {
+      ocorrenciasAbertas,
+      reservasAtivas,
+      proximasReservas,
+      comunicadosImportantes,
+      boletosVencidos,
+      situacaoFinanceira: boletosVencidos.length > 0 ? 'PENDENTE' : 'EM_DIA',
+      proximasEntregas: [
+        boletosAbertos[0] ? `Boleto: ${boletosAbertos[0].descricao}` : null,
+        proximasReservas[0] ? `Reserva: ${proximasReservas[0].areaComumNome}` : null,
+        ocorrenciasAbertas[0] ? `Ocorrência: ${ocorrenciasAbertas[0].titulo}` : null,
+      ].filter(Boolean) as string[],
+    };
+  }, [boletosAbertos, comunicados, minhasOcorrencias, minhasReservas]);
+
   if (isLoading) {
-    return <div className="space-y-6 animate-pulse"><div className="h-8 w-48 bg-slate-200 dark:bg-slate-700 rounded-lg" /><div className="grid grid-cols-1 md:grid-cols-3 gap-6">{[...Array(3)].map((_, i) => <div key={i} className="h-32 bg-slate-200 dark:bg-slate-700 rounded-2xl" />)}</div></div>;
+    return (
+      <DashboardPage>
+        <div className="space-y-6 animate-pulse">
+          <div className="h-40 rounded-[28px] bg-slate-200 dark:bg-slate-800" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[...Array(4)].map((_, i) => <div key={i} className="h-32 rounded-3xl bg-slate-200 dark:bg-slate-800" />)}
+          </div>
+        </div>
+      </DashboardPage>
+    );
   }
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen w-full">
-      <div className="w-full flex justify-center">
-        <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-8 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
-      <div className="animate-slide-up">
-        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Olá, {user?.nome?.split(' ')[0] || 'Usuário'}!</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Bem-vindo ao portal do usuário</p>
-        {situacaoFinanceira === 'EM_DIA' && (
-          <div className="flex items-center gap-2 mt-2">
-            <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <span className="text-sm font-semibold text-emerald-500">Sua situação financeira está em dia</span>
+    <DashboardPage>
+      <DashboardHero
+        eyebrow="Morador"
+        title={`Olá, ${user?.nome?.split(' ')[0] || 'Usuário'}`}
+        description="Aqui ficam os alertas que pedem atenção, seus próximos compromissos e o acesso rápido ao que mais importa no condomínio."
+        status={
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge variant={resumo.situacaoFinanceira === 'EM_DIA' ? 'success' : 'danger'} dot>
+              {resumo.situacaoFinanceira === 'EM_DIA' ? 'Situação financeira em dia' : 'Existe pendência financeira'}
+            </Badge>
+            <Badge variant="info">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}</Badge>
           </div>
-        )}
-        {situacaoFinanceira === 'PENDENTE' && (
-          <div className="flex items-center gap-2 mt-2">
-            <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-            <span className="text-sm font-semibold text-red-500">Você possui pendência financeira</span>
+        }
+        aside={
+          <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Próximos passos</p>
+            <div className="mt-4 space-y-3">
+              {resumo.proximasEntregas.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma pendência imediata identificada.</p>
+              ) : (
+                resumo.proximasEntregas.map((item) => (
+                  <div key={item} className="rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
+                    {item}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        )}
+        }
+      />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatsCard title="Boletos em aberto" value={boletosAbertos.length} color={resumo.boletosVencidos.length > 0 ? 'red' : 'blue'} icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" /></svg>} />
+        <StatsCard title="Ocorrências ativas" value={resumo.ocorrenciasAbertas.length} color="amber" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m0 3.75h.008v.008H12v-.008zm-8.355 2.648h16.71c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L1.913 16c-.77 1.333.192 3 1.732 3z" /></svg>} />
+        <StatsCard title="Reservas em andamento" value={resumo.reservasAtivas.length} color="emerald" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>} />
+        <StatsCard title="Comunicados importantes" value={resumo.comunicadosImportantes} color="indigo" icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535" /></svg>} />
       </div>
 
-      {/* Boletos pendentes/vencidos */}
-      {boletosAbertos.length > 0 && (
-        <div className="space-y-3 animate-slide-up">
-          {boletosAbertos.map((boleto) => {
-            const vencimento = new Date(boleto.dataVencimento + 'T00:00:00');
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-            const diffMs = hoje.getTime() - vencimento.getTime();
-            const diasAtraso = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            const isVencido = boleto.status === 'VENCIDO' || diasAtraso > 0;
+      <DashboardActions
+        actions={[
+          {
+            href: '/dashboard/usuario/pagamentos',
+            title: 'Financeiro',
+            description: 'Baixe boletos, acompanhe vencimentos e consulte o histórico.',
+            accent: 'border-red-200/70 bg-gradient-to-br from-red-50 to-white dark:border-red-900/40 dark:from-red-950/20 dark:to-slate-900',
+            icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" /></svg>,
+          },
+          {
+            href: '/dashboard/usuario/ocorrencias',
+            title: 'Ocorrências',
+            description: 'Abra chamados e acompanhe o andamento das solicitações.',
+            accent: 'border-amber-200/70 bg-gradient-to-br from-amber-50 to-white dark:border-amber-900/40 dark:from-amber-950/20 dark:to-slate-900',
+            icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m0 3.75h.008v.008H12v-.008zm-8.355 2.648h16.71c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L1.913 16c-.77 1.333.192 3 1.732 3z" /></svg>,
+          },
+          {
+            href: '/dashboard/usuario/reservas',
+            title: 'Reservas',
+            description: 'Veja áreas comuns disponíveis e acompanhe aprovações.',
+            accent: 'border-emerald-200/70 bg-gradient-to-br from-emerald-50 to-white dark:border-emerald-900/40 dark:from-emerald-950/20 dark:to-slate-900',
+            icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>,
+          },
+          {
+            href: '/dashboard/usuario/comunicados',
+            title: 'Comunicados',
+            description: 'Leia os avisos recentes e não perca atualizações relevantes.',
+            accent: 'border-sky-200/70 bg-gradient-to-br from-sky-50 to-white dark:border-sky-900/40 dark:from-sky-950/20 dark:to-slate-900',
+            icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535" /></svg>,
+          },
+        ]}
+      />
 
-            return (
-              <div
-                key={boleto.id}
-                className={`flex items-center justify-between p-4 rounded-xl border ${
-                  isVencido
-                    ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
-                    : 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {isVencido ? (
-                    <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                  ) : (
-                    <svg className="w-5 h-5 text-yellow-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  )}
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <Card gradient>
+          <CardHeader>
+            <DashboardSectionTitle title="Fila do morador" description="Itens que merecem acompanhamento agora." action={<Link href="/dashboard/usuario/ocorrencias" className="text-sm font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400">Abrir módulo</Link>} />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {resumo.ocorrenciasAbertas.slice(0, 3).map((ocorrencia) => (
+              <div key={ocorrencia.id} className="rounded-2xl border border-slate-200/80 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className={`text-sm font-semibold ${isVencido ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'}`}>
-                      {boleto.descricao} — R$ {boleto.valor.toFixed(2).replace('.', ',')}
-                    </p>
-                    <p className={`text-xs mt-0.5 ${isVencido ? 'text-red-500 dark:text-red-400' : 'text-yellow-500 dark:text-yellow-400'}`}>
-                      {isVencido
-                        ? `Vencido há ${diasAtraso} dia${diasAtraso !== 1 ? 's' : ''}`
-                        : `Vence em ${vencimento.toLocaleDateString('pt-BR')}`
-                      }
-                    </p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{ocorrencia.titulo}</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{ocorrencia.categoria} • {new Date(ocorrencia.dataCriacao || '').toLocaleDateString('pt-BR')}</p>
                   </div>
+                  <Badge variant={statusConfig[ocorrencia.status].variant} dot>{statusConfig[ocorrencia.status].label}</Badge>
                 </div>
-                <button
-                  onClick={() => handleDownloadBoleto(boleto)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    isVencido
-                      ? 'bg-red-500 hover:bg-red-600 text-white'
-                      : 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                  Baixar Boleto
-                </button>
               </div>
-            );
-          })}
-        </div>
-      )}
+            ))}
+            {resumo.ocorrenciasAbertas.length === 0 && (
+              <p className="rounded-2xl border border-dashed border-slate-200 px-4 py-5 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">Nenhuma ocorrência ativa no momento.</p>
+            )}
+            {boletosAbertos.slice(0, 2).map((boleto) => {
+              const vencimento = new Date(`${boleto.dataVencimento}T00:00:00`);
+              const hoje = new Date();
+              hoje.setHours(0, 0, 0, 0);
+              const isVencido = (boleto.status || '').toUpperCase() === 'VENCIDO' || vencimento < hoje;
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Comunicados */}
-        <Card gradient className="animate-slide-up">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Comunicados</h2>
-              <a href="/dashboard/usuario/comunicados" className="text-sm text-blue-500 hover:text-blue-400 font-medium">Ver todos →</a>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-slate-100 dark:divide-slate-700/30">
-              {comunicados.length === 0 ? (
-                <div className="px-6 py-8 text-center text-slate-400 text-sm">Nenhum comunicado recente.</div>
-              ) : comunicados.map((c) => (
-                <div key={c.id} className="px-6 py-4 hover:bg-slate-50/50 dark:hover:bg-slate-700/20 transition-colors cursor-pointer" onClick={() => window.location.href='/dashboard/usuario/comunicados'}>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        {c.importante && <Badge variant="danger" size="sm">Importante</Badge>}
-                        <Badge variant="info" size="sm">{c.categoria}</Badge>
-                      </div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{c.titulo}</p>
-                      <p className="text-xs text-slate-400 mt-1">{c.conteudo}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-slate-400">Por {c.autor}</span>
-                        <span className="text-xs text-slate-300">•</span>
-                        <span className="text-xs text-slate-400">{new Date(c.dataCriacao).toLocaleDateString('pt-BR')}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Minhas Ocorrências (substituindo pagamentos por enquanto) */}
-        <Card gradient className="animate-slide-up">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Minhas Ocorrências</h2>
-              <a href="/dashboard/usuario/ocorrencias" className="text-sm text-blue-500 hover:text-blue-400 font-medium">Ver todas →</a>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-slate-100 dark:divide-slate-700/30">
-              {minhasOcorrencias.length === 0 ? (
-                <div className="px-6 py-8 text-center text-slate-400 text-sm">Nenhuma ocorrência sua foi registrada.</div>
-              ) : minhasOcorrencias.slice(0, 3).map((o) => (
-                <div key={o.id} className="px-6 py-4 hover:bg-slate-50/50 dark:hover:bg-slate-700/20 transition-colors">
-                  <div className="flex items-center justify-between">
+              return (
+                <div key={boleto.id} className={`rounded-2xl border p-4 ${isVencido ? 'border-red-200 bg-red-50/70 dark:border-red-900/50 dark:bg-red-950/20' : 'border-amber-200 bg-amber-50/70 dark:border-amber-900/50 dark:bg-amber-950/20'}`}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{o.titulo}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{o.categoria} • {new Date(o.dataCriacao || '').toLocaleDateString('pt-BR')}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{boleto.descricao}</p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">R$ {boleto.valor.toFixed(2).replace('.', ',')} • Vencimento em {vencimento.toLocaleDateString('pt-BR')}</p>
                     </div>
-                    <div className="text-right flex flex-col items-end gap-1">
-                      <Badge variant={o.status === 'RESOLVIDA' ? 'success' : o.status === 'ABERTA' ? 'danger' : o.status === 'EM_ANDAMENTO' ? 'warning' : 'info'} size="sm" dot>
-                         {o.status === 'EM_ANDAMENTO' ? 'Andamento' : o.status.charAt(0).toUpperCase() + o.status.slice(1).toLowerCase()}
-                      </Badge>
-                    </div>
+                    <Button size="sm" variant={isVencido ? 'danger' : 'primary'} onClick={() => handleDownloadBoleto(boleto)}>
+                      Baixar boleto
+                    </Button>
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Minhas Reservas - só aparece se tiver reservas ativas */}
-      {minhasReservas.filter(r => r.status === 'APROVADA').length > 0 && (
-        <Card gradient className="animate-slide-up">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Minhas Reservas Ativas</h2>
-              <a href="/dashboard/usuario/reservas" className="text-sm text-blue-500 hover:text-blue-400 font-medium">Ver todas →</a>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-slate-100 dark:divide-slate-700/30">
-              {minhasReservas.filter(r => r.status === 'APROVADA').map((r) => (
-                <div key={r.id} className="px-6 py-4 hover:bg-slate-50/50 dark:hover:bg-slate-700/20 transition-colors">
-                  <div className="flex items-center justify-between">
+        <div className="space-y-6">
+          <Card gradient>
+            <CardHeader>
+              <DashboardSectionTitle title="Próximas reservas" description="O que está para acontecer nos próximos dias." action={<Link href="/dashboard/usuario/reservas" className="text-sm font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400">Ver tudo</Link>} />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {resumo.proximasReservas.slice(0, 4).map((reserva) => (
+                <div key={reserva.id} className="rounded-2xl border border-slate-200/80 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{r.areaComumNome}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{new Date(r.dataReserva + 'T00:00:00').toLocaleDateString('pt-BR')} • {r.horaInicio} - {r.horaFim}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{reserva.areaComumNome}</p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{new Date(`${reserva.dataReserva}T00:00:00`).toLocaleDateString('pt-BR')} • {reserva.horaInicio} - {reserva.horaFim}</p>
                     </div>
-                    <Badge variant="success" size="sm">Aprovada</Badge>
+                    <Badge variant={reservaStatusConfig[reserva.status].variant}>{reservaStatusConfig[reserva.status].label}</Badge>
                   </div>
                 </div>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              {resumo.proximasReservas.length === 0 && (
+                <p className="text-sm text-slate-500 dark:text-slate-400">Nenhuma reserva próxima encontrada.</p>
+              )}
+            </CardContent>
+          </Card>
 
+          <Card gradient>
+            <CardHeader>
+              <DashboardSectionTitle title="Comunicados recentes" description="Avisos com impacto direto na rotina do condomínio." action={<Link href="/dashboard/usuario/comunicados" className="text-sm font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400">Ver todos</Link>} />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {comunicados.slice(0, 4).map((comunicado) => (
+                <Link key={comunicado.id} href="/dashboard/usuario/comunicados" className="block rounded-2xl border border-slate-200/80 bg-white/70 p-4 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:bg-slate-900">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="mb-2 flex items-center gap-2">
+                        {comunicado.importante ? <Badge variant="danger" size="sm">Importante</Badge> : null}
+                        <Badge variant="info" size="sm">{comunicado.categoria}</Badge>
+                      </div>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{comunicado.titulo}</p>
+                      <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{comunicado.conteudo}</p>
+                    </div>
+                    <span className="text-xs text-slate-400">{new Date(comunicado.dataCriacao).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                </Link>
+              ))}
+              {comunicados.length === 0 && (
+                <p className="text-sm text-slate-500 dark:text-slate-400">Nenhum comunicado recente.</p>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </div>
+    </DashboardPage>
   );
 }
