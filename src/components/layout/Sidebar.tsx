@@ -14,6 +14,12 @@ interface NavItem {
   roles: UserRole[];
 }
 
+interface NavGroup {
+  category: string; // vazio = sem cabeçalho
+  roles: UserRole[];
+  items: NavItem[];
+}
+
 // SVG Icons
 const icons = {
   dashboard: (
@@ -114,34 +120,89 @@ const icons = {
   ),
 };
 
-const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard/sindico', icon: icons.dashboard, roles: ['SINDICO'] },
-  { label: 'Dashboard', href: '/dashboard/morador', icon: icons.dashboard, roles: ['MORADOR'] },
-  { label: 'Dashboard', href: '/dashboard/porteiro', icon: icons.dashboard, roles: ['PORTEIRO'] },
-  { label: 'Financeiro', href: '/dashboard/sindico/financeiro', icon: icons.payment, roles: ['SINDICO'] },
-  { label: 'Manutenção', href: '/dashboard/sindico/manutencao', icon: icons.maintenance, roles: ['SINDICO'] },
-  { label: 'Agenda', href: '/dashboard/sindico/agenda', icon: icons.calendar, roles: ['SINDICO'] },
-  { label: 'Segurança', href: '/dashboard/sindico/seguranca', icon: icons.security, roles: ['SINDICO'] },
-  // Pagamentos logo após Dashboard
-  { label: 'Pagamentos', href: '/dashboard/sindico/pagamentos', icon: icons.payment, roles: ['SINDICO'] },
-  { label: 'Histórico de Boletos', href: '/dashboard/sindico/pagamentos/historico', icon: icons.report, roles: ['SINDICO'] },
-  { label: 'Pagamentos', href: '/dashboard/morador/pagamentos', icon: icons.payment, roles: ['MORADOR'] },
-  { label: 'Moradores', href: '/dashboard/sindico/moradores', icon: icons.users, roles: ['SINDICO'] },
-  { label: 'Espaços', href: '/dashboard/sindico/espacos', icon: icons.building, roles: ['SINDICO'] },
-  { label: 'Ocorrências', href: '/dashboard/sindico/ocorrencias', icon: icons.occurrence, roles: ['SINDICO'] },
-  { label: 'Ocorrências', href: '/dashboard/morador/ocorrencias', icon: icons.occurrence, roles: ['MORADOR'] },
-  { label: 'Reservas', href: '/dashboard/sindico/reservas', icon: icons.calendar, roles: ['SINDICO'] },
-  { label: 'Reservas', href: '/dashboard/morador/reservas', icon: icons.calendar, roles: ['MORADOR'] },
-  { label: 'Comunicados', href: '/dashboard/sindico/comunicados', icon: icons.announcement, roles: ['SINDICO'] },
-  { label: 'Comunicados', href: '/dashboard/morador/comunicados', icon: icons.announcement, roles: ['MORADOR'] },
-  { label: 'Consulta', href: '/dashboard/morador/consulta', icon: icons.users, roles: ['MORADOR'] },
-  { label: 'Fornecedores', href: '/dashboard/morador/fornecedores', icon: icons.supplier, roles: ['MORADOR'] },
-  { label: 'Trocar Senha', href: '/dashboard/morador/perfil', icon: icons.profile, roles: ['MORADOR'] },
-  { label: 'Relatórios', href: '/dashboard/sindico/relatorios', icon: icons.report, roles: ['SINDICO'] },
-  { label: 'Acessos', href: '/dashboard/sindico/acessos', icon: icons.access, roles: ['SINDICO'] },
-  // Libera visão do porteiro para SÍNDICO (consulta)
-  { label: 'Visitantes', href: '/dashboard/porteiro/visitantes', icon: icons.visitor, roles: ['PORTEIRO', 'SINDICO'] },
-  { label: 'Consulta', href: '/dashboard/porteiro/consulta', icon: icons.users, roles: ['PORTEIRO', 'SINDICO'] },
+const navGroups: NavGroup[] = [
+  // ─── GERAL (todos os roles) ───────────────────────────────────────────────
+  {
+    category: '',
+    roles: ['SINDICO', 'MORADOR', 'PORTEIRO'],
+    items: [
+      { label: 'Dashboard', href: '/dashboard/sindico',  icon: icons.dashboard, roles: ['SINDICO'] },
+      { label: 'Dashboard', href: '/dashboard/morador',  icon: icons.dashboard, roles: ['MORADOR'] },
+      { label: 'Dashboard', href: '/dashboard/porteiro', icon: icons.dashboard, roles: ['PORTEIRO'] },
+    ],
+  },
+
+  // ─── FINANCEIRO ───────────────────────────────────────────────────────────
+  {
+    category: 'Financeiro',
+    roles: ['SINDICO', 'MORADOR'],
+    items: [
+      { label: 'Financeiro',          href: '/dashboard/sindico/financeiro',           icon: icons.payment,  roles: ['SINDICO'] },
+      { label: 'Pagamentos',          href: '/dashboard/sindico/pagamentos',            icon: icons.payment,  roles: ['SINDICO'] },
+      { label: 'Histórico de Boletos',href: '/dashboard/sindico/pagamentos/historico', icon: icons.report,   roles: ['SINDICO'] },
+      { label: 'Relatórios',          href: '/dashboard/sindico/relatorios',            icon: icons.report,   roles: ['SINDICO'] },
+      { label: 'Pagamentos',          href: '/dashboard/morador/pagamentos',            icon: icons.payment,  roles: ['MORADOR'] },
+    ],
+  },
+
+  // ─── GESTÃO (síndico) ─────────────────────────────────────────────────────
+  {
+    category: 'Gestão',
+    roles: ['SINDICO'],
+    items: [
+      { label: 'Moradores',   href: '/dashboard/sindico/moradores',   icon: icons.users,        roles: ['SINDICO'] },
+      { label: 'Ocorrências', href: '/dashboard/sindico/ocorrencias', icon: icons.occurrence,   roles: ['SINDICO'] },
+      { label: 'Comunicados', href: '/dashboard/sindico/comunicados', icon: icons.announcement, roles: ['SINDICO'] },
+    ],
+  },
+
+  // ─── CONDOMÍNIO ──────────────────────────────────────────────────────────
+  {
+    category: 'Condomínio',
+    roles: ['SINDICO', 'MORADOR'],
+    items: [
+      { label: 'Espaços',     href: '/dashboard/sindico/espacos',     icon: icons.building,     roles: ['SINDICO'] },
+      { label: 'Reservas',    href: '/dashboard/sindico/reservas',    icon: icons.calendar,     roles: ['SINDICO'] },
+      { label: 'Manutenção',  href: '/dashboard/sindico/manutencao',  icon: icons.maintenance,  roles: ['SINDICO'] },
+      { label: 'Agenda',      href: '/dashboard/sindico/agenda',      icon: icons.calendar,     roles: ['SINDICO'] },
+      { label: 'Ocorrências', href: '/dashboard/morador/ocorrencias', icon: icons.occurrence,   roles: ['MORADOR'] },
+      { label: 'Reservas',    href: '/dashboard/morador/reservas',    icon: icons.calendar,     roles: ['MORADOR'] },
+      { label: 'Comunicados', href: '/dashboard/morador/comunicados', icon: icons.announcement, roles: ['MORADOR'] },
+      { label: 'Consulta',    href: '/dashboard/morador/consulta',    icon: icons.users,        roles: ['MORADOR'] },
+      { label: 'Fornecedores',href: '/dashboard/morador/fornecedores',icon: icons.supplier,     roles: ['MORADOR'] },
+    ],
+  },
+
+  // ─── SEGURANÇA (síndico + porteiro) ──────────────────────────────────────
+  {
+    category: 'Segurança',
+    roles: ['SINDICO', 'PORTEIRO'],
+    items: [
+      { label: 'Segurança', href: '/dashboard/sindico/seguranca',    icon: icons.security, roles: ['SINDICO'] },
+      { label: 'Acessos',   href: '/dashboard/sindico/acessos',      icon: icons.access,   roles: ['SINDICO'] },
+      { label: 'Visitantes',href: '/dashboard/porteiro/visitantes',  icon: icons.visitor,  roles: ['PORTEIRO', 'SINDICO'] },
+      { label: 'Consulta',  href: '/dashboard/porteiro/consulta',    icon: icons.users,    roles: ['PORTEIRO', 'SINDICO'] },
+    ],
+  },
+
+  // ─── PERFIL (morador) ─────────────────────────────────────────────────────
+  {
+    category: 'Perfil',
+    roles: ['MORADOR'],
+    items: [
+      { label: 'Trocar Senha', href: '/dashboard/morador/perfil', icon: icons.profile, roles: ['MORADOR'] },
+    ],
+  },
+
+  // ─── PORTARIA ─────────────────────────────────────────────────────────────
+  {
+    category: 'Portaria',
+    roles: ['PORTEIRO'],
+    items: [
+      { label: 'Visitantes', href: '/dashboard/porteiro/visitantes', icon: icons.visitor, roles: ['PORTEIRO'] },
+      { label: 'Consulta',   href: '/dashboard/porteiro/consulta',   icon: icons.users,   roles: ['PORTEIRO'] },
+    ],
+  },
 ];
 
 interface SidebarProps {
@@ -154,7 +215,12 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
   const { user, logout } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
 
-  const filteredNavItems = navItems.filter((item) => user && item.roles.includes(user.role));
+  const filteredGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => user && item.roles.includes(user.role)),
+    }))
+    .filter((group) => group.items.length > 0);
 
   const roleLabel = {
     SINDICO: 'Síndico',
@@ -189,31 +255,42 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {filteredNavItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setIsMobileOpen(false)}
-              className={`
-                flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium
-                transition-all duration-200 group
-                ${
-                  isActive
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white hover:bg-blue-50 dark:hover:bg-white/5'
-                }
-              `}
-            >
-              <span className={`transition-transform duration-200 ${isActive ? '' : 'group-hover:scale-110'}`}>
-                {item.icon}
-              </span>
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
+        {filteredGroups.map((group, gi) => (
+          <div key={gi}>
+            {group.category !== '' && (
+              <p className="px-4 mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                {group.category}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
+                const isActive = pathname === item.href || (item.href !== '/dashboard/sindico' && item.href !== '/dashboard/morador' && item.href !== '/dashboard/porteiro' && pathname.startsWith(item.href));
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsMobileOpen(false)}
+                    className={`
+                      flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium
+                      transition-all duration-200 group
+                      ${
+                        isActive
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white hover:bg-blue-50 dark:hover:bg-white/5'
+                      }
+                    `}
+                  >
+                    <span className={`transition-transform duration-200 ${isActive ? '' : 'group-hover:scale-110'}`}>
+                      {item.icon}
+                    </span>
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Bottom Actions */}
