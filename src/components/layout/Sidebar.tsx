@@ -123,11 +123,12 @@ const navGroups: NavGroup[] = [
   // ─── GERAL (todos os roles) ───────────────────────────────────────────────
   {
     category: '',
-    roles: ['SINDICO', 'MORADOR', 'PORTEIRO'],
+    roles: ['SINDICO', 'MORADOR', 'PORTEIRO', 'MANTENEDOR'],
     items: [
       { label: 'Dashboard', href: '/dashboard/sindico',  icon: icons.dashboard, roles: ['SINDICO'] },
-      { label: 'Dashboard', href: '/dashboard/morador',  icon: icons.dashboard, roles: ['MORADOR'] },
+      { label: 'Dashboard', href: '/dashboard/usuario',  icon: icons.dashboard, roles: ['MORADOR'] },
       { label: 'Dashboard', href: '/dashboard/porteiro', icon: icons.dashboard, roles: ['PORTEIRO'] },
+      { label: 'Dashboard', href: '/dashboard/mantenedor', icon: icons.dashboard, roles: ['MANTENEDOR'] },
     ],
   },
 
@@ -142,7 +143,7 @@ const navGroups: NavGroup[] = [
       { label: 'Histórico de Downloads', href: '/dashboard/sindico/pagamentos/downloads', icon: icons.access, roles: ['SINDICO'] },
       { label: 'Relatórios',          href: '/dashboard/sindico/relatorios',            icon: icons.report,   roles: ['SINDICO'] },
       { label: 'Histórico de E-mails',href: '/dashboard/sindico/emails',               icon: icons.announcement, roles: ['SINDICO'] },
-      { label: 'Pagamentos',          href: '/dashboard/morador/pagamentos',            icon: icons.payment,  roles: ['MORADOR'] },
+      { label: 'Pagamentos',          href: '/dashboard/usuario/pagamentos',            icon: icons.payment,  roles: ['MORADOR'] },
     ],
   },
 
@@ -151,7 +152,7 @@ const navGroups: NavGroup[] = [
     category: 'Gestão',
     roles: ['SINDICO'],
     items: [
-      { label: 'Moradores',   href: '/dashboard/sindico/moradores',   icon: icons.users,        roles: ['SINDICO'] },
+      { label: 'Usuários',    href: '/dashboard/sindico/usuarios',   icon: icons.users,        roles: ['SINDICO'] },
       { label: 'Ocorrências', href: '/dashboard/sindico/ocorrencias', icon: icons.occurrence,   roles: ['SINDICO'] },
       { label: 'Comunicados', href: '/dashboard/sindico/comunicados', icon: icons.announcement, roles: ['SINDICO'] },
     ],
@@ -160,17 +161,18 @@ const navGroups: NavGroup[] = [
   // ─── CONDOMÍNIO ──────────────────────────────────────────────────────────
   {
     category: 'Condomínio',
-    roles: ['SINDICO', 'MORADOR'],
+    roles: ['SINDICO', 'MORADOR', 'MANTENEDOR'],
     items: [
       { label: 'Espaços',     href: '/dashboard/sindico/espacos',     icon: icons.building,     roles: ['SINDICO'] },
       { label: 'Reservas',    href: '/dashboard/sindico/reservas',    icon: icons.calendar,     roles: ['SINDICO'] },
       { label: 'Manutenção',  href: '/dashboard/sindico/manutencao',  icon: icons.maintenance,  roles: ['SINDICO'] },
       { label: 'Agenda',      href: '/dashboard/sindico/agenda',      icon: icons.calendar,     roles: ['SINDICO'] },
-      { label: 'Ocorrências', href: '/dashboard/morador/ocorrencias', icon: icons.occurrence,   roles: ['MORADOR'] },
-      { label: 'Reservas',    href: '/dashboard/morador/reservas',    icon: icons.calendar,     roles: ['MORADOR'] },
-      { label: 'Comunicados', href: '/dashboard/morador/comunicados', icon: icons.announcement, roles: ['MORADOR'] },
-      { label: 'Consulta',    href: '/dashboard/morador/consulta',    icon: icons.users,        roles: ['MORADOR'] },
-      { label: 'Fornecedores',href: '/dashboard/morador/fornecedores',icon: icons.supplier,     roles: ['MORADOR'] },
+      { label: 'Ocorrências', href: '/dashboard/usuario/ocorrencias', icon: icons.occurrence,   roles: ['MORADOR'] },
+      { label: 'Reservas',    href: '/dashboard/usuario/reservas',    icon: icons.calendar,     roles: ['MORADOR'] },
+      { label: 'Comunicados', href: '/dashboard/usuario/comunicados', icon: icons.announcement, roles: ['MORADOR'] },
+      { label: 'Consulta',    href: '/dashboard/usuario/consulta',    icon: icons.users,        roles: ['MORADOR'] },
+      { label: 'Fornecedores',href: '/dashboard/usuario/fornecedores',icon: icons.supplier,     roles: ['MORADOR'] },
+      { label: 'Manutenção',  href: '/dashboard/mantenedor/manutencao', icon: icons.maintenance, roles: ['MANTENEDOR'] },
     ],
   },
 
@@ -186,12 +188,13 @@ const navGroups: NavGroup[] = [
     ],
   },
 
-  // ─── PERFIL (morador) ─────────────────────────────────────────────────────
+  // ─── PERFIL (usuario) ─────────────────────────────────────────────────────
   {
     category: 'Perfil',
-    roles: ['MORADOR'],
+    roles: ['MORADOR', 'MANTENEDOR'],
     items: [
-      { label: 'Trocar Senha', href: '/dashboard/morador/perfil', icon: icons.profile, roles: ['MORADOR'] },
+      { label: 'Trocar Senha', href: '/dashboard/usuario/perfil', icon: icons.profile, roles: ['MORADOR'] },
+      { label: 'Trocar Senha', href: '/dashboard/mantenedor/perfil', icon: icons.profile, roles: ['MANTENEDOR'] },
     ],
   },
 
@@ -225,14 +228,16 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
 
   const roleLabel = {
     SINDICO: 'Síndico',
-    MORADOR: 'Morador',
+    MORADOR: 'Usuário',
     PORTEIRO: 'Porteiro',
+    MANTENEDOR: 'Profissional',
   };
 
   const roleColors = {
     SINDICO: 'from-blue-500 to-indigo-500',
     MORADOR: 'from-emerald-500 to-teal-500',
     PORTEIRO: 'from-amber-500 to-orange-500',
+    MANTENEDOR: 'from-cyan-500 to-sky-600',
   };
 
   const renderSidebarContent = () => (

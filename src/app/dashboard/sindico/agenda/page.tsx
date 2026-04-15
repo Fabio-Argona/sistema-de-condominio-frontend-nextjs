@@ -113,7 +113,7 @@ export default function AgendaPage() {
     const dataFmt = new Date(`${evento.data}T00:00:00`).toLocaleDateString('pt-BR');
     const subject = encodeURIComponent(`Convite: ${evento.titulo}`);
     const body = encodeURIComponent(
-      `Prezados moradores,%0D%0A%0D%0A` +
+      `Prezados usuários,%0D%0A%0D%0A` +
       `Convidamos todos para ${evento.titulo}.%0D%0A` +
       `Data: ${dataFmt}%0D%0A` +
       `Horario: ${evento.horario}%0D%0A` +

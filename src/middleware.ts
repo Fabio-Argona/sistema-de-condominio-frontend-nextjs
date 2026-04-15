@@ -10,10 +10,22 @@ function getJwtPayload(token: string) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
     return JSON.parse(jsonPayload);
-  } catch (e) {
+  } catch {
     return null;
   }
 }
+
+const dashboardByRole: Record<string, string> = {
+  SINDICO: '/dashboard/sindico',
+  MORADOR: '/dashboard/usuario',
+  PORTEIRO: '/dashboard/porteiro',
+  MANTENEDOR: '/dashboard/mantenedor',
+};
+
+const profileByRole: Record<string, string> = {
+  MORADOR: '/dashboard/usuario/perfil',
+  MANTENEDOR: '/dashboard/mantenedor/perfil',
+};
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
@@ -23,9 +35,7 @@ export function middleware(request: NextRequest) {
   if (pathname === '/login' && token) {
     const payload = getJwtPayload(token);
     if (payload && (payload.exp * 1000 > Date.now())) {
-      const destination = payload.role === 'SINDICO' ? '/dashboard/sindico' : 
-                         payload.role === 'PORTEIRO' ? '/dashboard/porteiro' : 
-                         '/dashboard/morador';
+      const destination = dashboardByRole[payload.role] ?? '/dashboard';
       return NextResponse.redirect(new URL(destination, request.url));
     }
   }
@@ -48,15 +58,16 @@ export function middleware(request: NextRequest) {
 
     // Proteção de Roles (Síndico não entra no Morador e vice-versa)
     const role = payload.role;
-    if (pathname.startsWith('/dashboard/sindico') && role !== 'SINDICO') {
-       return NextResponse.redirect(new URL('/dashboard/morador', request.url));
+    const roleRoutes = Object.entries(dashboardByRole);
+    for (const [routeRole, routePrefix] of roleRoutes) {
+      if (pathname.startsWith(routePrefix) && role !== routeRole) {
+        return NextResponse.redirect(new URL(dashboardByRole[role] ?? '/dashboard', request.url));
+      }
     }
-    if (pathname.startsWith('/dashboard/morador') && role !== 'MORADOR') {
-       return NextResponse.redirect(new URL('/dashboard/sindico', request.url));
-    }
-    // Força troca de senha na primeira entrada do morador
-    if (role === 'MORADOR' && payload.primeiroAcesso === true && !pathname.startsWith('/dashboard/morador/perfil')) {
-      return NextResponse.redirect(new URL('/dashboard/morador/perfil', request.url));
+
+    const profilePath = profileByRole[role];
+    if (payload.primeiroAcesso === true && profilePath && !pathname.startsWith(profilePath)) {
+      return NextResponse.redirect(new URL(profilePath, request.url));
     }
   }
 

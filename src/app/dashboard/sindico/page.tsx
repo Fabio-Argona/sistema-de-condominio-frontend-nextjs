@@ -7,7 +7,7 @@ import StatsCard from '@/components/ui/StatsCard';
 import Card, { CardHeader, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
-import { Ocorrencia, Reserva, Boleto, Comunicado } from '@/types';
+import { Ocorrencia, Reserva, Boleto, Comunicado, Usuario, Visitante } from '@/types';
 import { useApi } from '@/hooks/useApi';
 
 const statusColors: Record<string, 'success' | 'warning' | 'danger' | 'info'> = {
@@ -47,7 +47,7 @@ export default function SindicoDashboard() {
   const [sendingCobranca, setSendingCobranca] = useState<number | null>(null);
   const [totalReservasHoje, setTotalReservasHoje] = useState<number>(0);
   const [visitantesHoje, setVisitantesHoje] = useState<number>(0);
-  const [totalMoradores, setTotalMoradores] = useState<number>(0);
+  const [totalUsuarios, setTotalUsuarios] = useState<number>(0);
   const [totalUnidades, setTotalUnidades] = useState<number>(0);
   const [ocorrenciasAbertas, setOcorrenciasAbertas] = useState<number>(0);
   const [receitaMensal, setReceitaMensal] = useState<number>(0);
@@ -78,8 +78,8 @@ export default function SindicoDashboard() {
         const [ocData, resData, visData, morData, boletosData, comunicadosData] = await Promise.all([
           get('/ocorrencias') as Promise<Ocorrencia[]>,
           get('/reservas') as Promise<Reserva[]>,
-          get('/visitantes') as Promise<any[]>,
-          get('/moradores') as Promise<any[]>,
+          get('/visitantes') as Promise<Visitante[]>,
+          get('/usuarios') as Promise<Usuario[]>,
           get('/boletos') as Promise<Boleto[]>,
           get('/comunicados') as Promise<Comunicado[]>,
         ]);
@@ -111,7 +111,7 @@ export default function SindicoDashboard() {
 
         if (morData) {
           const ativos = morData.filter(m => m?.ativo !== false);
-          setTotalMoradores(ativos.length);
+          setTotalUsuarios(ativos.length);
 
           const unidadesUnicas = new Set(
             ativos.map(m => `${m?.bloco || '-'}-${m?.apartamento || '-'}`)
@@ -183,7 +183,7 @@ export default function SindicoDashboard() {
     try {
       const res = await post(`/boletos/${boleto.id}/enviar-cobranca`, {});
       if (res !== null) {
-        toast.success(`E-mail de cobrança enviado para ${boleto.moradorNome}!`);
+        toast.success(`E-mail de cobrança enviado para ${boleto.usuarioNome ?? boleto.moradorNome}!`);
       }
     } catch {
       toast.error('Falha ao enviar e-mail de cobrança.');
@@ -221,8 +221,8 @@ export default function SindicoDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             <div className="animate-slide-up stagger-1">
               <StatsCard
-                title="Moradores Ativos"
-                value={totalMoradores}
+                title="Usuários Ativos"
+                value={totalUsuarios}
                 color="blue"
                 icon={
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -358,7 +358,7 @@ export default function SindicoDashboard() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{oc.titulo}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{oc.moradorNome} • Apt {oc.apartamento} Bloco {oc.bloco}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{oc.usuarioNome ?? oc.moradorNome} • Apt {oc.apartamento} Bloco {oc.bloco}</p>
                         </div>
                         <div className="flex flex-col items-end gap-1.5 shrink-0">
                           <Badge variant={statusColors[oc.status] || 'info'} dot>{statusLabels[oc.status] || oc.status}</Badge>
@@ -389,7 +389,7 @@ export default function SindicoDashboard() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-slate-900 dark:text-white">{res.areaComumNome}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{res.moradorNome} • Apt {res.apartamento} Bloco {res.bloco}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{res.usuarioNome ?? res.moradorNome} • Apt {res.apartamento} Bloco {res.bloco}</p>
                           <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{res.dataReserva} • {res.horaInicio} - {res.horaFim}</p>
                         </div>
                         <Badge variant={statusColors[res.status] || 'info'} dot>{statusLabels[res.status] || res.status}</Badge>
@@ -424,7 +424,7 @@ export default function SindicoDashboard() {
                   <div key={b.id} className="px-6 py-4 hover:bg-red-50/30 dark:hover:bg-red-900/10 transition-colors">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{b.moradorNome}</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{b.usuarioNome ?? b.moradorNome}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{b.descricao}</p>
                         <div className="flex items-center gap-3 mt-1">
                           <span className="text-xs font-bold text-red-600 dark:text-red-400">

@@ -193,7 +193,7 @@ export default function FinanceiroPage() {
               {resumo.boletosVencidos.slice(0, 6).map((boleto) => (
                 <div key={boleto.id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{boleto.moradorNome}</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{boleto.usuarioNome ?? boleto.moradorNome}</p>
                     <Badge variant="danger">Vencido</Badge>
                   </div>
                   <p className="text-xs text-slate-500 mt-1">Vencimento: {new Date(`${boleto.dataVencimento}T00:00:00`).toLocaleDateString('pt-BR')}</p>

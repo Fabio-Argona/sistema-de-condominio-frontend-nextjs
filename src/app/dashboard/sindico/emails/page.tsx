@@ -76,7 +76,7 @@ const TIPO_LABELS: Record<string, string> = {
   COBRANCA_BOLETO_VENCIDO: 'Cobranca - Boleto Vencido',
   RECUPERACAO_SENHA: 'Recuperacao de Acesso',
   SENHA_ALTERADA: 'Alteracao de Senha',
-  CONVITE_MORADOR: 'Convite de Morador',
+  CONVITE_MORADOR: 'Convite de Usuário',
   NOVA_RESERVA: 'Nova Reserva',
   STATUS_RESERVA: 'Status de Reserva',
 };

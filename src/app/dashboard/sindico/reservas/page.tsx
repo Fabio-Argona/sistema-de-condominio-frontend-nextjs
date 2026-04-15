@@ -87,7 +87,7 @@ export default function ReservasPage() {
 
   const columns = [
     { key: 'areaComumNome', header: 'Área', render: (r: Reserva) => <span className="font-semibold text-slate-900 dark:text-white">{r.areaComumNome}</span> },
-    { key: 'moradorNome', header: 'Solicitante', render: (r: Reserva) => <div><p className="font-medium">{r.moradorNome}</p><p className="text-xs text-slate-500">Apt {r.apartamento} - Bloco {r.bloco}</p></div> },
+    { key: 'usuarioNome', header: 'Solicitante', render: (r: Reserva) => <div><p className="font-medium">{r.usuarioNome ?? r.moradorNome}</p><p className="text-xs text-slate-500">Apt {r.apartamento} - Bloco {r.bloco}</p></div> },
     { key: 'dataReserva', header: 'Data', render: (r: Reserva) => <div><p className="font-medium">{formatDate(r.dataReserva)}</p><p className="text-xs text-slate-500">{r.horaInicio} - {r.horaFim}</p></div> },
     { key: 'status', header: 'Status', render: (r: Reserva) => <Badge variant={statusColors[r.status] || 'info'} dot>{statusLabels[r.status] || r.status}</Badge> },
     {
@@ -177,8 +177,8 @@ export default function ReservasPage() {
                 statusToChange === 'APROVADA' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
               }`}>
                 {statusToChange === 'APROVADA'
-                  ? 'O morador será notificado da aprovação.'
-                  : 'O morador será notificado da rejeição.'}
+                  ? 'O usuário será notificado da aprovação.'
+                  : 'O usuário será notificado da rejeição.'}
               </p>
             </div>
           </div>

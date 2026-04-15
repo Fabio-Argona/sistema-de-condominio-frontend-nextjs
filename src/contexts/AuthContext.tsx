@@ -8,6 +8,18 @@ import api from '@/lib/api';
 
 import { User, UserRole, DecodedToken, LoginRequest } from '@/types';
 
+const dashboardByRole: Record<UserRole, string> = {
+  SINDICO: '/dashboard/sindico',
+  MORADOR: '/dashboard/usuario',
+  PORTEIRO: '/dashboard/porteiro',
+  MANTENEDOR: '/dashboard/mantenedor',
+};
+
+const profileByRole: Partial<Record<UserRole, string>> = {
+  MORADOR: '/dashboard/usuario/perfil',
+  MANTENEDOR: '/dashboard/mantenedor/perfil',
+};
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -79,23 +91,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userData);
 
       // Redireciona com base no role
-      if (userData.role === 'MORADOR' && userData.primeiroAcesso) {
-        router.push('/dashboard/morador/perfil');
+      const profilePath = profileByRole[userData.role];
+      if (userData.primeiroAcesso && profilePath) {
+        router.push(profilePath);
         return;
       }
-      switch (userData.role) {
-        case 'SINDICO':
-          router.push('/dashboard/sindico');
-          break;
-        case 'MORADOR':
-          router.push('/dashboard/morador');
-          break;
-        case 'PORTEIRO':
-          router.push('/dashboard/porteiro');
-          break;
-        default:
-          router.push('/dashboard');
-      }
+      router.push(dashboardByRole[userData.role] ?? '/dashboard');
     } catch (error) {
       throw error;
     }

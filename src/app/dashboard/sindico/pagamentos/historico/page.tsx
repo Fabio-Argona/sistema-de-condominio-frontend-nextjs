@@ -13,8 +13,8 @@ import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
 
 type GroupedHistorico = {
-  moradorId: number;
-  moradorNome: string;
+  usuarioId: number;
+  usuarioNome: string;
   boletos: Boleto[];
   totalPago: number;
   totalPendente: number;
@@ -28,7 +28,7 @@ export default function HistoricoBoletosPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [mesFilter, setMesFilter] = useState('');
   const [anoFilter, setAnoFilter] = useState('');
-  const [expandedMorador, setExpandedMorador] = useState<number | null>(null);
+  const [expandedUsuario, setExpandedUsuario] = useState<number | null>(null);
   const [sendingEmail, setSendingEmail] = useState<number | null>(null);
 
   const { get, post } = useApi();
@@ -118,17 +118,19 @@ export default function HistoricoBoletosPage() {
 
     const map = new Map<number, GroupedHistorico>();
     filtered.forEach((b) => {
-      if (!map.has(b.moradorId)) {
-        map.set(b.moradorId, {
-          moradorId: b.moradorId,
-          moradorNome: b.moradorNome || `Morador #${b.moradorId}`,
+      const usuarioId = b.usuarioId ?? b.moradorId;
+      const usuarioNome = b.usuarioNome ?? b.moradorNome || `Usuário #${usuarioId}`;
+      if (!map.has(usuarioId)) {
+        map.set(usuarioId, {
+          usuarioId,
+          usuarioNome,
           boletos: [],
           totalPago: 0,
           totalPendente: 0,
           totalVencido: 0,
         });
       }
-      const entry = map.get(b.moradorId)!;
+      const entry = map.get(usuarioId)!;
       entry.boletos.push(b);
       if (b.status === 'PAGO') entry.totalPago += b.valor;
       else if (b.status === 'PENDENTE') entry.totalPendente += b.valor;
@@ -138,9 +140,9 @@ export default function HistoricoBoletosPage() {
     return Array.from(map.values())
       .filter((g) =>
         searchTerm === '' ||
-        g.moradorNome.toLowerCase().includes(searchTerm.toLowerCase()),
+        g.usuarioNome.toLowerCase().includes(searchTerm.toLowerCase()),
       )
-      .sort((a, b) => a.moradorNome.localeCompare(b.moradorNome, 'pt-BR'));
+      .sort((a, b) => a.usuarioNome.localeCompare(b.usuarioNome, 'pt-BR'));
   }, [boletos, searchTerm, statusFilter, mesFilter, anoFilter]);
 
   const totalGeral = useMemo(() => {
@@ -154,8 +156,8 @@ export default function HistoricoBoletosPage() {
     );
   }, [grouped]);
 
-  const toggleMorador = (id: number) => {
-    setExpandedMorador((prev) => (prev === id ? null : id));
+  const toggleUsuario = (id: number) => {
+    setExpandedUsuario((prev) => (prev === id ? null : id));
   };
 
   const fmt = (v: number) =>
@@ -186,7 +188,7 @@ export default function HistoricoBoletosPage() {
               </h1>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 ml-7">
-              Visualize todos os boletos enviados agrupados por morador
+              Visualize todos os boletos enviados agrupados por usuário
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={loadBoletos}>
@@ -202,7 +204,7 @@ export default function HistoricoBoletosPage() {
           <CardContent className="py-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Input
-                placeholder="Buscar morador..."
+                placeholder="Buscar usuário..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -267,13 +269,13 @@ export default function HistoricoBoletosPage() {
           </div>
         </div>
 
-        {/* Lista agrupada por morador */}
+        {/* Lista agrupada por usuário */}
         <Card>
           <CardHeader>
             <h2 className="text-base font-semibold text-slate-800 dark:text-white">
-              Boletos por Morador{' '}
+              Boletos por Usuário{' '}
               <span className="text-slate-400 font-normal text-sm">
-                ({grouped.length} {grouped.length === 1 ? 'morador' : 'moradores'})
+                ({grouped.length} {grouped.length === 1 ? 'usuário' : 'usuários'})
               </span>
             </h2>
           </CardHeader>
@@ -292,17 +294,17 @@ export default function HistoricoBoletosPage() {
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {grouped.map((group) => (
-                  <div key={group.moradorId}>
-                    {/* Linha do morador (clicável para expandir) */}
+                  <div key={group.usuarioId}>
+                    {/* Linha do usuário (clicável para expandir) */}
                     <button
-                      onClick={() => toggleMorador(group.moradorId)}
+                      onClick={() => toggleUsuario(group.usuarioId)}
                       className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         {/* Chevron */}
                         <svg
                           className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${
-                            expandedMorador === group.moradorId ? 'rotate-90' : ''
+                            expandedUsuario === group.usuarioId ? 'rotate-90' : ''
                           }`}
                           fill="none"
                           viewBox="0 0 24 24"
@@ -317,7 +319,7 @@ export default function HistoricoBoletosPage() {
                         </div>
                         <div>
                           <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">
-                            {group.moradorNome}
+                            {group.usuarioNome}
                           </p>
                           <p className="text-xs text-slate-500 dark:text-slate-400">
                             {group.boletos.length} {group.boletos.length === 1 ? 'boleto' : 'boletos'}
@@ -344,7 +346,7 @@ export default function HistoricoBoletosPage() {
                     </button>
 
                     {/* Boletos expandidos */}
-                    {expandedMorador === group.moradorId && (
+                    {expandedUsuario === group.usuarioId && (
                       <div className="bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800">
                         {/* Cabeçalho da tabela interna — visível apenas em telas maiores */}
                         <div className="hidden md:grid grid-cols-[1.5fr_1fr_1fr_1fr_auto] gap-4 px-8 py-2 text-xs font-bold uppercase text-slate-400 tracking-wider border-b border-slate-100 dark:border-slate-800">

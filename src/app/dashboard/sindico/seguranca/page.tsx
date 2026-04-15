@@ -99,7 +99,7 @@ export default function SegurancaPage() {
                       {o.status.replace('_', ' ')}
                     </Badge>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">{o.moradorNome} • Apt {o.apartamento}/{o.bloco}</p>
+                  <p className="text-xs text-slate-500 mt-1">{o.usuarioNome ?? o.moradorNome} • Apt {o.apartamento}/{o.bloco}</p>
                   <p className="text-xs text-slate-500">{new Date(o.dataCriacao).toLocaleDateString('pt-BR')}</p>
                 </div>
               ))}
@@ -120,7 +120,7 @@ export default function SegurancaPage() {
                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{visitante.nome}</p>
                     <Badge variant={visitante.dataSaida ? 'success' : 'warning'}>{visitante.dataSaida ? 'Finalizado' : 'Em andamento'}</Badge>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">Morador: {visitante.moradorNome}</p>
+                  <p className="text-xs text-slate-500 mt-1">Usuário: {visitante.usuarioNome ?? visitante.moradorNome}</p>
                   <p className="text-xs text-slate-500">Entrada: {new Date(visitante.dataEntrada).toLocaleString('pt-BR')}</p>
                 </div>
               ))}
@@ -131,4 +131,4 @@ export default function SegurancaPage() {
       </div>
     </div>
   );
-}
+}

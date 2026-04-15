@@ -4,35 +4,35 @@ import { useState, useEffect } from 'react';
 import Card, { CardContent } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
-import { Morador } from '@/types';
+import { Usuario } from '@/types';
 import { useApi } from '@/hooks/useApi';
 
 export default function PorteiroConsultaPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [moradores, setMoradores] = useState<Morador[]>([]);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const { get, isLoading } = useApi();
 
   useEffect(() => {
-    const fetchMoradores = async () => {
-      const data = await get('/moradores') as Morador[];
+    const fetchUsuarios = async () => {
+      const data = await get('/usuarios') as Usuario[];
       if (data) {
-        setMoradores(data);
+        setUsuarios(data);
       }
     };
-    fetchMoradores();
+    fetchUsuarios();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filteredMoradores = searchTerm.length >= 1
-    ? moradores.filter((m) =>
+  const filteredUsuarios = searchTerm.length >= 1
+    ? usuarios.filter((m) =>
         (m.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         (m.apartamento || '').includes(searchTerm) ||
         (m.bloco?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         (m.telefone || '').includes(searchTerm)
       )
-    : moradores;
+    : usuarios;
 
-  const moradoresOrdenados = [...filteredMoradores].sort((a, b) =>
+  const usuariosOrdenados = [...filteredUsuarios].sort((a, b) =>
     (a.nome || '').localeCompare(b.nome || '', 'pt-BR')
   );
 
@@ -41,7 +41,7 @@ export default function PorteiroConsultaPage() {
       <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
       <div className="animate-slide-up">
         <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Consulta Rápida</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Busque moradores e apartamentos do condomínio</p>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Busque usuários e apartamentos do condomínio</p>
       </div>
 
       <div className="animate-slide-up">
@@ -55,11 +55,11 @@ export default function PorteiroConsultaPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {isLoading && moradores.length === 0 ? (
+        {isLoading && usuarios.length === 0 ? (
           [...Array(6)].map((_, i) => (
             <div key={i} className={`h-28 bg-slate-200 dark:bg-slate-700/50 rounded-2xl animate-pulse stagger-${Math.min(i + 1, 6)}`} />
           ))
-        ) : moradoresOrdenados.map((m, i) => (
+        ) : usuariosOrdenados.map((m, i) => (
           <Card key={m.id} hover gradient className={`animate-slide-up stagger-${Math.min(i + 1, 6)}`}>
             <CardContent className="p-5">
               <div className="flex items-start gap-4">
@@ -92,9 +92,9 @@ export default function PorteiroConsultaPage() {
         ))}
       </div>
 
-      {!isLoading && moradoresOrdenados.length === 0 && (
+      {!isLoading && usuariosOrdenados.length === 0 && (
         <div className="text-center py-12 text-slate-400 animate-slide-up">
-          <p className="text-lg">Nenhum morador encontrado</p>
+          <p className="text-lg">Nenhum usuário encontrado</p>
           <p className="text-sm mt-1">Tente buscar por outro termo</p>
         </div>
       )}

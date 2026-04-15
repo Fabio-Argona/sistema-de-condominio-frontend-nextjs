@@ -37,7 +37,7 @@ export default function PorteiroDashboard() {
 
   const filteredVisitantes = visitantes.filter((v) =>
     (v.nome?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    (v.moradorNome?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    ((v.usuarioNome ?? v.moradorNome)?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     (v.apartamento || '').includes(searchTerm)
   );
 
@@ -48,7 +48,8 @@ export default function PorteiroDashboard() {
     const payload = {
         ...formData,
         porteiroNome: user.nome,
-        moradorNome: 'Não Identificado' // Aqui poderia puxar o nome do morador no backend
+      moradorNome: 'Não Identificado',
+      usuarioNome: 'Não Identificado'
     };
     
     const created = await post('/visitantes', payload) as Visitante;

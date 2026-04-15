@@ -3,12 +3,13 @@
 // ============================================
 
 // Roles
-export type UserRole = 'SINDICO' | 'MORADOR' | 'PORTEIRO';
+export type UserRole = 'SINDICO' | 'MORADOR' | 'PORTEIRO' | 'MANTENEDOR';
 
 // Fornecedor / Contrato
 export interface Fornecedor {
   id: number;
   nome: string;
+  usuarioId?: number | null;
   moradorId?: number | null;
   comentario?: string;
   vigencia?: string;
@@ -59,8 +60,8 @@ export interface DecodedToken {
   primeiroAcesso?: boolean;
 }
 
-// Morador (Resident)
-export interface Morador {
+// Usuario (Resident)
+export interface Usuario {
   id: number;
   nome: string;
   email: string;
@@ -76,6 +77,8 @@ export interface Morador {
   ultimoAcesso?: string;
 }
 
+export type Morador = Usuario;
+
 // Log de Acesso
 export interface LogAcesso {
   id: number;
@@ -87,7 +90,7 @@ export interface LogAcesso {
   pagina?: string;
 }
 
-export interface MoradorFormData {
+export interface UsuarioFormData {
   nome: string;
   email: string;
   cpf: string;
@@ -97,6 +100,8 @@ export interface MoradorFormData {
   dataNascimento?: string;
   senha?: string;
 }
+
+export type MoradorFormData = UsuarioFormData;
 
 // Ocorrência (Occurrence)
 export type OcorrenciaStatus = 'ABERTA' | 'EM_ANDAMENTO' | 'RESOLVIDA' | 'FECHADA';
@@ -109,8 +114,12 @@ export interface Ocorrencia {
   categoria: string;
   status: OcorrenciaStatus;
   prioridade: OcorrenciaPrioridade;
+  usuarioId?: number;
+  usuarioNome?: string;
   moradorId: number;
   moradorNome: string;
+  profissionalResponsavelId?: number | null;
+  profissionalResponsavelNome?: string | null;
   apartamento: string;
   bloco: string;
   dataCriacao: string;
@@ -123,6 +132,7 @@ export interface OcorrenciaFormData {
   descricao: string;
   categoria: string;
   prioridade: OcorrenciaPrioridade;
+  profissionalResponsavelId?: number | null;
 }
 
 // Reserva (Reservation)
@@ -145,6 +155,8 @@ export interface Reserva {
   id: number;
   areaComumId: number;
   areaComumNome: string;
+  usuarioId?: number;
+  usuarioNome?: string;
   moradorId: number;
   moradorNome: string;
   apartamento: string;
@@ -170,6 +182,8 @@ export type BoletoStatus = 'PENDENTE' | 'PAGO' | 'VENCIDO';
 
 export interface Boleto {
   id: number;
+  usuarioId?: number;
+  usuarioNome?: string;
   moradorId: number;
   moradorNome: string;
   valor: number;
@@ -184,6 +198,8 @@ export interface Boleto {
 export interface LogDownloadBoleto {
   id: number;
   boletoId: number;
+  usuarioDestinoId?: number;
+  usuarioDestinoNome?: string;
   moradorId: number;
   moradorNome: string;
   descricaoBoleto: string;
@@ -212,6 +228,8 @@ export interface Visitante {
   nome: string;
   documento: string;
   telefone?: string;
+  usuarioId?: number;
+  usuarioNome?: string;
   moradorId: number;
   moradorNome: string;
   apartamento: string;

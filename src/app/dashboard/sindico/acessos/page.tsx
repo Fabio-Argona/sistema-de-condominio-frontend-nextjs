@@ -9,7 +9,7 @@ import { LogAcesso } from '@/types';
 
 const roleLabel: Record<string, string> = {
   SINDICO: 'Síndico',
-  MORADOR: 'Morador',
+  MORADOR: 'Usuário',
   PORTEIRO: 'Porteiro',
 };
 
@@ -26,7 +26,8 @@ const pageLabel: Record<string, string> = {
   '/dashboard/sindico/agenda': 'Agenda',
   '/dashboard/sindico/seguranca': 'Segurança',
   '/dashboard/sindico/pagamentos': 'Pagamentos',
-  '/dashboard/sindico/moradores': 'Moradores',
+  '/dashboard/sindico/usuarios': 'Usuários',
+  '/dashboard/sindico/moradores': 'Usuários',
   '/dashboard/sindico/espacos': 'Espaços',
   '/dashboard/sindico/ocorrencias': 'Ocorrências',
   '/dashboard/sindico/reservas': 'Reservas',
@@ -35,6 +36,14 @@ const pageLabel: Record<string, string> = {
   '/dashboard/sindico/acessos': 'Histórico de Acesso',
   '/dashboard/sindico/visitantes': 'Visitantes',
   '/dashboard/sindico/consulta': 'Consulta',
+  '/dashboard/usuario': 'Dashboard',
+  '/dashboard/usuario/pagamentos': 'Pagamentos',
+  '/dashboard/usuario/ocorrencias': 'Ocorrências',
+  '/dashboard/usuario/reservas': 'Reservas',
+  '/dashboard/usuario/comunicados': 'Comunicados',
+  '/dashboard/usuario/consulta': 'Consulta',
+  '/dashboard/usuario/fornecedores': 'Fornecedores',
+  // Compatibilidade com logs antigos antes da migração de rotas.
   '/dashboard/morador': 'Dashboard',
   '/dashboard/morador/pagamentos': 'Pagamentos',
   '/dashboard/morador/ocorrencias': 'Ocorrências',

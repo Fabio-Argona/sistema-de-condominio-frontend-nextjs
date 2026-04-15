@@ -8,7 +8,7 @@ import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import DataTable from '@/components/ui/DataTable';
-import { Ocorrencia, OcorrenciaStatus, OcorrenciaPrioridade } from '@/types';
+import { Usuario, Ocorrencia, OcorrenciaStatus, OcorrenciaPrioridade } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
 
@@ -21,9 +21,12 @@ export default function OcorrenciasPage() {
   const [selectedOcorrencia, setSelectedOcorrencia] = useState<Ocorrencia | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isForwardModalOpen, setIsForwardModalOpen] = useState(false);
   const [statusToChange, setStatusToChange] = useState<OcorrenciaStatus | ''>('');
   const [ocorrenciaToChange, setOcorrenciaToChange] = useState<Ocorrencia | null>(null);
   const [tratativa, setTratativa] = useState('');
+  const [profissionais, setProfissionais] = useState<Usuario[]>([]);
+  const [profissionalSelecionado, setProfissionalSelecionado] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -34,14 +37,22 @@ export default function OcorrenciasPage() {
     if (data) setOcorrencias(data);
   };
 
+  const loadProfissionais = async () => {
+    const data = await get('/usuarios') as Usuario[];
+    if (data) {
+      setProfissionais(data.filter((usuario) => usuario.role === 'MANTENEDOR' && usuario.ativo));
+    }
+  };
+
   useEffect(() => {
     loadOcorrencias();
+    loadProfissionais();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredOcorrencias = ocorrencias.filter((o) => {
     const matchesSearch = o.titulo.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (o.moradorNome && o.moradorNome.toLowerCase().includes(searchTerm.toLowerCase()));
+                          ((o.usuarioNome ?? o.moradorNome) && (o.usuarioNome ?? o.moradorNome)?.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = !filterStatus || o.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -73,6 +84,43 @@ export default function OcorrenciasPage() {
       toast.success(`Status atualizado para ${statusLabels[newStatus]}`);
     }
     closeStatusModal();
+  };
+
+  const openForwardModal = (ocorrencia: Ocorrencia) => {
+    setOcorrenciaToChange(ocorrencia);
+    setProfissionalSelecionado(ocorrencia.profissionalResponsavelId ? String(ocorrencia.profissionalResponsavelId) : '');
+    setTratativa('');
+    setIsForwardModalOpen(true);
+  };
+
+  const closeForwardModal = () => {
+    setIsForwardModalOpen(false);
+    setOcorrenciaToChange(null);
+    setProfissionalSelecionado('');
+    setTratativa('');
+  };
+
+  const handleForwardOccurrence = async () => {
+    if (!ocorrenciaToChange || !profissionalSelecionado) {
+      toast.error('Selecione um profissional para encaminhar.');
+      return;
+    }
+
+    const descricaoTratativa = tratativa.trim() || 'Ocorrência encaminhada para o profissional responsável.';
+    const updated = await patch(`/ocorrencias/${ocorrenciaToChange.id}/status`, {
+      status: ocorrenciaToChange.status,
+      profissionalResponsavelId: Number(profissionalSelecionado),
+      respostasSindico: [descricaoTratativa],
+    }) as Ocorrencia;
+
+    if (updated) {
+      setOcorrencias(ocorrencias.map((o) => o.id === ocorrenciaToChange.id ? updated : o));
+      if (selectedOcorrencia?.id === ocorrenciaToChange.id) {
+        setSelectedOcorrencia(updated);
+      }
+      toast.success('Ocorrência encaminhada ao profissional.');
+      closeForwardModal();
+    }
   };
 
   const handleConfirmStatus = () => {
@@ -111,7 +159,15 @@ export default function OcorrenciasPage() {
         </div>
       ),
     },
-    { key: 'moradorNome', header: 'Morador', render: (o: Ocorrencia) => <span>{o.moradorNome} • Apt {o.apartamento}/{o.bloco}</span> },
+    { key: 'usuarioNome', header: 'Usuário', render: (o: Ocorrencia) => <span>{o.usuarioNome ?? o.moradorNome} • Apt {o.apartamento}/{o.bloco}</span> },
+    {
+      key: 'profissional', header: 'Profissional',
+      render: (o: Ocorrencia) => o.profissionalResponsavelNome ? (
+        <span className="text-sm font-medium text-cyan-700 dark:text-cyan-300">{o.profissionalResponsavelNome}</span>
+      ) : (
+        <span className="text-xs text-slate-400">Nao encaminhada</span>
+      ),
+    },
     { key: 'prioridade', header: 'Prioridade', render: (o: Ocorrencia) => <Badge variant={prioridadeColors[o.prioridade] || 'info'}>{o.prioridade}</Badge> },
     { key: 'status', header: 'Status', render: (o: Ocorrencia) => <Badge variant={statusColors[o.status] || 'info'} dot>{statusLabels[o.status] || o.status}</Badge> },
     {
@@ -147,6 +203,15 @@ export default function OcorrenciasPage() {
             >
               Alterar status
             </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={isLoading || profissionais.length === 0}
+              onClick={() => openForwardModal(o)}
+              className="ml-1"
+            >
+              Encaminhar
+            </Button>
           </div>
         </div>
       ),
@@ -173,7 +238,7 @@ export default function OcorrenciasPage() {
 
       <Card className="animate-slide-up">
         <CardHeader>
-          <Input placeholder="Buscar por título ou morador..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="max-w-sm" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>} />
+          <Input placeholder="Buscar por título ou usuário..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="max-w-sm" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>} />
         </CardHeader>
         <CardContent className="p-0">
           <DataTable columns={columns} data={filteredOcorrencias} isLoading={isLoading && ocorrencias.length === 0} keyExtractor={(o) => o.id} emptyMessage="Nenhuma ocorrência encontrada." />
@@ -233,8 +298,9 @@ export default function OcorrenciasPage() {
               <p className="text-sm text-slate-700 dark:text-slate-300">{selectedOcorrencia.descricao}</p>
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><span className="text-slate-500">Morador:</span><p className="font-medium text-slate-900 dark:text-white">{selectedOcorrencia.moradorNome}</p></div>
+              <div><span className="text-slate-500">Usuário:</span><p className="font-medium text-slate-900 dark:text-white">{selectedOcorrencia.usuarioNome ?? selectedOcorrencia.moradorNome}</p></div>
               <div><span className="text-slate-500">Unidade:</span><p className="font-medium text-slate-900 dark:text-white">Apt {selectedOcorrencia.apartamento} - Bloco {selectedOcorrencia.bloco}</p></div>
+              <div><span className="text-slate-500">Profissional:</span><p className="font-medium text-slate-900 dark:text-white">{selectedOcorrencia.profissionalResponsavelNome || 'Nao encaminhada'}</p></div>
               <div><span className="text-slate-500">Registrado em:</span><p className="font-medium text-slate-900 dark:text-white">{formatDate(selectedOcorrencia.dataCriacao)}</p></div>
               <div><span className="text-slate-500">Atualizado em:</span><p className="font-medium text-slate-900 dark:text-white">{formatDate(selectedOcorrencia.dataAtualizacao)}</p></div>
             </div>
@@ -256,11 +322,49 @@ export default function OcorrenciasPage() {
               {selectedOcorrencia.status === 'ABERTA' && <Button variant="outline" onClick={() => { openStatusModal(selectedOcorrencia, 'EM_ANDAMENTO'); setIsDetailOpen(false); }}>Iniciar Atendimento</Button>}
               {selectedOcorrencia.status === 'EM_ANDAMENTO' && <Button onClick={() => { openStatusModal(selectedOcorrencia, 'RESOLVIDA'); setIsDetailOpen(false); }}>Marcar Resolvida</Button>}
               {selectedOcorrencia.status !== 'FECHADA' && <Button onClick={() => { openStatusModal(selectedOcorrencia, 'FECHADA'); setIsDetailOpen(false); }}>Fechar Chamado</Button>}
+              <Button variant="outline" onClick={() => { openForwardModal(selectedOcorrencia); setIsDetailOpen(false); }} disabled={profissionais.length === 0}>Encaminhar</Button>
               <Button variant="secondary" onClick={() => { openStatusModal(selectedOcorrencia); setIsDetailOpen(false); }}>Alterar Status</Button>
               <Button variant="ghost" onClick={() => setIsDetailOpen(false)}>Cancelar</Button>
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal isOpen={isForwardModalOpen} onClose={closeForwardModal} title="Encaminhar para Profissional" size="md">
+        <div className="space-y-4">
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/40">
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">{ocorrenciaToChange?.titulo}</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Selecione o profissional que recebera este chamado no painel dele.</p>
+          </div>
+          <Select
+            label="Profissional responsavel"
+            value={profissionalSelecionado}
+            onChange={(e) => setProfissionalSelecionado(e.target.value)}
+            options={[
+              { value: '', label: profissionais.length === 0 ? 'Nenhum profissional disponivel' : 'Selecione um profissional' },
+              ...profissionais.map((profissional) => ({
+                value: String(profissional.id),
+                label: profissional.nome,
+              })),
+            ]}
+          />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Observacao do encaminhamento</label>
+            <textarea
+              value={tratativa}
+              onChange={(e) => setTratativa(e.target.value)}
+              rows={4}
+              placeholder="Ex: Favor avaliar urgente a tubulacao do bloco B."
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={closeForwardModal} disabled={isLoading}>Cancelar</Button>
+            <Button variant="primary" onClick={handleForwardOccurrence} isLoading={isLoading} disabled={!profissionalSelecionado}>
+              Encaminhar
+            </Button>
+          </div>
+        </div>
       </Modal>
       </div>
     </div>

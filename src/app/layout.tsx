@@ -4,8 +4,8 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: `Residencial Oceano`,
-  description: "Sistema completo para gestão de condomínios. Controle moradores, reservas, ocorrências, pagamentos e muito mais.",
-  keywords: "condomínio, gestão, moradores, reservas, pagamentos, síndico",
+  description: "Sistema completo para gestão de condomínios. Controle usuários, reservas, ocorrências, pagamentos e muito mais.",
+  keywords: "condomínio, gestão, usuários, reservas, pagamentos, síndico",
 };
 
 export default function RootLayout({

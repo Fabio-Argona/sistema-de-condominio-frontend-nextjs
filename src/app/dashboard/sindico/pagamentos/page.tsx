@@ -10,7 +10,7 @@ import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
-import { Boleto, Morador } from '@/types';
+import { Boleto, Usuario } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -32,9 +32,9 @@ export default function GestaoPagamentosPage() {
   
   // States para Emissão de Boleto Avulso
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [moradoresList, setMoradoresList] = useState<{value: string, label: string}[]>([]);
+  const [usuariosList, setUsuariosList] = useState<{value: string, label: string}[]>([]);
   const [novoBoletoForm, setNovoBoletoForm] = useState({ 
-    moradorId: '', 
+    usuarioId: '', 
     descricao: '', 
     valor: '', 
     dataVencimento: '',
@@ -75,15 +75,15 @@ export default function GestaoPagamentosPage() {
 
   const abrirModalEmissao = async () => {
     setIsModalOpen(true);
-    // Carregar moradores para o Select, se ainda não carregou
-    if (moradoresList.length === 0) {
+    // Carregar usuarios para o Select, se ainda não carregou
+    if (usuariosList.length === 0) {
       try {
-        const data = await get('/moradores') as Morador[];
+        const data = await get('/usuarios') as Usuario[];
         if (data) {
-           setMoradoresList(data.map(m => ({ value: m.id.toString(), label: m.nome })));
+           setUsuariosList(data.map(m => ({ value: m.id.toString(), label: m.nome })));
         }
       } catch {
-        toast.error('Erro ao buscar lista de moradores');
+        toast.error('Erro ao buscar lista de usuários');
       }
     }
   };
@@ -147,15 +147,15 @@ export default function GestaoPagamentosPage() {
               }
             }
 
-            // Tentar descobrir quem é o Morador (Procurar o nome dele no meio do PDF)
-            let moradorDetectadoId = null;
-            if (moradoresList.length > 0) {
+            // Tentar descobrir quem é o usuario (Procurar o nome dele no meio do PDF)
+            let usuarioDetectadoId = null;
+            if (usuariosList.length > 0) {
                // Limpa acentos e converte tudo pra minúsculo para a busca não falhar
                const textoSuperLimpo = textCompleto.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
-               for (const morador of moradoresList) {
-                  const nomeLimpo = morador.label.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+              for (const usuario of usuariosList) {
+                const nomeLimpo = usuario.label.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
                   if (textoSuperLimpo.includes(nomeLimpo)) {
-                     moradorDetectadoId = morador.value;
+                  usuarioDetectadoId = usuario.value;
                      break; // Achamos o dono!
                   }
                }
@@ -171,10 +171,10 @@ export default function GestaoPagamentosPage() {
               linhaDigitavelEncontrada = linhaMatch[0].trim();
             }
 
-            if (dataEncontrada || valorMaximo || moradorDetectadoId || linhaDigitavelEncontrada) {
+            if (dataEncontrada || valorMaximo || usuarioDetectadoId || linhaDigitavelEncontrada) {
                setNovoBoletoForm((prev) => ({ 
                   ...prev, 
-                  moradorId: moradorDetectadoId || prev.moradorId,
+              usuarioId: usuarioDetectadoId || prev.usuarioId,
                   descricao: prev.descricao ? prev.descricao : 'Taxa Condominial',
                   dataVencimento: dataEncontrada || prev.dataVencimento, 
                   valor: valorMaximo || prev.valor,
@@ -193,10 +193,10 @@ export default function GestaoPagamentosPage() {
     }
   };
 
-  const iniciarDownloadPDF = (pdfBase64: string, descricao: string, moradorNome: string) => {
+  const iniciarDownloadPDF = (pdfBase64: string, descricao: string, usuarioNome: string) => {
     const link = document.createElement('a');
     link.href = pdfBase64;
-    link.download = `Boleto_${descricao.replace(/\s+/g, '_')}_${moradorNome.replace(/\s+/g, '')}.pdf`;
+    link.download = `Boleto_${descricao.replace(/\s+/g, '_')}_${usuarioNome.replace(/\s+/g, '')}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -209,7 +209,8 @@ export default function GestaoPagamentosPage() {
     }
 
     const result = await post(`/boletos/${boleto.id}/registrar-download`, {}, { showErrorToast: false });
-    iniciarDownloadPDF(boleto.pdfBase64, boleto.descricao, boleto.moradorNome || `Morador_${boleto.moradorId}`);
+    const nomeUsuario = boleto.usuarioNome ?? boleto.moradorNome ?? `Usuario_${boleto.usuarioId ?? boleto.moradorId}`;
+    iniciarDownloadPDF(boleto.pdfBase64, boleto.descricao, nomeUsuario);
 
     if (result !== null) {
       toast.success('Download do boleto iniciado!');
@@ -221,7 +222,7 @@ export default function GestaoPagamentosPage() {
 
   const handleEmitirBoleto = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!novoBoletoForm.moradorId || !novoBoletoForm.valor || !novoBoletoForm.descricao || !novoBoletoForm.dataVencimento) {
+    if (!novoBoletoForm.usuarioId || !novoBoletoForm.valor || !novoBoletoForm.descricao || !novoBoletoForm.dataVencimento) {
        toast.error('Preencha todos os campos!');
        return;
     }
@@ -233,7 +234,7 @@ export default function GestaoPagamentosPage() {
     setIsSubmitting(true);
     try {
        const criado = await post('/boletos', {
-         moradorId: parseInt(novoBoletoForm.moradorId),
+         moradorId: parseInt(novoBoletoForm.usuarioId),
          valor: parseFloat(novoBoletoForm.valor),
          descricao: novoBoletoForm.descricao,
          dataVencimento: novoBoletoForm.dataVencimento,
@@ -243,7 +244,7 @@ export default function GestaoPagamentosPage() {
        
        toast.success('Boleto emitido com sucesso!');
        setIsModalOpen(false);
-       setNovoBoletoForm({ moradorId: '', descricao: '', valor: '', dataVencimento: '', pdfBase64: '', linhaDigitavel: '' });
+      setNovoBoletoForm({ usuarioId: '', descricao: '', valor: '', dataVencimento: '', pdfBase64: '', linhaDigitavel: '' });
        setNomeArquivo('');
        loadBoletos(); // Atualiza a tabela
 
@@ -261,8 +262,8 @@ export default function GestaoPagamentosPage() {
          const emailResult = await post(endpoint, {}, { showErrorToast: false });
          if (emailResult !== null) {
             const msg = isVencido
-              ? 'E-mail de cobrança enviado automaticamente ao morador!'
-              : 'E-mail com boleto enviado automaticamente ao morador!';
+              ? 'E-mail de cobrança enviado automaticamente ao usuário!'
+              : 'E-mail com boleto enviado automaticamente ao usuário!';
             toast.success(msg, { 
               duration: 4000, 
               icon: (
@@ -343,8 +344,8 @@ export default function GestaoPagamentosPage() {
     const result = await post(endpoint, {}, { showErrorToast: false });
     if (result !== null) {
       const msg = isVencido
-        ? 'E-mail de cobrança enviado ao morador!'
-        : 'E-mail com boleto enviado ao morador!';
+        ? 'E-mail de cobrança enviado ao usuário!'
+        : 'E-mail com boleto enviado ao usuário!';
       toast.success(msg, { 
         icon: (
           <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -389,27 +390,30 @@ export default function GestaoPagamentosPage() {
   const filteredBoletos = useMemo(() => {
     const statusOrder: Record<string, number> = { VENCIDO: 0, PENDENTE: 1, PAGO: 2 };
 
-    // Para PAGO: manter apenas o mais recente por morador
-    const pagoMaisRecentePorMorador = new Map<number, Boleto>();
+    // Para PAGO: manter apenas o mais recente por usuario
+    const pagoMaisRecentePorUsuario = new Map<number, Boleto>();
     boletos
       .filter(b => b.status === 'PAGO')
       .sort((a, b) => new Date(`${b.dataVencimento}T00:00:00`).getTime() - new Date(`${a.dataVencimento}T00:00:00`).getTime())
       .forEach(b => {
-        if (!pagoMaisRecentePorMorador.has(b.moradorId)) {
-          pagoMaisRecentePorMorador.set(b.moradorId, b);
+        const usuarioId = b.usuarioId ?? b.moradorId;
+        if (usuarioId !== undefined && !pagoMaisRecentePorUsuario.has(usuarioId)) {
+          pagoMaisRecentePorUsuario.set(usuarioId, b);
         }
       });
 
     const base = boletos.filter(b => {
+      const usuarioId = b.usuarioId ?? b.moradorId;
       if (b.status === 'PAGO') {
-        return pagoMaisRecentePorMorador.get(b.moradorId)?.id === b.id;
+        return usuarioId !== undefined && pagoMaisRecentePorUsuario.get(usuarioId)?.id === b.id;
       }
       return true;
     });
 
     return base
       .filter((b) => {
-        const matchSearch = b.moradorNome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const nomeUsuario = b.usuarioNome ?? b.moradorNome;
+        const matchSearch = nomeUsuario?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             b.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchStatus = statusFilter === '' || b.status === statusFilter;
         return matchSearch && matchStatus;
@@ -421,7 +425,7 @@ export default function GestaoPagamentosPage() {
         const dueDateDiff = new Date(`${a.dataVencimento}T00:00:00`).getTime() - new Date(`${b.dataVencimento}T00:00:00`).getTime();
         if (dueDateDiff !== 0) return dueDateDiff;
 
-        return (a.moradorNome || '').localeCompare(b.moradorNome || '', 'pt-BR');
+        return (a.usuarioNome || a.moradorNome || '').localeCompare(b.usuarioNome || b.moradorNome || '', 'pt-BR');
       });
   }, [boletos, searchTerm, statusFilter]);
 
@@ -443,11 +447,11 @@ export default function GestaoPagamentosPage() {
 
   const columns = [
     {
-      key: 'morador',
-      header: 'Morador',
+      key: 'usuario',
+      header: 'Usuário',
       render: (b: Boleto) => (
          <div className="font-medium text-slate-900 dark:text-white">
-           {b.moradorNome || `Morador #${b.moradorId}`}
+           {b.usuarioNome ?? b.moradorNome ?? `Usuário #${b.usuarioId ?? b.moradorId}`}
          </div>
       ),
     },
@@ -588,7 +592,7 @@ export default function GestaoPagamentosPage() {
             <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Boletos Emitidos</h2>
              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <Input
-                placeholder="Buscar por morador..."
+                placeholder="Buscar por usuário..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full sm:w-64"
@@ -650,10 +654,10 @@ export default function GestaoPagamentosPage() {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Emitir Boleto Avulso">
         <form onSubmit={handleEmitirBoleto} className="space-y-4">
           <Select
-            label="Morador Destino"
-            options={moradoresList}
-            value={novoBoletoForm.moradorId}
-            onChange={(e) => setNovoBoletoForm({...novoBoletoForm, moradorId: e.target.value})}
+            label="Usuário Destino"
+            options={usuariosList}
+            value={novoBoletoForm.usuarioId}
+            onChange={(e) => setNovoBoletoForm({...novoBoletoForm, usuarioId: e.target.value})}
             required
           />
           <Input
@@ -763,7 +767,7 @@ export default function GestaoPagamentosPage() {
             </div>
             <div>
               <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200">Confirmar baixa do boleto?</p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">O status será alterado para PAGO e o morador será notificado da quitação.</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">O status será alterado para PAGO e o usuário será notificado da quitação.</p>
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
@@ -782,7 +786,7 @@ export default function GestaoPagamentosPage() {
             </div>
             <div>
               <p className="text-sm font-bold text-red-800 dark:text-red-200">Deseja apagar este boleto?</p>
-              <p className="text-xs text-red-600 dark:text-red-400 mt-1">Atenção: Esta ação é irreversível e o boleto sumirá do histórico do morador.</p>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">Atenção: Esta ação é irreversível e o boleto sumirá do histórico do usuário.</p>
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">

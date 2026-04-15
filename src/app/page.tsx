@@ -17,10 +17,13 @@ export default function HomePage() {
             router.push('/dashboard/sindico');
             break;
           case 'MORADOR':
-            router.push('/dashboard/morador');
+            router.push('/dashboard/usuario');
             break;
           case 'PORTEIRO':
             router.push('/dashboard/porteiro');
+            break;
+          case 'MANTENEDOR':
+            router.push('/dashboard/mantenedor');
             break;
         }
       } else {

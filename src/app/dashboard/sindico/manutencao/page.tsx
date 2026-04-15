@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import { Fornecedor, FornecedorFormData, Ocorrencia, OcorrenciaPrioridade, Reserva } from '@/types';
+import { Fornecedor, FornecedorFormData, Usuario, Ocorrencia, OcorrenciaPrioridade, Reserva } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -25,6 +25,7 @@ interface NovoChamadoForm {
   descricao: string;
   categoria: string;
   prioridade: OcorrenciaPrioridade;
+  profissionalResponsavelId: string;
   // vinculo de fornecedor
   fornecedorMode: 'nenhum' | 'existente' | 'novo';
   fornecedorId: string;
@@ -36,6 +37,7 @@ const formVazio: NovoChamadoForm = {
   descricao: '',
   categoria: 'MANUTENCAO',
   prioridade: 'MEDIA',
+  profissionalResponsavelId: '',
   fornecedorMode: 'nenhum',
   fornecedorId: '',
   novoFornecedor: { nome: '', comentario: '', vigencia: '', contato: '', valor: '' },
@@ -61,13 +63,22 @@ export default function ManutencaoPage() {
   const [form, setForm] = useState<NovoChamadoForm>(formVazio);
   const [formFornecedor, setFormFornecedor] = useState<FornecedorFormData>(fornecedorVazio);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
-  const { get, post, put, del, isLoading: apiLoading } = useApi();
+  const [profissionais, setProfissionais] = useState<Usuario[]>([]);
+  const { get, post, put, del } = useApi();
   const { user } = useAuth();
 
   // Carrega fornecedores da API
   const loadFornecedores = useCallback(async () => {
     const data = await get('/fornecedores') as Fornecedor[] | null;
     if (data) setFornecedores(data);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadProfissionais = useCallback(async () => {
+    const data = await get('/usuarios') as Usuario[] | null;
+    if (data) {
+      setProfissionais(data.filter((usuario) => usuario.role === 'MANTENEDOR' && usuario.ativo));
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -82,6 +93,7 @@ export default function ManutencaoPage() {
         setOcorrencias(ocData || []);
         setReservas(reservaData || []);
         await loadFornecedores();
+        await loadProfissionais();
       } finally {
         setIsLoading(false);
       }
@@ -120,8 +132,14 @@ export default function ManutencaoPage() {
     }
     setSalvando(true);
     try {
-      const payload = { titulo: form.titulo, descricao: form.descricao, categoria: form.categoria, prioridade: form.prioridade };
-      const nova = await post(`/ocorrencias/morador/${user?.id}`, payload, { showSuccessToast: true, successMessage: 'Chamado criado com sucesso!' }) as Ocorrencia | null;
+      const payload = {
+        titulo: form.titulo,
+        descricao: form.descricao,
+        categoria: form.categoria,
+        prioridade: form.prioridade,
+        profissionalResponsavelId: form.profissionalResponsavelId ? Number(form.profissionalResponsavelId) : undefined,
+      };
+      const nova = await post(`/ocorrencias/usuario/${user?.id}`, payload, { showSuccessToast: true, successMessage: 'Chamado criado com sucesso!' }) as Ocorrencia | null;
       if (nova) {
         setOcorrencias((prev) => [nova, ...prev]);
         setModalChamado(false);
@@ -237,6 +255,16 @@ export default function ManutencaoPage() {
               { value: 'MEDIA', label: 'Média' },
               { value: 'ALTA', label: 'Alta' },
               { value: 'URGENTE', label: 'Urgente' },
+            ]}
+          />
+          <Select
+            label="Encaminhar para profissional"
+            name="profissionalResponsavelId"
+            value={form.profissionalResponsavelId}
+            onChange={(e) => setForm((p) => ({ ...p, profissionalResponsavelId: e.target.value }))}
+            options={[
+              { value: '', label: profissionais.length === 0 ? 'Nenhum profissional disponivel' : 'Selecionar depois' },
+              ...profissionais.map((profissional) => ({ value: String(profissional.id), label: profissional.nome })),
             ]}
           />
 
@@ -402,7 +430,10 @@ export default function ManutencaoPage() {
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold text-slate-900 dark:text-white">{o.titulo}</p>
-                          <p className="text-xs text-slate-500 mt-1">{o.moradorNome} • Apt {o.apartamento}/{o.bloco}</p>
+                          <p className="text-xs text-slate-500 mt-1">{o.usuarioNome ?? o.moradorNome} • Apt {o.apartamento}/{o.bloco}</p>
+                          {o.profissionalResponsavelNome && (
+                            <p className="text-xs text-cyan-600 dark:text-cyan-300 mt-1">Profissional: {o.profissionalResponsavelNome}</p>
+                          )}
                         </div>
                         <Badge variant={statusCor[o.status] || 'info'} dot>{o.status.replace('_', ' ')}</Badge>
                       </div>
@@ -423,7 +454,7 @@ export default function ManutencaoPage() {
                   <div key={evento.id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
                     <p className="text-sm font-semibold text-slate-900 dark:text-white">{evento.areaComumNome}</p>
                     <p className="text-xs text-slate-500 mt-1">{new Date(`${evento.dataReserva}T00:00:00`).toLocaleDateString('pt-BR')} • {evento.horaInicio} às {evento.horaFim}</p>
-                    <p className="text-xs text-slate-500">Responsável: {evento.moradorNome}</p>
+                    <p className="text-xs text-slate-500">Responsável: {evento.usuarioNome ?? evento.moradorNome}</p>
                   </div>
                 ))}
                 {resumo.agenda.length === 0 && <p className="text-sm text-slate-500">Sem reservas pendentes nos próximos dias.</p>}

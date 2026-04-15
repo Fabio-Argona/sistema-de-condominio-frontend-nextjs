@@ -54,7 +54,7 @@ export default function HistoricoDownloadsBoletosPage() {
       const term = searchTerm.trim().toLowerCase();
       const matchSearch =
         term === '' ||
-        log.moradorNome.toLowerCase().includes(term) ||
+        (log.usuarioNome ?? log.moradorNome).toLowerCase().includes(term) ||
         log.usuarioNome.toLowerCase().includes(term) ||
         log.usuarioEmail.toLowerCase().includes(term) ||
         log.descricaoBoleto.toLowerCase().includes(term);
@@ -75,7 +75,7 @@ export default function HistoricoDownloadsBoletosPage() {
 
     return {
       total: logs.length,
-      moradores: porRole.MORADOR || 0,
+      usuarios: porRole.MORADOR || 0,
       sindicos: porRole.SINDICO || 0,
     };
   }, [logs]);
@@ -134,8 +134,8 @@ export default function HistoricoDownloadsBoletosPage() {
             <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{totais.total}</p>
           </div>
           <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 p-4 bg-emerald-50 dark:bg-emerald-900/10">
-            <p className="text-xs uppercase tracking-wider text-emerald-700/70 dark:text-emerald-400/70 font-semibold">Downloads por moradores</p>
-            <p className="mt-2 text-2xl font-bold text-emerald-700 dark:text-emerald-400">{totais.moradores}</p>
+            <p className="text-xs uppercase tracking-wider text-emerald-700/70 dark:text-emerald-400/70 font-semibold">Downloads por usuários</p>
+            <p className="mt-2 text-2xl font-bold text-emerald-700 dark:text-emerald-400">{totais.usuarios}</p>
           </div>
           <div className="rounded-xl border border-blue-200 dark:border-blue-900/50 p-4 bg-blue-50 dark:bg-blue-900/10">
             <p className="text-xs uppercase tracking-wider text-blue-700/70 dark:text-blue-400/70 font-semibold">Downloads pelo síndico</p>
@@ -147,7 +147,7 @@ export default function HistoricoDownloadsBoletosPage() {
           <CardContent className="py-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
-                placeholder="Buscar por morador, usuário, e-mail ou boleto..."
+                placeholder="Buscar por usuário, e-mail ou boleto..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -156,7 +156,7 @@ export default function HistoricoDownloadsBoletosPage() {
                 onChange={(e) => setRoleFilter(e.target.value)}
                 options={[
                   { value: '', label: 'Todos os perfis' },
-                  { value: 'MORADOR', label: 'Morador' },
+                  { value: 'MORADOR', label: 'Usuário' },
                   { value: 'SINDICO', label: 'Síndico' },
                   { value: 'PORTEIRO', label: 'Porteiro' },
                 ]}
@@ -189,7 +189,7 @@ export default function HistoricoDownloadsBoletosPage() {
             ) : (
               <>
                 <div className="hidden md:grid grid-cols-[1.4fr_1.2fr_1fr_1fr_0.8fr] gap-4 px-6 py-2.5 text-xs font-bold uppercase text-slate-400 tracking-wider border-b border-slate-100 dark:border-slate-800">
-                  <span>Morador / Boleto</span>
+                  <span>Usuário / Boleto</span>
                   <span>Quem baixou</span>
                   <span>Data / Hora</span>
                   <span>Referência</span>
@@ -202,7 +202,7 @@ export default function HistoricoDownloadsBoletosPage() {
                       className="grid grid-cols-1 md:grid-cols-[1.4fr_1.2fr_1fr_1fr_0.8fr] gap-2 md:gap-4 items-center px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
                     >
                       <div>
-                        <p className="font-semibold text-sm text-slate-900 dark:text-white">{log.moradorNome}</p>
+                        <p className="font-semibold text-sm text-slate-900 dark:text-white">{log.usuarioNome ?? log.moradorNome}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">{log.descricaoBoleto}</p>
                       </div>
 
