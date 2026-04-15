@@ -265,7 +265,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
             )}
             <div className="space-y-0.5">
               {group.items.map((item) => {
-                const isActive = pathname === item.href || (item.href !== '/dashboard/sindico' && item.href !== '/dashboard/morador' && item.href !== '/dashboard/porteiro' && pathname.startsWith(item.href));
+                const isActive = pathname === item.href;
                 return (
                   <Link
                     key={item.href}
