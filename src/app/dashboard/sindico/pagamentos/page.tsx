@@ -7,6 +7,7 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import DataTable from '@/components/ui/DataTable';
 import Input from '@/components/ui/Input';
+import Pagination from '@/components/ui/Pagination';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import { Boleto, Morador } from '@/types';
@@ -26,6 +27,8 @@ export default function GestaoPagamentosPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   
   // States para Emissão de Boleto Avulso
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -400,6 +403,22 @@ export default function GestaoPagamentosPage() {
       });
   }, [boletos, searchTerm, statusFilter]);
 
+  const paginatedBoletos = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredBoletos.slice(start, start + pageSize);
+  }, [currentPage, filteredBoletos, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, pageSize]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredBoletos.length / pageSize));
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, filteredBoletos.length, pageSize]);
+
   const columns = [
     {
       key: 'morador',
@@ -547,11 +566,21 @@ export default function GestaoPagamentosPage() {
         <CardContent className="p-0">
           <DataTable
             columns={columns}
-            data={filteredBoletos}
+            data={paginatedBoletos}
             isLoading={isLoading}
             emptyMessage="Nenhum boleto encontrado com os filtros atuais."
             keyExtractor={(b) => b.id}
           />
+          {!isLoading && filteredBoletos.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredBoletos.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              itemLabel="boletos"
+            />
+          )}
         </CardContent>
       </Card>
       

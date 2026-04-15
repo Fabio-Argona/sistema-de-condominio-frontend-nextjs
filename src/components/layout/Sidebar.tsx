@@ -180,7 +180,7 @@ const navGroups: NavGroup[] = [
     roles: ['SINDICO', 'PORTEIRO'],
     items: [
       { label: 'Segurança', href: '/dashboard/sindico/seguranca',    icon: icons.security, roles: ['SINDICO'] },
-      { label: 'Acessos',   href: '/dashboard/sindico/acessos',      icon: icons.access,   roles: ['SINDICO'] },
+      { label: 'Histórico de Acesso', href: '/dashboard/sindico/acessos', icon: icons.access, roles: ['SINDICO'] },
       { label: 'Visitantes',href: '/dashboard/porteiro/visitantes',  icon: icons.visitor,  roles: ['PORTEIRO', 'SINDICO'] },
       { label: 'Consulta',  href: '/dashboard/porteiro/consulta',    icon: icons.users,    roles: ['PORTEIRO', 'SINDICO'] },
     ],

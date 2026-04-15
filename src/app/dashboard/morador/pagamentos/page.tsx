@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Card, { CardHeader, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import Pagination from '@/components/ui/Pagination';
 import { Boleto } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +14,8 @@ import toast from 'react-hot-toast';
 export default function BoletosPage() {
   const [boletos, setBoletos] = useState<Boleto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   
   const { get, put } = useApi();
   const { user } = useAuth();
@@ -69,11 +72,27 @@ export default function BoletosPage() {
   });
 
   const statusOrder: Record<string, number> = { VENCIDO: 0, PENDENTE: 1, PAGO: 2 };
-  const boletosOrdenados = [...boletosFiltrados].sort((a, b) => {
+  const boletosOrdenados = useMemo(() => [...boletosFiltrados].sort((a, b) => {
     const diff = (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
     if (diff !== 0) return diff;
     return new Date(`${b.dataVencimento}T00:00:00`).getTime() - new Date(`${a.dataVencimento}T00:00:00`).getTime();
-  });
+  }), [boletosFiltrados]);
+
+  const paginatedBoletos = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return boletosOrdenados.slice(start, start + pageSize);
+  }, [currentPage, boletosOrdenados, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [pageSize, boletos.length]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(boletosOrdenados.length / pageSize));
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [boletosOrdenados.length, currentPage, pageSize]);
 
   return (
     <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
@@ -105,7 +124,7 @@ export default function BoletosPage() {
             </div>
           ) : (
             <div className="flex flex-col gap-4 p-4 md:p-0 md:divide-y md:divide-slate-100 md:dark:divide-slate-800">
-              {boletosOrdenados.map((boleto) => (
+              {paginatedBoletos.map((boleto) => (
                 <div 
                   key={boleto.id} 
                   className="p-5 md:p-6 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-2xl md:bg-transparent md:dark:bg-transparent md:border-none md:rounded-none flex flex-col md:flex-row justify-between md:items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200 shadow-sm md:shadow-none"
@@ -173,6 +192,16 @@ export default function BoletosPage() {
             </div>
           )}
         </CardContent>
+        {!isLoading && boletosOrdenados.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalItems={boletosOrdenados.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="boletos"
+          />
+        )}
       </Card>
       </div>
     </div>

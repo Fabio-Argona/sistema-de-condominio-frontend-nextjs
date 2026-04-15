@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Card, { CardHeader, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
+import Pagination from '@/components/ui/Pagination';
 import { useApi } from '@/hooks/useApi';
 import { LogAcesso } from '@/types';
 
@@ -31,7 +32,7 @@ const pageLabel: Record<string, string> = {
   '/dashboard/sindico/reservas': 'Reservas',
   '/dashboard/sindico/comunicados': 'Comunicados',
   '/dashboard/sindico/relatorios': 'Relatórios',
-  '/dashboard/sindico/acessos': 'Acessos',
+  '/dashboard/sindico/acessos': 'Histórico de Acesso',
   '/dashboard/sindico/visitantes': 'Visitantes',
   '/dashboard/sindico/consulta': 'Consulta',
   '/dashboard/morador': 'Dashboard',
@@ -62,6 +63,8 @@ export default function AcessosPage() {
   const [logs, setLogs] = useState<LogAcesso[]>([]);
   const [filtro, setFiltro] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const { get } = useApi();
 
   useEffect(() => {
@@ -75,13 +78,29 @@ export default function AcessosPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const logsFiltrados = logs.filter(l => l.role !== 'SINDICO').filter(l =>
+  const logsFiltrados = useMemo(() => logs.filter(l => l.role !== 'SINDICO').filter(l =>
     l.usuarioNome.toLowerCase().includes(filtro.toLowerCase()) ||
     l.usuarioEmail.toLowerCase().includes(filtro.toLowerCase()) ||
     l.role.toLowerCase().includes(filtro.toLowerCase()) ||
     (l.ip || '').includes(filtro) ||
     (pageLabel[l.pagina ?? ''] || l.pagina || '').toLowerCase().includes(filtro.toLowerCase())
-  );
+  ), [filtro, logs]);
+
+  const paginatedLogs = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return logsFiltrados.slice(start, start + pageSize);
+  }, [currentPage, logsFiltrados, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filtro, pageSize]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(logsFiltrados.length / pageSize));
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, logsFiltrados.length, pageSize]);
 
   return (
     <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
@@ -96,7 +115,7 @@ export default function AcessosPage() {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Log de Acessos</h1>
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Histórico de Acesso</h1>
               <p className="text-sm text-slate-500 dark:text-slate-400">Histórico de entradas no portal do condomínio</p>
             </div>
           </div>
@@ -153,7 +172,7 @@ export default function AcessosPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {logsFiltrados.map(log => (
+                    {paginatedLogs.map(log => (
                       <tr key={log.id} className="border-b border-slate-50 dark:border-slate-700/30 hover:bg-slate-50/60 dark:hover:bg-slate-700/30 transition-colors">
                         <td className="py-3 px-3">
                           <p className="font-medium text-slate-800 dark:text-slate-200">{log.usuarioNome}</p>
@@ -186,6 +205,16 @@ export default function AcessosPage() {
               </div>
             )}
           </CardContent>
+          {!isLoading && logsFiltrados.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalItems={logsFiltrados.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              itemLabel="registros"
+            />
+          )}
         </Card>
       </div>
     </div>
