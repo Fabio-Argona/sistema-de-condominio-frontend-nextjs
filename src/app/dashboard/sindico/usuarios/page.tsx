@@ -19,7 +19,7 @@ interface CriarUsuarioResponse {
 }
 
 const roleLabels: Record<UserRole, string> = {
-  MORADOR: 'Usuário',
+  MORADOR: 'Morador',
   PORTEIRO: 'Porteiro',
   MANTENEDOR: 'Profissional de manutenção',
   SINDICO: 'Síndico',
@@ -363,7 +363,8 @@ export default function UsuariosPage() {
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 >
-                  <option value="MORADOR">Usuário</option>
+                  <option value="MORADOR">Morador</option>
+                  <option value="PORTEIRO">Porteiro</option>
                   <option value="MANTENEDOR">Profissional de manutenção</option>
                   <option value="SINDICO">Síndico</option>
                 </select>
@@ -427,7 +428,8 @@ export default function UsuariosPage() {
               className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             >
               <option value="">Selecione um perfil...</option>
-              <option value="MORADOR">Usuário</option>
+              <option value="MORADOR">Morador</option>
+              <option value="PORTEIRO">Porteiro</option>
               <option value="MANTENEDOR">Profissional de manutenção</option>
               <option value="SINDICO">Síndico</option>
             </select>
