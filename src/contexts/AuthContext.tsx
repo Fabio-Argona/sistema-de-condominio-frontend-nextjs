@@ -91,12 +91,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userData);
 
       // Redireciona com base no role
-      const profilePath = profileByRole[userData.role];
+      const userRole = userData.role as UserRole;
+      const profilePath = profileByRole[userRole];
       if (userData.primeiroAcesso && profilePath) {
         router.push(profilePath);
         return;
       }
-      router.push(dashboardByRole[userData.role] ?? '/dashboard');
+      router.push(dashboardByRole[userRole] ?? '/dashboard');
     } catch (error) {
       throw error;
     }

@@ -119,7 +119,7 @@ export default function HistoricoBoletosPage() {
     const map = new Map<number, GroupedHistorico>();
     filtered.forEach((b) => {
       const usuarioId = b.usuarioId ?? b.moradorId;
-      const usuarioNome = b.usuarioNome ?? b.moradorNome || `Usuário #${usuarioId}`;
+      const usuarioNome = b.usuarioNome ?? b.moradorNome ?? `Usuário #${usuarioId}`;
       if (!map.has(usuarioId)) {
         map.set(usuarioId, {
           usuarioId,

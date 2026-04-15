@@ -30,7 +30,7 @@ export default function OcorrenciasPage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { get, patch, isLoading } = useApi<Ocorrencia[] | Ocorrencia>();
+  const { get, patch, isLoading } = useApi<Ocorrencia[] | Ocorrencia | Usuario[]>();
 
   const loadOcorrencias = async () => {
     const data = await get('/ocorrencias') as Ocorrencia[];
