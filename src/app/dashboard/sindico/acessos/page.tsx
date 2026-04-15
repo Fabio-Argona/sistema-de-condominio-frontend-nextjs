@@ -7,6 +7,17 @@ import Pagination from '@/components/ui/Pagination';
 import { useApi } from '@/hooks/useApi';
 import { LogAcesso } from '@/types';
 
+type GrupoAcesso = {
+  key: string;
+  usuarioNome: string;
+  usuarioEmail: string;
+  role: string;
+  total: number;
+  ultimoAcesso: string;
+  paginas: string[];
+  logs: LogAcesso[];
+};
+
 const roleLabel: Record<string, string> = {
   SINDICO: 'Síndico',
   MORADOR: 'Usuário',
@@ -74,6 +85,7 @@ export default function AcessosPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const { get } = useApi();
 
   useEffect(() => {
@@ -87,7 +99,7 @@ export default function AcessosPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const logsFiltrados = useMemo(() => logs.filter(l => l.role !== 'SINDICO').filter(l =>
+  const logsFiltrados = useMemo(() => logs.filter(l =>
     l.usuarioNome.toLowerCase().includes(filtro.toLowerCase()) ||
     l.usuarioEmail.toLowerCase().includes(filtro.toLowerCase()) ||
     l.role.toLowerCase().includes(filtro.toLowerCase()) ||
@@ -95,21 +107,68 @@ export default function AcessosPage() {
     (pageLabel[l.pagina ?? ''] || l.pagina || '').toLowerCase().includes(filtro.toLowerCase())
   ), [filtro, logs]);
 
-  const paginatedLogs = useMemo(() => {
+  const grupos = useMemo((): GrupoAcesso[] => {
+    const map = new Map<string, GrupoAcesso>();
+
+    logsFiltrados.forEach((log) => {
+      const key = log.usuarioEmail || `${log.usuarioNome}-${log.role}`;
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          usuarioNome: log.usuarioNome,
+          usuarioEmail: log.usuarioEmail,
+          role: log.role,
+          total: 0,
+          ultimoAcesso: log.dataHora,
+          paginas: [],
+          logs: [],
+        });
+      }
+
+      const grupo = map.get(key)!;
+      grupo.total += 1;
+      grupo.logs.push(log);
+      if (new Date(log.dataHora) > new Date(grupo.ultimoAcesso)) {
+        grupo.ultimoAcesso = log.dataHora;
+      }
+      const paginaLabel = pageLabel[log.pagina ?? ''] ?? log.pagina;
+      if (paginaLabel && !grupo.paginas.includes(paginaLabel)) {
+        grupo.paginas.push(paginaLabel);
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) => {
+      const roleCompare = (roleLabel[a.role] ?? a.role).localeCompare(roleLabel[b.role] ?? b.role, 'pt-BR');
+      if (roleCompare !== 0) {
+        return roleCompare;
+      }
+
+      return a.usuarioNome.localeCompare(b.usuarioNome, 'pt-BR');
+    });
+  }, [logsFiltrados]);
+
+  const paginatedGroups = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return logsFiltrados.slice(start, start + pageSize);
-  }, [currentPage, logsFiltrados, pageSize]);
+    return grupos.slice(start, start + pageSize);
+  }, [currentPage, grupos, pageSize]);
+
+  const resumo = useMemo(() => {
+    return logs.reduce<Record<string, number>>((acc, log) => {
+      acc[log.role] = (acc[log.role] || 0) + 1;
+      return acc;
+    }, {});
+  }, [logs]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [filtro, pageSize]);
 
   useEffect(() => {
-    const totalPages = Math.max(1, Math.ceil(logsFiltrados.length / pageSize));
+    const totalPages = Math.max(1, Math.ceil(grupos.length / pageSize));
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
-  }, [currentPage, logsFiltrados.length, pageSize]);
+  }, [currentPage, grupos.length, pageSize]);
 
   return (
     <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
@@ -131,9 +190,9 @@ export default function AcessosPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          {(['MORADOR', 'PORTEIRO'] as const).map(role => {
-            const count = logs.filter(l => l.role === role).length;
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          {(['SINDICO', 'MORADOR', 'PORTEIRO'] as const).map(role => {
+            const count = resumo[role] || 0;
             return (
               <div key={role} className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600/50 rounded-xl p-4 text-center">
                 <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{count}</p>
@@ -158,7 +217,7 @@ export default function AcessosPage() {
         <Card>
           <CardHeader>
             <span className="text-slate-700 dark:text-slate-200 font-medium">
-              {logsFiltrados.length} registro{logsFiltrados.length !== 1 ? 's' : ''}
+              {grupos.length} grupo{grupos.length !== 1 ? 's' : ''}
             </span>
           </CardHeader>
           <CardContent>
@@ -166,62 +225,79 @@ export default function AcessosPage() {
               <div className="flex justify-center py-12">
                 <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
               </div>
-            ) : logsFiltrados.length === 0 ? (
+            ) : grupos.length === 0 ? (
               <p className="text-center text-slate-500 dark:text-slate-400 py-10 text-sm">Nenhum acesso registrado.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-100 dark:border-slate-700/50">
-                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Usuário</th>
-                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Perfil</th>
-                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Data / Hora</th>
-                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Página</th>
-                      <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">IP</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedLogs.map(log => (
-                      <tr key={log.id} className="border-b border-slate-50 dark:border-slate-700/30 hover:bg-slate-50/60 dark:hover:bg-slate-700/30 transition-colors">
-                        <td className="py-3 px-3">
-                          <p className="font-medium text-slate-800 dark:text-slate-200">{log.usuarioNome}</p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">{log.usuarioEmail}</p>
-                        </td>
-                        <td className="py-3 px-3">
-                          <Badge variant={roleColor[log.role] ?? 'info'}>
-                            {roleLabel[log.role] ?? log.role}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-3 text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                          {formatDataHora(log.dataHora)}
-                        </td>
-                        <td className="py-3 px-3">
-                          {log.pagina ? (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-lg px-2 py-0.5">
-                              {pageLabel[log.pagina] ?? log.pagina}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-3 text-slate-400 dark:text-slate-500 font-mono text-xs">
-                          {log.ip || '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {paginatedGroups.map((grupo) => (
+                  <div key={grupo.key}>
+                    <button
+                      onClick={() => setExpandedGroup((prev) => (prev === grupo.key ? null : grupo.key))}
+                      className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-4 text-left hover:bg-slate-50/60 dark:hover:bg-slate-700/30 transition-colors"
+                    >
+                      <div>
+                        <p className="font-medium text-slate-800 dark:text-slate-200">{grupo.usuarioNome}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">{grupo.usuarioEmail}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Último acesso: {formatDataHora(grupo.ultimoAcesso)}</p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant={roleColor[grupo.role] ?? 'info'}>
+                          {roleLabel[grupo.role] ?? grupo.role}
+                        </Badge>
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-lg px-2 py-0.5">
+                          {grupo.total} acesso{grupo.total !== 1 ? 's' : ''}
+                        </span>
+                        {grupo.paginas.slice(0, 2).map((pagina) => (
+                          <span key={pagina} className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-lg px-2 py-0.5">
+                            {pagina}
+                          </span>
+                        ))}
+                      </div>
+                    </button>
+
+                    {expandedGroup === grupo.key && (
+                      <div className="border-t border-slate-100 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-900/30 overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-slate-100 dark:border-slate-700/50">
+                              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Data / Hora</th>
+                              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Página</th>
+                              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">IP</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {grupo.logs.map((log) => (
+                              <tr key={log.id} className="border-b border-slate-50 dark:border-slate-700/30 last:border-0">
+                                <td className="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">{formatDataHora(log.dataHora)}</td>
+                                <td className="py-3 px-4">
+                                  {log.pagina ? (
+                                    <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-lg px-2 py-0.5">
+                                      {pageLabel[log.pagina] ?? log.pagina}
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-4 text-slate-400 dark:text-slate-500 font-mono text-xs">{log.ip || '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>
-          {!isLoading && logsFiltrados.length > 0 && (
+          {!isLoading && grupos.length > 0 && (
             <Pagination
               currentPage={currentPage}
-              totalItems={logsFiltrados.length}
+              totalItems={grupos.length}
               pageSize={pageSize}
               onPageChange={setCurrentPage}
               onPageSizeChange={setPageSize}
-              itemLabel="registros"
+              itemLabel="grupos"
             />
           )}
         </Card>

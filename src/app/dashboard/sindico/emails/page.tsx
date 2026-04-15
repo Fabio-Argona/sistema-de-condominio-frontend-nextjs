@@ -21,6 +21,16 @@ interface LogEmail {
   descricao: string;
 }
 
+type EmailGroup = {
+  key: string;
+  destinatario: string;
+  destinatarioNome: string;
+  logs: LogEmail[];
+  total: number;
+  ultimoEnvio: string;
+  tipos: Record<string, number>;
+};
+
 const TIPO_COLORS: Record<string, 'success' | 'warning' | 'danger' | 'default' | 'info'> = {
   ENVIO_BOLETO: 'info',
   COBRANCA_BOLETO_VENCIDO: 'danger',
@@ -124,6 +134,7 @@ export default function HistoricoEmailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoFilter, setTipoFilter] = useState('');
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
   const { get } = useApi();
 
@@ -173,6 +184,57 @@ export default function HistoricoEmailsPage() {
     return map;
   }, [logs]);
 
+  const grouped = useMemo((): EmailGroup[] => {
+    const map = new Map<string, EmailGroup>();
+
+    filtered.forEach((log) => {
+      const key = log.destinatario || `${log.destinatarioNome}-${log.id}`;
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          destinatario: log.destinatario,
+          destinatarioNome: log.destinatarioNome,
+          logs: [],
+          total: 0,
+          ultimoEnvio: log.dataHoraEnvio,
+          tipos: {},
+        });
+      }
+
+      const group = map.get(key)!;
+      group.logs.push(log);
+      group.total += 1;
+      group.tipos[log.tipo] = (group.tipos[log.tipo] || 0) + 1;
+      if (new Date(log.dataHoraEnvio) > new Date(group.ultimoEnvio)) {
+        group.ultimoEnvio = log.dataHoraEnvio;
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) => {
+      const byName = a.destinatarioNome.localeCompare(b.destinatarioNome, 'pt-BR');
+      if (byName !== 0) {
+        return byName;
+      }
+
+      return new Date(b.ultimoEnvio).getTime() - new Date(a.ultimoEnvio).getTime();
+    });
+  }, [filtered]);
+
+  const resumo = useMemo(() => {
+    return grouped.reduce(
+      (acc, group) => {
+        if (group.tipos.ENVIO_BOLETO) {
+          acc.comBoletos += 1;
+        }
+        if (group.tipos.COBRANCA_BOLETO_VENCIDO) {
+          acc.comCobrancas += 1;
+        }
+        return acc;
+      },
+      { destinatarios: grouped.length, comBoletos: 0, comCobrancas: 0 },
+    );
+  }, [grouped]);
+
   const fmtDt = (dt: string) => {
     const d = new Date(dt);
     return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -199,6 +261,21 @@ export default function HistoricoEmailsPage() {
         </div>
 
         {/* Cards de resumo */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-slate-50 dark:bg-slate-900/60">
+            <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">Destinatários no histórico</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{resumo.destinatarios}</p>
+          </div>
+          <div className="rounded-xl border border-blue-200 dark:border-blue-900/50 p-4 bg-blue-50 dark:bg-blue-900/10">
+            <p className="text-xs uppercase tracking-wider text-blue-700/70 dark:text-blue-400/70 font-semibold">Subconjunto com boletos</p>
+            <p className="mt-2 text-2xl font-bold text-blue-700 dark:text-blue-400">{resumo.comBoletos}</p>
+          </div>
+          <div className="rounded-xl border border-red-200 dark:border-red-900/50 p-4 bg-red-50 dark:bg-red-900/10">
+            <p className="text-xs uppercase tracking-wider text-red-700/70 dark:text-red-400/70 font-semibold">Subconjunto com cobranças</p>
+            <p className="mt-2 text-2xl font-bold text-red-700 dark:text-red-400">{resumo.comCobrancas}</p>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {tipoOptions.slice(1).map((opt) => (
             <button
@@ -243,9 +320,9 @@ export default function HistoricoEmailsPage() {
         <Card>
           <CardHeader>
             <h2 className="text-base font-semibold text-slate-800 dark:text-white">
-              Registros{' '}
+              Histórico Agrupado{' '}
               <span className="text-slate-400 font-normal text-sm">
-                ({filtered.length} {filtered.length === 1 ? 'registro' : 'registros'})
+                ({grouped.length} {grouped.length === 1 ? 'destinatário' : 'destinatários'})
               </span>
             </h2>
           </CardHeader>
@@ -254,7 +331,7 @@ export default function HistoricoEmailsPage() {
               <div className="flex justify-center p-12">
                 <LoadingSpinner size="lg" />
               </div>
-            ) : filtered.length === 0 ? (
+            ) : grouped.length === 0 ? (
               <div className="flex flex-col items-center gap-3 p-12 text-slate-400">
                 <svg className="w-14 h-14 text-slate-200 dark:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -262,55 +339,84 @@ export default function HistoricoEmailsPage() {
                 <p>Nenhum e-mail encontrado com os filtros selecionados.</p>
               </div>
             ) : (
-              <>
-                {/* Cabeçalho — desktop */}
-                <div className="hidden md:grid grid-cols-[2fr_2fr_2fr_1fr] gap-4 px-6 py-2.5 text-xs font-bold uppercase text-slate-400 tracking-wider border-b border-slate-100 dark:border-slate-800">
-                  <span>Destinatário</span>
-                  <span>Descrição</span>
-                  <span>Data / Hora</span>
-                  <span>Tipo</span>
-                </div>
-                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {filtered.map((log) => (
-                    <div
-                      key={log.id}
-                      className="grid grid-cols-1 md:grid-cols-[2fr_2fr_2fr_1fr] gap-2 md:gap-4 items-center px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {grouped.map((group) => (
+                  <div key={group.key}>
+                    <button
+                      onClick={() => setExpandedGroup((prev) => (prev === group.key ? null : group.key))}
+                      className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors text-left"
                     >
-                      {/* Destinatário */}
-                      <div>
-                        <p className="font-semibold text-sm text-slate-900 dark:text-white">
-                          {log.destinatarioNome}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{log.destinatario}</p>
+                      <div className="flex items-start gap-3 min-w-0">
+                        <svg
+                          className={`w-4 h-4 mt-1 text-slate-400 shrink-0 transition-transform ${expandedGroup === group.key ? 'rotate-90' : ''}`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm text-slate-900 dark:text-white">{group.destinatarioNome}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{group.destinatario}</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Último envio: {fmtDt(group.ultimoEnvio)}</p>
+                        </div>
                       </div>
-
-                      {/* Descrição */}
-                      <p className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
-                        <span className="mt-0.5 shrink-0 text-slate-500 dark:text-slate-400">
-                          {TIPO_ICONS[log.tipo] ?? TIPO_ICONS.NOVA_RESERVA}
+                      <div className="flex flex-wrap items-center gap-2 ml-7 sm:ml-0">
+                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
+                          {group.total} {group.total === 1 ? 'envio' : 'envios'}
                         </span>
-                        <span>
-                          {log.descricao || log.tipoLabel}
-                        {log.boletoId && (
-                          <span className="ml-1.5 text-xs text-slate-400">(Boleto #{log.boletoId})</span>
-                        )}
-                        </span>
-                      </p>
+                        {Object.entries(group.tipos)
+                          .sort(([, a], [, b]) => b - a)
+                          .slice(0, 2)
+                          .map(([tipo, total]) => (
+                            <Badge key={tipo} variant={TIPO_COLORS[tipo] ?? 'default'} size="sm">
+                              {total} {TIPO_LABELS[tipo] ?? tipo}
+                            </Badge>
+                          ))}
+                      </div>
+                    </button>
 
-                      {/* Data / Hora */}
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        <span className="md:hidden text-xs text-slate-400 mr-1">Enviado:</span>
-                        {fmtDt(log.dataHoraEnvio)}
-                      </p>
-
-                      {/* Badge tipo */}
-                      <Badge variant={TIPO_COLORS[log.tipo] ?? 'default'} size="sm">
-                        {log.tipoLabel}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </>
+                    {expandedGroup === group.key && (
+                      <div className="bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800">
+                        <div className="hidden md:grid grid-cols-[2fr_2fr_2fr_1fr] gap-4 px-8 py-2 text-xs font-bold uppercase text-slate-400 tracking-wider border-b border-slate-100 dark:border-slate-800">
+                          <span>Destinatário</span>
+                          <span>Descrição</span>
+                          <span>Data / Hora</span>
+                          <span>Tipo</span>
+                        </div>
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {group.logs.map((log) => (
+                            <div
+                              key={log.id}
+                              className="grid grid-cols-1 md:grid-cols-[2fr_2fr_2fr_1fr] gap-2 md:gap-4 items-center px-8 py-4"
+                            >
+                              <div>
+                                <p className="font-semibold text-sm text-slate-900 dark:text-white">{log.destinatarioNome}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">{log.destinatario}</p>
+                              </div>
+                              <p className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                                <span className="mt-0.5 shrink-0 text-slate-500 dark:text-slate-400">
+                                  {TIPO_ICONS[log.tipo] ?? TIPO_ICONS.NOVA_RESERVA}
+                                </span>
+                                <span>
+                                  {log.descricao || log.tipoLabel}
+                                  {log.boletoId && (
+                                    <span className="ml-1.5 text-xs text-slate-400">(Boleto #{log.boletoId})</span>
+                                  )}
+                                </span>
+                              </p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400">{fmtDt(log.dataHoraEnvio)}</p>
+                              <Badge variant={TIPO_COLORS[log.tipo] ?? 'default'} size="sm">
+                                {log.tipoLabel}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
