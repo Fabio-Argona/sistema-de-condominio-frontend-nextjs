@@ -19,12 +19,14 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Proxy Rewrites: Conecta o Frontend (HTTPS) ao Backend (HTTP) da AWS
+  // Proxy Rewrites: Conecta o Frontend (HTTPS) ao Backend
+  // Em produção, defina NEXT_PUBLIC_API_URL (ou BACKEND_URL) nas env vars do Vercel
   async rewrites() {
+    const backendUrl = process.env.BACKEND_URL || 'http://100.51.89.148:8080';
     return [
       {
         source: '/api/:path*',
-        destination: 'http://100.51.89.148:8080/api/:path*',
+        destination: `${backendUrl}/api/:path*`,
       },
     ];
   },
