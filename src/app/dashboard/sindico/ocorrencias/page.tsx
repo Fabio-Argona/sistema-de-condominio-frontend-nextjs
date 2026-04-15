@@ -21,8 +21,9 @@ export default function OcorrenciasPage() {
   const [selectedOcorrencia, setSelectedOcorrencia] = useState<Ocorrencia | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
-  const [statusToChange, setStatusToChange] = useState<OcorrenciaStatus | null>(null);
-  const [ocorrenciaToChange, setOcorrenciaToChange] = useState<number | null>(null);
+  const [statusToChange, setStatusToChange] = useState<OcorrenciaStatus | ''>('');
+  const [ocorrenciaToChange, setOcorrenciaToChange] = useState<Ocorrencia | null>(null);
+  const [tratativa, setTratativa] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -45,35 +46,52 @@ export default function OcorrenciasPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleStatusChange = (id: number, newStatus: OcorrenciaStatus) => {
-    // Se for apenas iniciar atendimento, podemos fazer direto p/ experiência ser fluida
-    // Mas fechar/resolver são ações definitivas que merecem confirmação
-    if (newStatus === 'EM_ANDAMENTO') {
-       executeStatusChange(id, newStatus);
-       return;
-    }
-    
-    setOcorrenciaToChange(id);
+  const openStatusModal = (ocorrencia: Ocorrencia, newStatus?: OcorrenciaStatus) => {
+    setOcorrenciaToChange(ocorrencia);
     setStatusToChange(newStatus);
+    setTratativa('');
     setIsStatusModalOpen(true);
   };
 
-  const executeStatusChange = async (id: number, newStatus: OcorrenciaStatus) => {
-    const updated = await patch(`/ocorrencias/${id}/status`, { status: newStatus }) as Ocorrencia;
-    if (updated) {
-      setOcorrencias(ocorrencias.map((o) => o.id === id ? updated : o));
-      toast.success(`Status atualizado para ${statusLabels[newStatus]}`);
-    }
+  const closeStatusModal = () => {
     setIsStatusModalOpen(false);
     setOcorrenciaToChange(null);
-    setStatusToChange(null);
+    setStatusToChange('');
+    setTratativa('');
+  };
+
+  const executeStatusChange = async (ocorrencia: Ocorrencia, newStatus: OcorrenciaStatus, descricaoTratativa: string) => {
+    const updated = await patch(`/ocorrencias/${ocorrencia.id}/status`, {
+      status: newStatus,
+      respostasSindico: [descricaoTratativa.trim()],
+    }) as Ocorrencia;
+    if (updated) {
+      setOcorrencias(ocorrencias.map((o) => o.id === ocorrencia.id ? updated : o));
+      if (selectedOcorrencia?.id === ocorrencia.id) {
+        setSelectedOcorrencia(updated);
+      }
+      toast.success(`Status atualizado para ${statusLabels[newStatus]}`);
+    }
+    closeStatusModal();
   };
 
   const handleConfirmStatus = () => {
-    if (ocorrenciaToChange && statusToChange) {
-       executeStatusChange(ocorrenciaToChange, statusToChange);
+    if (!ocorrenciaToChange || !statusToChange) {
+      return;
     }
+    if (tratativa.trim().length < 5) {
+      toast.error('Digite uma tratativa com pelo menos 5 caracteres.');
+      return;
+    }
+    executeStatusChange(ocorrenciaToChange, statusToChange, tratativa);
   };
+
+  const statusOptions = (ocorrenciaAtual?: Ocorrencia | null) => [
+    { value: 'ABERTA', label: 'Aberta' },
+    { value: 'EM_ANDAMENTO', label: 'Em Andamento' },
+    { value: 'RESOLVIDA', label: 'Resolvida' },
+    { value: 'FECHADA', label: 'Fechada' },
+  ].filter((option) => option.value !== ocorrenciaAtual?.status);
 
   const formatDate = (dateString?: string, onlyDate = false) => {
       if (!dateString) return '';
@@ -99,26 +117,36 @@ export default function OcorrenciasPage() {
     {
       key: 'acoes', header: 'Ações',
       render: (o: Ocorrencia) => (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button onClick={() => { setSelectedOcorrencia(o); setIsDetailOpen(true); }} className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Ver detalhes">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
           </button>
           <div className="flex items-center gap-1">
             {o.status === 'ABERTA' && (
-              <button disabled={isLoading} onClick={() => handleStatusChange(o.id, 'EM_ANDAMENTO')} className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors" title="Iniciar atendimento">
+              <button disabled={isLoading} onClick={() => openStatusModal(o, 'EM_ANDAMENTO')} className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors" title="Iniciar atendimento">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </button>
             )}
             {o.status === 'EM_ANDAMENTO' && (
-              <button disabled={isLoading} onClick={() => handleStatusChange(o.id, 'RESOLVIDA')} className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors" title="Marcar como resolvida">
+              <button disabled={isLoading} onClick={() => openStatusModal(o, 'RESOLVIDA')} className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors" title="Marcar como resolvida">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </button>
             )}
             {o.status !== 'FECHADA' && (
-              <button disabled={isLoading} onClick={() => handleStatusChange(o.id, 'FECHADA')} className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Fechar chamado">
+              <button disabled={isLoading} onClick={() => openStatusModal(o, 'FECHADA')} className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Fechar chamado">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </button>
             )}
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isLoading}
+              onClick={() => openStatusModal(o)}
+              icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M16.586 3.586a2 2 0 112.828 2.828L11.828 14H9v-2.828l7.586-7.586z" /></svg>}
+              className="ml-1"
+            >
+              Alterar status
+            </Button>
           </div>
         </div>
       ),
@@ -153,41 +181,37 @@ export default function OcorrenciasPage() {
       </Card>
 
       {/* Status Confirmation Modal */}
-      <Modal isOpen={isStatusModalOpen} onClose={() => { setIsStatusModalOpen(false); setOcorrenciaToChange(null); setStatusToChange(null); }} title="Confirmar Alteração" size="sm">
+      <Modal isOpen={isStatusModalOpen} onClose={closeStatusModal} title="Alterar Status da Ocorrência" size="md">
         <div className="space-y-4">
-          <div className={`p-4 rounded-xl flex items-start gap-3 ${
-            statusToChange === 'RESOLVIDA'
-              ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30'
-              : 'bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600/30'
-          }`}>
-            <div className={`p-2 rounded-lg shrink-0 ${
-              statusToChange === 'RESOLVIDA'
-                ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
-            }`}>
-              {statusToChange === 'RESOLVIDA' ? (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              )}
-            </div>
-            <div>
-              <p className={`text-sm font-bold ${
-                statusToChange === 'RESOLVIDA' ? 'text-emerald-800 dark:text-emerald-200' : 'text-slate-800 dark:text-slate-200'
-              }`}>
-                {statusToChange === 'RESOLVIDA' ? 'Marcar como resolvida?' : 'Fechar este chamado?'}
-              </p>
-              <p className={`text-xs mt-1 ${
-                statusToChange === 'RESOLVIDA' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'
-              }`}>
-                {statusToChange === 'RESOLVIDA' ? 'A ocorrência será marcada como resolvida.' : 'O chamado será encerrado e não poderá ser reaberto.'}
-              </p>
-            </div>
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/40">
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+              {ocorrenciaToChange?.titulo}
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Status atual: {ocorrenciaToChange ? statusLabels[ocorrenciaToChange.status] : '-'}
+            </p>
+          </div>
+          <Select
+            label="Novo status"
+            value={statusToChange}
+            onChange={(e) => setStatusToChange(e.target.value as OcorrenciaStatus)}
+            options={statusOptions(ocorrenciaToChange)}
+          />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Tratativa</label>
+            <textarea
+              value={tratativa}
+              onChange={(e) => setTratativa(e.target.value)}
+              rows={4}
+              placeholder="Descreva a ação realizada ou o motivo da alteração de status..."
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            />
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">A tratativa ficará registrada no histórico da ocorrência.</p>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => { setIsStatusModalOpen(false); setOcorrenciaToChange(null); setStatusToChange(null); }} disabled={isLoading}>Cancelar</Button>
-            <Button variant={statusToChange === 'RESOLVIDA' ? 'primary' : 'secondary'} onClick={handleConfirmStatus} isLoading={isLoading}>
-              {statusToChange === 'RESOLVIDA' ? 'Confirmar' : 'Fechar Chamado'}
+            <Button variant="ghost" onClick={closeStatusModal} disabled={isLoading}>Cancelar</Button>
+            <Button variant="primary" onClick={handleConfirmStatus} isLoading={isLoading} disabled={!statusToChange || tratativa.trim().length < 5}>
+              Salvar Alteração
             </Button>
           </div>
         </div>
@@ -214,10 +238,25 @@ export default function OcorrenciasPage() {
               <div><span className="text-slate-500">Registrado em:</span><p className="font-medium text-slate-900 dark:text-white">{formatDate(selectedOcorrencia.dataCriacao)}</p></div>
               <div><span className="text-slate-500">Atualizado em:</span><p className="font-medium text-slate-900 dark:text-white">{formatDate(selectedOcorrencia.dataAtualizacao)}</p></div>
             </div>
+            <div>
+              <span className="text-sm text-slate-500">Tratativas do síndico:</span>
+              {selectedOcorrencia.respostasSindico && selectedOcorrencia.respostasSindico.length > 0 ? (
+                <div className="mt-2 space-y-2">
+                  {selectedOcorrencia.respostasSindico.map((resposta, index) => (
+                    <div key={`${selectedOcorrencia.id}-resposta-${index}`} className="rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-700/30 dark:text-slate-300">
+                      {resposta}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-slate-400">Nenhuma tratativa registrada.</p>
+              )}
+            </div>
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/50">
-              {selectedOcorrencia.status === 'ABERTA' && <Button variant="outline" onClick={() => { handleStatusChange(selectedOcorrencia.id, 'EM_ANDAMENTO'); setIsDetailOpen(false); }}>Iniciar Atendimento</Button>}
-              {selectedOcorrencia.status === 'EM_ANDAMENTO' && <Button onClick={() => { handleStatusChange(selectedOcorrencia.id, 'RESOLVIDA'); setIsDetailOpen(false); }}>Marcar Resolvida</Button>}
-              {selectedOcorrencia.status !== 'FECHADA' && <Button onClick={() => { handleStatusChange(selectedOcorrencia.id, 'FECHADA'); setIsDetailOpen(false); }}>Fechar Chamado</Button>}
+              {selectedOcorrencia.status === 'ABERTA' && <Button variant="outline" onClick={() => { openStatusModal(selectedOcorrencia, 'EM_ANDAMENTO'); setIsDetailOpen(false); }}>Iniciar Atendimento</Button>}
+              {selectedOcorrencia.status === 'EM_ANDAMENTO' && <Button onClick={() => { openStatusModal(selectedOcorrencia, 'RESOLVIDA'); setIsDetailOpen(false); }}>Marcar Resolvida</Button>}
+              {selectedOcorrencia.status !== 'FECHADA' && <Button onClick={() => { openStatusModal(selectedOcorrencia, 'FECHADA'); setIsDetailOpen(false); }}>Fechar Chamado</Button>}
+              <Button variant="secondary" onClick={() => { openStatusModal(selectedOcorrencia); setIsDetailOpen(false); }}>Alterar Status</Button>
               <Button variant="ghost" onClick={() => setIsDetailOpen(false)}>Cancelar</Button>
             </div>
           </div>
