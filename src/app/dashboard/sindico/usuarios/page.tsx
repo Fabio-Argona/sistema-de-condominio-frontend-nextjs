@@ -212,11 +212,6 @@ export default function UsuariosPage() {
         </div>
       ),
     },
-    { 
-      key: 'apartamento', 
-      header: 'Unidade', 
-      render: (m: Usuario) => <span className="font-medium">Nº {m.apartamento} - {m.bloco}</span> 
-    },
     {
       key: 'role',
       header: 'Perfil',
