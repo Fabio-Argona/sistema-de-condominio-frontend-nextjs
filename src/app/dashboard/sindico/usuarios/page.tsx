@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Card, { CardHeader, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import DataTable from '@/components/ui/DataTable';
+import Pagination from '@/components/ui/Pagination';
 import { Usuario, UserRole } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
@@ -25,6 +26,13 @@ const roleLabels: Record<UserRole, string> = {
   SINDICO: 'Síndico',
 };
 
+const roleOrder: Record<UserRole, number> = {
+  SINDICO: 0,
+  MORADOR: 1,
+  PORTEIRO: 2,
+  MANTENEDOR: 3,
+};
+
 const emptyFormData = {
   nome: '',
   email: '',
@@ -40,6 +48,8 @@ export default function UsuariosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [formData, setFormData] = useState({ 
     ...emptyFormData,
   });
@@ -65,11 +75,33 @@ export default function UsuariosPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filteredUsuarios = usuarios.filter((m) =>
-    (m.nome || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (m.apartamento || '').includes(searchTerm) ||
-    (m.bloco || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsuarios = usuarios
+    .filter((m) =>
+      (m.nome || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (m.apartamento || '').includes(searchTerm) ||
+      (m.bloco || '').toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const roleDiff = roleOrder[a.role || 'MORADOR'] - roleOrder[b.role || 'MORADOR'];
+      if (roleDiff !== 0) return roleDiff;
+      return (a.nome || '').localeCompare(b.nome || '', 'pt-BR');
+    });
+
+  const paginatedUsuarios = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredUsuarios.slice(start, start + pageSize);
+  }, [currentPage, filteredUsuarios, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, pageSize]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredUsuarios.length / pageSize));
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, filteredUsuarios.length, pageSize]);
 
   const handleOpenModal = (usuario?: Usuario) => {
     if (usuario) {
@@ -332,11 +364,21 @@ export default function UsuariosPage() {
         <CardContent className="p-0">
           <DataTable
             columns={columns}
-            data={filteredUsuarios}
+            data={paginatedUsuarios}
             isLoading={isLoading && usuarios.length === 0}
             keyExtractor={(m) => m.id}
             emptyMessage="Nenhum usuário encontrado."
           />
+          {!isLoading && filteredUsuarios.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredUsuarios.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              itemLabel="usuários"
+            />
+          )}
         </CardContent>
       </Card>
 
