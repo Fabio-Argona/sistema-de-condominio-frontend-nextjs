@@ -91,13 +91,19 @@ export default function MoradorPerfilPage() {
   const [show, setShow] = useState({ atual: false, nova: false, confirmar: false });
 
   const isPrimeiroAcesso = user?.primeiroAcesso ?? false;
+  const senhaIgualAtual = !isPrimeiroAcesso && form.senhaAtual.length > 0 && form.novaSenha.length > 0 && form.senhaAtual === form.novaSenha;
 
   // Validações
-  const novaValida = form.novaSenha.length === 0 ? 'idle' : form.novaSenha.length >= 6 ? 'valid' : 'invalid';
+  const novaValida =
+    form.novaSenha.length === 0
+      ? 'idle'
+      : form.novaSenha.length >= 6 && !senhaIgualAtual
+      ? 'valid'
+      : 'invalid';
   const confirmarValida =
     form.confirmarSenha.length === 0
       ? 'idle'
-      : form.confirmarSenha === form.novaSenha && form.novaSenha.length >= 6
+      : form.confirmarSenha === form.novaSenha && form.novaSenha.length >= 6 && !senhaIgualAtual
       ? 'valid'
       : 'invalid';
   const atualValida = form.senhaAtual.length === 0 ? 'idle' : form.senhaAtual.length >= 1 ? 'valid' : 'invalid';
@@ -110,6 +116,10 @@ export default function MoradorPerfilPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (senhaIgualAtual) {
+      toast.error('A nova senha nao pode ser igual a senha atual.');
+      return;
+    }
 
     const res = await patch(`/usuarios/${user.id}/senha`, {
       senhaAtual: form.senhaAtual,
@@ -227,7 +237,9 @@ export default function MoradorPerfilPage() {
                 required
               />
               {novaValida === 'invalid' && (
-                <p className="text-xs text-red-500 -mt-2">Mínimo 6 caracteres</p>
+                <p className="text-xs text-red-500 -mt-2">
+                  {senhaIgualAtual ? 'A nova senha nao pode ser igual a senha atual' : 'Minimo 6 caracteres'}
+                </p>
               )}
 
               {/* Confirmar nova senha */}
@@ -243,9 +255,11 @@ export default function MoradorPerfilPage() {
               />
               {confirmarValida === 'invalid' && (
                 <p className="text-xs text-red-500 -mt-2">
-                  {form.confirmarSenha.length > 0 && form.novaSenha.length < 6
-                    ? 'A nova senha deve ter no mínimo 6 caracteres'
-                    : 'As senhas não coincidem'}
+                  {senhaIgualAtual
+                    ? 'A nova senha nao pode ser igual a senha atual'
+                    : form.confirmarSenha.length > 0 && form.novaSenha.length < 6
+                    ? 'A nova senha deve ter no minimo 6 caracteres'
+                    : 'As senhas nao coincidem'}
                 </p>
               )}
               {confirmarValida === 'valid' && (
