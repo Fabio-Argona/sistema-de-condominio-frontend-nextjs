@@ -399,6 +399,10 @@ export default function GestaoPagamentosPage() {
       .sort((a, b) => {
         const statusDiff = (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
         if (statusDiff !== 0) return statusDiff;
+
+        const dueDateDiff = new Date(`${a.dataVencimento}T00:00:00`).getTime() - new Date(`${b.dataVencimento}T00:00:00`).getTime();
+        if (dueDateDiff !== 0) return dueDateDiff;
+
         return (a.moradorNome || '').localeCompare(b.moradorNome || '', 'pt-BR');
       });
   }, [boletos, searchTerm, statusFilter]);

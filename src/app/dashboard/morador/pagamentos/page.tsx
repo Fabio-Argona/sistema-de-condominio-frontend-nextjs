@@ -75,7 +75,7 @@ export default function BoletosPage() {
   const boletosOrdenados = useMemo(() => [...boletosFiltrados].sort((a, b) => {
     const diff = (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
     if (diff !== 0) return diff;
-    return new Date(`${b.dataVencimento}T00:00:00`).getTime() - new Date(`${a.dataVencimento}T00:00:00`).getTime();
+    return new Date(`${a.dataVencimento}T00:00:00`).getTime() - new Date(`${b.dataVencimento}T00:00:00`).getTime();
   }), [boletosFiltrados]);
 
   const paginatedBoletos = useMemo(() => {
