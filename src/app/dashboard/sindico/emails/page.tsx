@@ -25,18 +25,60 @@ const TIPO_COLORS: Record<string, 'success' | 'warning' | 'danger' | 'default' |
   ENVIO_BOLETO: 'info',
   COBRANCA_BOLETO_VENCIDO: 'danger',
   RECUPERACAO_SENHA: 'warning',
+  SENHA_ALTERADA: 'success',
   CONVITE_MORADOR: 'success',
   NOVA_RESERVA: 'default',
   STATUS_RESERVA: 'default',
 };
 
-const TIPO_ICON: Record<string, string> = {
-  ENVIO_BOLETO: '💰',
-  COBRANCA_BOLETO_VENCIDO: '⚠️',
-  RECUPERACAO_SENHA: '🔑',
-  CONVITE_MORADOR: '🏠',
-  NOVA_RESERVA: '📅',
-  STATUS_RESERVA: '✅',
+const iconClassName = 'w-5 h-5';
+
+const TIPO_ICONS: Record<string, React.ReactNode> = {
+  ENVIO_BOLETO: (
+    <svg className={iconClassName} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+    </svg>
+  ),
+  COBRANCA_BOLETO_VENCIDO: (
+    <svg className={iconClassName} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+    </svg>
+  ),
+  RECUPERACAO_SENHA: (
+    <svg className={iconClassName} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-3A2.25 2.25 0 008.25 5.25V9m7.5 0h.75A2.25 2.25 0 0118.75 11.25v6A2.25 2.25 0 0116.5 19.5h-9A2.25 2.25 0 015.25 17.25v-6A2.25 2.25 0 017.5 9h8.25z" />
+    </svg>
+  ),
+  SENHA_ALTERADA: (
+    <svg className={iconClassName} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m9 0A2.25 2.25 0 0118.75 12.75v5.25A2.25 2.25 0 0116.5 20.25h-9a2.25 2.25 0 01-2.25-2.25v-5.25A2.25 2.25 0 017.5 10.5m9 0h-9m4.5 3.75l1.5 1.5 3-3" />
+    </svg>
+  ),
+  CONVITE_MORADOR: (
+    <svg className={iconClassName} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+    </svg>
+  ),
+  NOVA_RESERVA: (
+    <svg className={iconClassName} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+    </svg>
+  ),
+  STATUS_RESERVA: (
+    <svg className={iconClassName} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75m6 2.354c0 4.373-3.438 8.354-8.25 9.896C7.938 20.458 4.5 16.477 4.5 12.104V6.75A1.5 1.5 0 016 5.25c1.757 0 3.43-.514 4.852-1.476l.398-.268a1.5 1.5 0 011.7 0l.398.268A8.25 8.25 0 0018 5.25a1.5 1.5 0 011.5 1.5v5.354z" />
+    </svg>
+  ),
+};
+
+const TIPO_LABELS: Record<string, string> = {
+  ENVIO_BOLETO: 'Envio de Boleto',
+  COBRANCA_BOLETO_VENCIDO: 'Cobranca - Boleto Vencido',
+  RECUPERACAO_SENHA: 'Recuperacao de Senha',
+  SENHA_ALTERADA: 'Senha Alterada',
+  CONVITE_MORADOR: 'Convite de Morador',
+  NOVA_RESERVA: 'Nova Reserva',
+  STATUS_RESERVA: 'Status de Reserva',
 };
 
 export default function HistoricoEmailsPage() {
@@ -66,12 +108,13 @@ export default function HistoricoEmailsPage() {
 
   const tipoOptions = [
     { value: '', label: 'Todos os tipos' },
-    { value: 'ENVIO_BOLETO', label: '💰 Envio de Boleto' },
-    { value: 'COBRANCA_BOLETO_VENCIDO', label: '⚠️ Cobrança - Boleto Vencido' },
-    { value: 'RECUPERACAO_SENHA', label: '🔑 Recuperação de Senha' },
-    { value: 'CONVITE_MORADOR', label: '🏠 Convite de Morador' },
-    { value: 'NOVA_RESERVA', label: '📅 Nova Reserva' },
-    { value: 'STATUS_RESERVA', label: '✅ Status de Reserva' },
+    { value: 'ENVIO_BOLETO', label: TIPO_LABELS.ENVIO_BOLETO },
+    { value: 'COBRANCA_BOLETO_VENCIDO', label: TIPO_LABELS.COBRANCA_BOLETO_VENCIDO },
+    { value: 'RECUPERACAO_SENHA', label: TIPO_LABELS.RECUPERACAO_SENHA },
+    { value: 'SENHA_ALTERADA', label: TIPO_LABELS.SENHA_ALTERADA },
+    { value: 'CONVITE_MORADOR', label: TIPO_LABELS.CONVITE_MORADOR },
+    { value: 'NOVA_RESERVA', label: TIPO_LABELS.NOVA_RESERVA },
+    { value: 'STATUS_RESERVA', label: TIPO_LABELS.STATUS_RESERVA },
   ];
 
   const filtered = useMemo(() => {
@@ -129,10 +172,12 @@ export default function HistoricoEmailsPage() {
                   : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600'
               }`}
             >
-              <p className="text-lg mb-1">{TIPO_ICON[opt.value]}</p>
+              <div className="mb-2 inline-flex items-center justify-center rounded-lg bg-slate-100 p-2 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {TIPO_ICONS[opt.value]}
+              </div>
               <p className="text-xl font-bold text-slate-900 dark:text-white">{totais[opt.value] || 0}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
-                {opt.label.replace(/^[^\s]+\s/, '')}
+                {opt.label}
               </p>
             </button>
           ))}
@@ -202,11 +247,16 @@ export default function HistoricoEmailsPage() {
                       </div>
 
                       {/* Descrição */}
-                      <p className="text-sm text-slate-700 dark:text-slate-300">
-                        {TIPO_ICON[log.tipo] ?? '📧'} {log.descricao || log.tipoLabel}
+                      <p className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                        <span className="mt-0.5 shrink-0 text-slate-500 dark:text-slate-400">
+                          {TIPO_ICONS[log.tipo] ?? TIPO_ICONS.NOVA_RESERVA}
+                        </span>
+                        <span>
+                          {log.descricao || log.tipoLabel}
                         {log.boletoId && (
                           <span className="ml-1.5 text-xs text-slate-400">(Boleto #{log.boletoId})</span>
                         )}
+                        </span>
                       </p>
 
                       {/* Data / Hora */}
