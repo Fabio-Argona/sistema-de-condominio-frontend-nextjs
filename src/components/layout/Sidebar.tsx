@@ -124,6 +124,7 @@ const navItems: NavItem[] = [
   { label: 'Segurança', href: '/dashboard/sindico/seguranca', icon: icons.security, roles: ['SINDICO'] },
   // Pagamentos logo após Dashboard
   { label: 'Pagamentos', href: '/dashboard/sindico/pagamentos', icon: icons.payment, roles: ['SINDICO'] },
+  { label: 'Histórico de Boletos', href: '/dashboard/sindico/pagamentos/historico', icon: icons.report, roles: ['SINDICO'] },
   { label: 'Pagamentos', href: '/dashboard/morador/pagamentos', icon: icons.payment, roles: ['MORADOR'] },
   { label: 'Moradores', href: '/dashboard/sindico/moradores', icon: icons.users, roles: ['SINDICO'] },
   { label: 'Espaços', href: '/dashboard/sindico/espacos', icon: icons.building, roles: ['SINDICO'] },
