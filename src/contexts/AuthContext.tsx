@@ -16,7 +16,8 @@ const dashboardByRole: Record<UserRole, string> = {
 };
 
 const profileByRole: Partial<Record<UserRole, string>> = {
-  MORADOR: '/dashboard/usuario/perfil',
+  MORADOR: '/dashboard/morador/perfil',
+  PORTEIRO: '/dashboard/porteiro/perfil',
   MANTENEDOR: '/dashboard/mantenedor/perfil',
 };
 

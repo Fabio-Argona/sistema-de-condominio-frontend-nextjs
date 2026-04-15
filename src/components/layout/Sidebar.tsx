@@ -188,12 +188,13 @@ const navGroups: NavGroup[] = [
     ],
   },
 
-  // ─── PERFIL (usuario) ─────────────────────────────────────────────────────
+  // ─── PERFIL ───────────────────────────────────────────────────────────────
   {
     category: 'Perfil',
-    roles: ['MORADOR', 'MANTENEDOR'],
+    roles: ['MORADOR', 'MANTENEDOR', 'PORTEIRO'],
     items: [
-      { label: 'Trocar Senha', href: '/dashboard/usuario/perfil', icon: icons.profile, roles: ['MORADOR'] },
+      { label: 'Trocar Senha', href: '/dashboard/morador/perfil', icon: icons.profile, roles: ['MORADOR'] },
+      { label: 'Trocar Senha', href: '/dashboard/porteiro/perfil', icon: icons.profile, roles: ['PORTEIRO'] },
       { label: 'Trocar Senha', href: '/dashboard/mantenedor/perfil', icon: icons.profile, roles: ['MANTENEDOR'] },
     ],
   },
