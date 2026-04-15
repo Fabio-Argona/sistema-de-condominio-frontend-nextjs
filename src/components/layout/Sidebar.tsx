@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -140,6 +139,7 @@ const navGroups: NavGroup[] = [
       { label: 'Financeiro',          href: '/dashboard/sindico/financeiro',           icon: icons.payment,  roles: ['SINDICO'] },
       { label: 'Pagamentos',          href: '/dashboard/sindico/pagamentos',            icon: icons.payment,  roles: ['SINDICO'] },
       { label: 'Histórico de Boletos',href: '/dashboard/sindico/pagamentos/historico', icon: icons.report,   roles: ['SINDICO'] },
+      { label: 'Histórico de Downloads', href: '/dashboard/sindico/pagamentos/downloads', icon: icons.access, roles: ['SINDICO'] },
       { label: 'Relatórios',          href: '/dashboard/sindico/relatorios',            icon: icons.report,   roles: ['SINDICO'] },
       { label: 'Histórico de E-mails',href: '/dashboard/sindico/emails',               icon: icons.announcement, roles: ['SINDICO'] },
       { label: 'Pagamentos',          href: '/dashboard/morador/pagamentos',            icon: icons.payment,  roles: ['MORADOR'] },
@@ -214,7 +214,7 @@ interface SidebarProps {
 export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const { theme, toggleTheme, isDark } = useTheme();
+  const { toggleTheme, isDark } = useTheme();
 
   const filteredGroups = navGroups
     .map((group) => ({
@@ -235,7 +235,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
     PORTEIRO: 'from-amber-500 to-orange-500',
   };
 
-  const SidebarContent = () => (
+  const renderSidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-4 py-5 border-b border-slate-200 dark:border-slate-200/10 flex justify-center overflow-hidden bg-white dark:bg-slate-900">
@@ -344,7 +344,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
           {icons.close}
         </button>
 
-        <SidebarContent />
+        {renderSidebarContent()}
       </aside>
     </>
   );

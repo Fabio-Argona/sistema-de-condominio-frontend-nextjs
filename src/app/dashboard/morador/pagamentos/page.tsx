@@ -11,13 +11,15 @@ import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 
+const STATUS_ORDER: Record<string, number> = { VENCIDO: 0, PENDENTE: 1, PAGO: 2 };
+
 export default function BoletosPage() {
   const [boletos, setBoletos] = useState<Boleto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   
-  const { get, put } = useApi();
+  const { get, post } = useApi();
   const { user } = useAuth();
 
   useEffect(() => {
@@ -34,21 +36,37 @@ export default function BoletosPage() {
       if (data) {
         setBoletos(data as Boleto[]);
       }
-    } catch (error) {
+    } catch {
       toast.error('Erro ao carregar boletos');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const abrirPDF = (pdfBase64: string, descricao: string) => {
+  const iniciarDownloadPDF = (pdfBase64: string, descricao: string) => {
     const link = document.createElement('a');
     link.href = pdfBase64;
     link.download = `Boleto_${descricao.replace(/\s+/g, '_')}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('Download do boleto iniciado!');
+  };
+
+  const handleDownloadBoleto = async (boleto: Boleto) => {
+    if (!boleto.pdfBase64) {
+      toast.error('O síndico não anexou o PDF deste boleto.');
+      return;
+    }
+
+    const result = await post(`/boletos/${boleto.id}/registrar-download`, {}, { showErrorToast: false });
+    iniciarDownloadPDF(boleto.pdfBase64, boleto.descricao);
+
+    if (result !== null) {
+      toast.success('Download do boleto iniciado!');
+      return;
+    }
+
+    toast('Download iniciado, mas o histórico não foi registrado.');
   };
 
 
@@ -71,9 +89,8 @@ export default function BoletosPage() {
     return diasAteVencimento <= 30; // Só mostra pendentes até 30 dias do vencimento
   });
 
-  const statusOrder: Record<string, number> = { VENCIDO: 0, PENDENTE: 1, PAGO: 2 };
   const boletosOrdenados = useMemo(() => [...boletosFiltrados].sort((a, b) => {
-    const diff = (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
+    const diff = (STATUS_ORDER[a.status] ?? 3) - (STATUS_ORDER[b.status] ?? 3);
     if (diff !== 0) return diff;
     return new Date(`${a.dataVencimento}T00:00:00`).getTime() - new Date(`${b.dataVencimento}T00:00:00`).getTime();
   }), [boletosFiltrados]);
@@ -176,7 +193,7 @@ export default function BoletosPage() {
                           variant="primary" 
                           size="md"
                           className="w-full flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
-                          onClick={() => boleto.pdfBase64 ? abrirPDF(boleto.pdfBase64, boleto.descricao) : toast.error('O síndico não anexou o PDF deste boleto.')}
+                          onClick={() => handleDownloadBoleto(boleto)}
                           disabled={!boleto.pdfBase64}
                         >
                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

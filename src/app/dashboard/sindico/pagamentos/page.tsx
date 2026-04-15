@@ -66,7 +66,7 @@ export default function GestaoPagamentosPage() {
     try {
       const data = await get('/boletos');
       if (data) setBoletos(data as Boleto[]);
-    } catch (error) {
+    } catch {
       toast.error('Erro ao carregar os boletos');
     } finally {
       setIsLoading(false);
@@ -82,7 +82,7 @@ export default function GestaoPagamentosPage() {
         if (data) {
            setMoradoresList(data.map(m => ({ value: m.id.toString(), label: m.nome })));
         }
-      } catch (error) {
+      } catch {
         toast.error('Erro ao buscar lista de moradores');
       }
     }
@@ -122,7 +122,9 @@ export default function GestaoPagamentosPage() {
             for (let i = 1; i <= pdfDocument.numPages; i++) {
               const page = await pdfDocument.getPage(i);
               const textContent = await page.getTextContent();
-              const pageText = textContent.items.map((item: any) => item.str).join(' ');
+              const pageText = textContent.items
+                .map((item) => ('str' in item ? item.str : ''))
+                .join(' ');
               textCompleto += pageText + ' ';
             }
 
@@ -138,8 +140,8 @@ export default function GestaoPagamentosPage() {
             const valoresEncontrados = textCompleto.match(/\b\d{1,3}(?:\.\d{3})*,\d{2}\b/g);
             let valorMaximo = null;
             if (valoresEncontrados && valoresEncontrados.length > 0) {
-              let arrayNumeros = valoresEncontrados.map(v => parseFloat(v.replace(/\./g, '').replace(',', '.')));
-              let maximo = Math.max(...arrayNumeros); 
+              const arrayNumeros = valoresEncontrados.map(v => parseFloat(v.replace(/\./g, '').replace(',', '.')));
+              const maximo = Math.max(...arrayNumeros); 
               if (maximo > 0) {
                  valorMaximo = maximo.toString();
               }
@@ -182,7 +184,7 @@ export default function GestaoPagamentosPage() {
             } else {
                toast.success('Boleto anexado. Mas não consegui ler os dados 100%.', { id: 'pdf-leitura' });
             }
-         } catch (error) {
+        } catch (error) {
             console.error("Erro ao ler PDF", error);
             toast.dismiss('pdf-leitura');
          }
@@ -191,14 +193,30 @@ export default function GestaoPagamentosPage() {
     }
   };
 
-  const abrirPDF = (pdfBase64: string, descricao: string, moradorNome: string) => {
+  const iniciarDownloadPDF = (pdfBase64: string, descricao: string, moradorNome: string) => {
     const link = document.createElement('a');
     link.href = pdfBase64;
     link.download = `Boleto_${descricao.replace(/\s+/g, '_')}_${moradorNome.replace(/\s+/g, '')}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('Download do boleto iniciado!');
+  };
+
+  const handleDownloadBoleto = async (boleto: Boleto) => {
+    if (!boleto.pdfBase64) {
+      toast.error('O PDF deste boleto não está disponível.');
+      return;
+    }
+
+    const result = await post(`/boletos/${boleto.id}/registrar-download`, {}, { showErrorToast: false });
+    iniciarDownloadPDF(boleto.pdfBase64, boleto.descricao, boleto.moradorNome || `Morador_${boleto.moradorId}`);
+
+    if (result !== null) {
+      toast.success('Download do boleto iniciado!');
+      return;
+    }
+
+    toast('Download iniciado, mas o histórico não foi registrado.');
   };
 
   const handleEmitirBoleto = async (e: React.FormEvent) => {
@@ -256,7 +274,7 @@ export default function GestaoPagamentosPage() {
          }
          // 403/404 silencioso — o síndico pode reenviar manualmente pela tabela
        }
-    } catch (error) {
+     } catch {
        toast.error('Erro ao emitir boleto.');
     } finally {
        setIsSubmitting(false);
@@ -276,7 +294,7 @@ export default function GestaoPagamentosPage() {
       setIsPayModalOpen(false);
       setSelectedBoletoId(null);
       loadBoletos();
-    } catch (error) {
+    } catch {
       toast.error("Erro ao registrar pagamento.");
     }
   };
@@ -348,7 +366,7 @@ export default function GestaoPagamentosPage() {
       setIsDeleteModalOpen(false);
       setSelectedBoletoId(null);
       loadBoletos();
-    } catch (error) {
+    } catch {
       toast.error("Erro ao excluir boleto.");
     }
   };
@@ -464,9 +482,19 @@ export default function GestaoPagamentosPage() {
     {
       key: 'acoes',
       header: '',
-      className: 'md:text-right md:min-w-[260px]',
+      className: 'md:text-right md:min-w-[300px]',
       render: (b: Boleto) => (
         <div className="flex justify-start md:justify-end items-center gap-2 flex-wrap max-w-full">
+           <button
+             onClick={() => handleDownloadBoleto(b)}
+             disabled={!b.pdfBase64}
+             className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+             title="Baixar boleto"
+           >
+             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+             </svg>
+           </button>
            <button
              onClick={() => handleEnviarEmailBoleto(b)}
              disabled={sendingEmail === b.id}
@@ -538,6 +566,14 @@ export default function GestaoPagamentosPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               Histórico
+            </Button>
+          </Link>
+          <Link href="/dashboard/sindico/pagamentos/downloads">
+            <Button variant="outline">
+              <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16.5l4.5-4.5m-4.5 4.5L7.5 12m4.5 4.5V3m-7.5 15.75v.75A2.25 2.25 0 006.75 21h10.5a2.25 2.25 0 002.25-2.25v-.75" />
+              </svg>
+              Downloads
             </Button>
           </Link>
           <Button onClick={abrirModalEmissao}>

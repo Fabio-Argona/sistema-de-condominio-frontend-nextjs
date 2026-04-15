@@ -181,6 +181,20 @@ export interface Boleto {
   pdfBase64?: string;
 }
 
+export interface LogDownloadBoleto {
+  id: number;
+  boletoId: number;
+  moradorId: number;
+  moradorNome: string;
+  descricaoBoleto: string;
+  usuarioId: number;
+  usuarioNome: string;
+  usuarioEmail: string;
+  usuarioRole: UserRole;
+  usuarioRoleLabel: string;
+  dataHoraDownload: string;
+}
+
 // Comunicado (Announcement)
 export interface Comunicado {
   id: number;

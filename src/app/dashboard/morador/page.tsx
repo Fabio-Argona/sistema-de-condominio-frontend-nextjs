@@ -5,6 +5,7 @@ import Card, { CardHeader, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import { Comunicado, Reserva, Ocorrencia, Boleto } from '@/types';
 import { useApi } from '@/hooks/useApi';
+import toast from 'react-hot-toast';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -16,8 +17,31 @@ export default function MoradorDashboard() {
   const [situacaoFinanceira, setSituacaoFinanceira] = useState<'EM_DIA' | 'PENDENTE' | null>(null);
   const [boletosAbertos, setBoletosAbertos] = useState<Boleto[]>([]);
 
-  const { get } = useApi();
+  const { get, post } = useApi();
   const { user } = useAuth();
+
+  const iniciarDownloadPDF = (pdfBase64: string, descricao: string) => {
+    const link = document.createElement('a');
+    link.href = pdfBase64;
+    link.download = `Boleto_${descricao.replace(/\s+/g, '_')}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadBoleto = async (boleto: Boleto) => {
+    if (!boleto.pdfBase64) {
+      window.location.href = '/dashboard/morador/pagamentos';
+      return;
+    }
+
+    const result = await post(`/boletos/${boleto.id}/registrar-download`, {}, { showErrorToast: false });
+    iniciarDownloadPDF(boleto.pdfBase64, boleto.descricao);
+
+    if (result === null) {
+      toast('Download iniciado, mas o histórico não foi registrado.');
+    }
+  };
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -146,16 +170,7 @@ export default function MoradorDashboard() {
                   </div>
                 </div>
                 <button
-                  onClick={() => {
-                    if (boleto.pdfBase64) {
-                      const link = document.createElement('a');
-                      link.href = boleto.pdfBase64;
-                      link.download = `Boleto_${boleto.descricao.replace(/\s+/g, '_')}.pdf`;
-                      link.click();
-                    } else {
-                      window.location.href = '/dashboard/morador/pagamentos';
-                    }
-                  }}
+                  onClick={() => handleDownloadBoleto(boleto)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                     isVencido
                       ? 'bg-red-500 hover:bg-red-600 text-white'
