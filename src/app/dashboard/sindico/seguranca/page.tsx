@@ -7,6 +7,7 @@ import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 import { useApi } from '@/hooks/useApi';
 import { Ocorrencia, Visitante } from '@/types';
+import { DashboardPage } from '@/components/layout/RoleDashboard';
 
 export default function SegurancaPage() {
   const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
@@ -68,8 +69,7 @@ export default function SegurancaPage() {
   }
 
   return (
-    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <div className="w-full max-w-6xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
+    <DashboardPage>
         <div className="animate-slide-up">
           <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Segurança</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">Ocorrências de segurança, visitantes e monitoramento operacional</p>
@@ -137,7 +137,6 @@ export default function SegurancaPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </div>
+    </DashboardPage>
   );
 }

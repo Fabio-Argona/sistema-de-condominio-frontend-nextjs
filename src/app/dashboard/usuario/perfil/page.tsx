@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
+import { DashboardPage } from '@/components/layout/RoleDashboard';
 
 const dashboardByRole = {
   MORADOR: '/dashboard/usuario',
@@ -146,8 +147,7 @@ export default function UsuarioPerfilPage() {
   };
 
   return (
-    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <div className="w-full max-w-2xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
+    <DashboardPage>
 
         {/* Cabeçalho */}
         <div className="animate-slide-up">
@@ -291,7 +291,6 @@ export default function UsuarioPerfilPage() {
           </CardContent>
         </Card>
 
-      </div>
-    </div>
+    </DashboardPage>
   );
 }

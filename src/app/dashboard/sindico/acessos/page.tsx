@@ -6,6 +6,7 @@ import Badge from '@/components/ui/Badge';
 import Pagination from '@/components/ui/Pagination';
 import { useApi } from '@/hooks/useApi';
 import { LogAcesso } from '@/types';
+import { DashboardPage } from '@/components/layout/RoleDashboard';
 
 type GrupoAcesso = {
   key: string;
@@ -171,8 +172,7 @@ export default function AcessosPage() {
   }, [currentPage, grupos.length, pageSize]);
 
   return (
-    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 my-8">
+    <DashboardPage>
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-1">
@@ -301,7 +301,6 @@ export default function AcessosPage() {
             />
           )}
         </Card>
-      </div>
-    </div>
+    </DashboardPage>
   );
 }

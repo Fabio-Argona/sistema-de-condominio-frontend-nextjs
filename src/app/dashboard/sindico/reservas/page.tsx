@@ -9,6 +9,7 @@ import DataTable from '@/components/ui/DataTable';
 import { Reserva, AreaComum, ReservaStatus } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
+import { DashboardPage } from '@/components/layout/RoleDashboard';
 
 const statusColors: Record<ReservaStatus, 'success' | 'warning' | 'danger' | 'info'> = { PENDENTE: 'warning', APROVADA: 'success', REJEITADA: 'danger', CANCELADA: 'info' };
 const statusLabels: Record<ReservaStatus, string> = { PENDENTE: 'Pendente', APROVADA: 'Aprovada', REJEITADA: 'Rejeitada', CANCELADA: 'Cancelada' };
@@ -106,8 +107,7 @@ export default function ReservasPage() {
   ];
 
   return (
-    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
+    <DashboardPage>
       <div className="animate-slide-up">
         <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Reservas</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">Gerencie as reservas de áreas comuns</p>
@@ -194,7 +194,6 @@ export default function ReservasPage() {
           </div>
         </div>
       </Modal>
-      </div>
-    </div>
+    </DashboardPage>
   );
 }

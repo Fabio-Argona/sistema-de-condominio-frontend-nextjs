@@ -12,6 +12,7 @@ import Select from '@/components/ui/Select';
 import { useApi } from '@/hooks/useApi';
 import { LogDownloadBoleto } from '@/types';
 import toast from 'react-hot-toast';
+import { DashboardPage } from '@/components/layout/RoleDashboard';
 
 const ROLE_COLORS: Record<string, 'info' | 'success' | 'warning' | 'default'> = {
   SINDICO: 'info',
@@ -141,8 +142,7 @@ export default function HistoricoDownloadsBoletosPage() {
   };
 
   return (
-    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <div className="w-full max-w-6xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
+    <DashboardPage>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -310,7 +310,6 @@ export default function HistoricoDownloadsBoletosPage() {
             />
           )}
         </Card>
-      </div>
-    </div>
+    </DashboardPage>
   );
 }

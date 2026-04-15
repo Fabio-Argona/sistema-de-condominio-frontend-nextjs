@@ -12,6 +12,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { Fornecedor, FornecedorFormData } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
+import { DashboardPage } from '@/components/layout/RoleDashboard';
 
 const emptyForm: FornecedorFormData = { nome: '', comentario: '', vigencia: '', contato: '', valor: '' };
 
@@ -98,9 +99,7 @@ export default function UsuarioFornecedoresPage() {
   };
 
   return (
-    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
-
+    <DashboardPage>
         <div className="animate-slide-up flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Fornecedores Recomendados</h1>
@@ -214,7 +213,6 @@ export default function UsuarioFornecedoresPage() {
             ))}
           </div>
         )}
-      </div>
 
       {/* Modal criar/editar */}
       <Modal
@@ -280,6 +278,6 @@ export default function UsuarioFornecedoresPage() {
           </Button>
         </div>
       </Modal>
-    </div>
+    </DashboardPage>
   );
 }

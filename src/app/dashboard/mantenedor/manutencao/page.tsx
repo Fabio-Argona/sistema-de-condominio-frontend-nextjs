@@ -10,6 +10,7 @@ import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
 import { Ocorrencia, OcorrenciaStatus } from '@/types';
 import toast from 'react-hot-toast';
+import { DashboardPage } from '@/components/layout/RoleDashboard';
 
 const statusColors: Record<OcorrenciaStatus, 'danger' | 'warning' | 'success' | 'info'> = {
   ABERTA: 'danger',
@@ -69,8 +70,7 @@ export default function ManutencaoProfissionalPage() {
   };
 
   return (
-    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <div className="w-full max-w-6xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
+    <DashboardPage>
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Fila de Manutenção</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">Atualize o andamento dos chamados que foram encaminhados para você.</p>
@@ -139,7 +139,6 @@ export default function ManutencaoProfissionalPage() {
             </div>
           </div>
         </Modal>
-      </div>
-    </div>
+    </DashboardPage>
   );
 }

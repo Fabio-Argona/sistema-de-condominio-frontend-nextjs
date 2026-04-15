@@ -11,6 +11,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Boleto } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
+import { DashboardPage } from '@/components/layout/RoleDashboard';
 
 type GroupedHistorico = {
   usuarioId: number;
@@ -167,8 +168,7 @@ export default function HistoricoBoletosPage() {
     new Date(`${d}T00:00:00`).toLocaleDateString('pt-BR');
 
   return (
-    <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <div className="w-full max-w-6xl px-4 sm:px-8 py-10 space-y-6 bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
+    <DashboardPage>
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -419,7 +419,6 @@ export default function HistoricoBoletosPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </DashboardPage>
   );
 }
