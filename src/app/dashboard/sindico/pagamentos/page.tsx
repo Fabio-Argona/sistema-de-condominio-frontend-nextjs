@@ -441,9 +441,9 @@ export default function GestaoPagamentosPage() {
     {
       key: 'acoes',
       header: '',
-      className: 'text-right min-w-[260px]',
+      className: 'md:text-right md:min-w-[260px]',
       render: (b: Boleto) => (
-        <div className="flex justify-end items-center gap-2 flex-wrap">
+        <div className="flex justify-start md:justify-end items-center gap-2 flex-wrap max-w-full">
            <button
              onClick={() => handleEnviarEmailBoleto(b)}
              disabled={sendingEmail === b.id}
@@ -503,9 +503,9 @@ export default function GestaoPagamentosPage() {
       <div className="w-full max-w-5xl px-4 sm:px-8 py-10 space-y-6 animate-fade-in bg-white dark:bg-slate-950 shadow-lg rounded-2xl border border-slate-100 dark:border-slate-800 my-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestão Financeira</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestão de Boletos</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Acompanhe o pagamento das cotas condominiais e gere cobranças.
+            Acompanhe os boletos das cotas condominiais e gere cobranças.
           </p>
         </div>
         <div className="flex gap-2">
@@ -526,7 +526,7 @@ export default function GestaoPagamentosPage() {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Relatório de Emissões</h2>
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Boletos Emitidos</h2>
              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <Input
                 placeholder="Buscar por morador..."
@@ -558,19 +558,19 @@ export default function GestaoPagamentosPage() {
       {/* Mini Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
          <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 p-4 rounded-xl">
-            <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">Recebidos (Pagos)</p>
+          <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">Boletos Recebidos</p>
             <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
                {filteredBoletos.filter(b => b.status === 'PAGO').length}
             </p>
          </div>
          <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 p-4 rounded-xl">
-            <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">A Vencer (Pendentes)</p>
+          <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">Boletos Pendentes</p>
             <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">
                {filteredBoletos.filter(b => b.status === 'PENDENTE').length}
             </p>
          </div>
          <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 p-4 rounded-xl">
-            <p className="text-sm text-red-600 dark:text-red-400 font-medium">Inadimplência (Vencidos)</p>
+          <p className="text-sm text-red-600 dark:text-red-400 font-medium">Boletos Vencidos</p>
             <p className="text-2xl font-bold text-red-700 dark:text-red-300">
                {filteredBoletos.filter(b => b.status === 'VENCIDO').length}
             </p>
@@ -686,7 +686,7 @@ export default function GestaoPagamentosPage() {
       </Modal>
 
       {/* Modal de Confirmação de Baixa */}
-      <Modal isOpen={isPayModalOpen} onClose={() => setIsPayModalOpen(false)} title="Confirmar Recebimento">
+      <Modal isOpen={isPayModalOpen} onClose={() => setIsPayModalOpen(false)} title="Confirmar Recebimento do Boleto">
         <div className="space-y-4">
           <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl flex items-start gap-3">
             <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg text-emerald-600 dark:text-emerald-400">
