@@ -221,7 +221,21 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
   const { user, logout } = useAuth();
   const { toggleTheme, isDark } = useTheme();
 
-  const isItemActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  // Todos os hrefs do menu (para detectar conflito de prefixos)
+  const allHrefs = navGroups.flatMap((g) => g.items.map((i) => i.href));
+
+  const isItemActive = (href: string) => {
+    // Match exato: sempre ativo
+    if (pathname === href) return true;
+    // Match por prefixo: só ativo se nenhum outro href mais específico também casar
+    if (pathname.startsWith(`${href}/`)) {
+      const hasMoreSpecificMatch = allHrefs.some(
+        (other) => other !== href && other.startsWith(`${href}/`) && (pathname === other || pathname.startsWith(`${other}/`))
+      );
+      return !hasMoreSpecificMatch;
+    }
+    return false;
+  };
 
   const filteredGroups = navGroups
     .map((group) => ({
