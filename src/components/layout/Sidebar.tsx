@@ -141,6 +141,7 @@ const navGroups: NavGroup[] = [
       { label: 'Pagamentos',          href: '/dashboard/sindico/pagamentos',            icon: icons.payment,  roles: ['SINDICO'] },
       { label: 'Histórico de Boletos',href: '/dashboard/sindico/pagamentos/historico', icon: icons.report,   roles: ['SINDICO'] },
       { label: 'Relatórios',          href: '/dashboard/sindico/relatorios',            icon: icons.report,   roles: ['SINDICO'] },
+      { label: 'Histórico de E-mails',href: '/dashboard/sindico/emails',               icon: icons.announcement, roles: ['SINDICO'] },
       { label: 'Pagamentos',          href: '/dashboard/morador/pagamentos',            icon: icons.payment,  roles: ['MORADOR'] },
     ],
   },
