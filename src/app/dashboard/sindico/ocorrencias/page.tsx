@@ -48,7 +48,7 @@ export default function OcorrenciasPage() {
 
   const openStatusModal = (ocorrencia: Ocorrencia, newStatus?: OcorrenciaStatus) => {
     setOcorrenciaToChange(ocorrencia);
-    setStatusToChange(newStatus);
+    setStatusToChange(newStatus ?? '');
     setTratativa('');
     setIsStatusModalOpen(true);
   };
