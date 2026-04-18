@@ -100,9 +100,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       console.log("Extração de texto concluída");
       
+      // Lógica de parsing básica para extrair transações do texto
+      const transacoes: any[] = [];
+      const lines = fullText.split('\n');
+      // Regex para capturar padrões comuns de extrato: 18/04/2026 Descrição 100,00
+      const regex = /(\d{2}\/\d{2}(?:\/\d{2,4})?)\s+(.*?)\s+(-?[\d.,]+)(?=\s|$)/g;
+      
+      let match;
+      while ((match = regex.exec(fullText)) !== null) {
+        // Tenta filtrar ruídos (valores que não parecem dinheiro)
+        const valorRaw = match[3].replace('.', '').replace(',', '.');
+        const valor = parseFloat(valorRaw);
+        
+        if (!isNaN(valor) && match[2].length > 2) {
+          transacoes.push({
+            data: match[1],
+            descricao: match[2].trim(),
+            valor: valor,
+            valorFormatado: match[3]
+          });
+        }
+      }
+
       return res.status(200).json({
         message: "Arquivo processado com sucesso",
-        texto: fullText
+        texto: fullText,
+        transacoes: transacoes.length > 0 ? transacoes : null
       });
     } catch (pdfErr: any) {
       console.error("Erro no pdfjs-dist:", pdfErr);
