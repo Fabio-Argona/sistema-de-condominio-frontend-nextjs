@@ -192,52 +192,6 @@ export default function UsuarioFornecedoresPage() {
         </section>
       </DashboardPage>
     );
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Comentário */}
-                  {f.comentario && (
-                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-l-2 border-blue-200 dark:border-blue-700 pl-3">
-                      {f.comentario}
-                    </p>
-                  )}
-
-                  {/* Detalhes */}
-                  <div className="space-y-1 pt-1 border-t border-slate-100 dark:border-slate-700/50">
-                    {f.contato && (
-                      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        {f.contato}
-                      </div>
-                    )}
-                    {f.vigencia && (
-                      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Contrato vigente até {f.vigencia}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-      {/* Modal criar/editar */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingId ? 'Editar Fornecedor' : 'Indicar Fornecedor'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
