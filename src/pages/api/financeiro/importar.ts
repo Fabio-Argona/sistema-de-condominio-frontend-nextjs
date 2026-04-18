@@ -74,14 +74,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!pdfjs.GlobalWorkerOptions.workerSrc) {
         // @ts-ignore
         const pdfjsWorker = await import("pdfjs-dist/legacy/build/pdf.worker.mjs");
-        pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+        pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker.default || pdfjsWorker;
       }
       
       const loadingTask = pdfjs.getDocument({
-        data: new Uint8Array(buffer),
+        data: new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength),
         useWorkerFetch: false,
         isEvalSupported: false,
         disableRange: true,
+        stopAtErrors: false,
       });
 
       const pdfDocument = await loadingTask.promise;
