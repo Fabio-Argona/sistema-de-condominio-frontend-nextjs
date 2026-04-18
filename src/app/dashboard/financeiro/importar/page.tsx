@@ -26,7 +26,8 @@ export default function ImportarFinanceiroPage() {
       const res = await api.post("/financeiro/importar", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setResult(res.data);
+      // Acessamos res.data.texto se disponível, caso contrário res.data
+      setResult(res.data.texto || res.data.message || JSON.stringify(res.data));
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || err.response?.data?.error || "Erro ao enviar arquivo.";
       setResult(`Erro: ${errorMsg}`);
@@ -50,7 +51,11 @@ export default function ImportarFinanceiroPage() {
           {loading ? "Enviando..." : "Importar PDF"}
         </Button>
       </form>
-      {result && <div className="mt-6 p-4 bg-slate-100 rounded">{result}</div>}
+      {result && (
+        <div className="mt-6 p-4 bg-slate-100 rounded overflow-auto max-h-96 whitespace-pre-wrap text-sm">
+          {result}
+        </div>
+      )}
     </div>
   );
 }
