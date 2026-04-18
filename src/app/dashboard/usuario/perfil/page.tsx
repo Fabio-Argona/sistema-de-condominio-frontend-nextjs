@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
-import { DashboardPage } from '@/components/layout/RoleDashboard';
+import { DashboardPage, DashboardHero } from '@/components/layout/RoleDashboard';
 
 const dashboardByRole = {
   MORADOR: '/dashboard/usuario',
@@ -148,12 +148,11 @@ export default function UsuarioPerfilPage() {
 
   return (
     <DashboardPage>
-
-        {/* Cabeçalho */}
-        <div className="animate-slide-up">
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Trocar Senha</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Atualize sua senha de acesso</p>
-        </div>
+      <DashboardHero
+        eyebrow="Perfil"
+        title="Trocar senha de acesso"
+        description="Mantenha sua conta segura atualizando a senha regularmente. A nova senha deve ter pelo menos 6 caracteres e ser diferente da atual."
+      />
 
         {/* Banner primeiro acesso */}
         {isPrimeiroAcesso && (

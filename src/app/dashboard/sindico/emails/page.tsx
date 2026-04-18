@@ -9,7 +9,7 @@ import Select from '@/components/ui/Select';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
-import { DashboardPage } from '@/components/layout/RoleDashboard';
+import { DashboardPage, DashboardHero } from '@/components/layout/RoleDashboard';
 
 interface LogEmail {
   id: number;
@@ -243,22 +243,24 @@ export default function HistoricoEmailsPage() {
 
   return (
     <DashboardPage>
-
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Histórico de E-mails Enviados</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Registro completo de todos os e-mails disparados pelo sistema
-            </p>
+      <DashboardHero
+        eyebrow="Financeiro"
+        title="Histórico de e-mails enviados"
+        description="Registro completo de todos os e-mails disparados pelo sistema. Verifique entregas, destinatários e o status de cada disparo."
+        aside={
+          <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Ações</p>
+            <div className="mt-4">
+              <Button variant="outline" onClick={loadLogs} className="w-full">
+                <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Atualizar
+              </Button>
+            </div>
           </div>
-          <Button variant="outline" size="sm" onClick={loadLogs}>
-            <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Atualizar
-          </Button>
-        </div>
+        }
+      />
 
         {/* Cards de resumo */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

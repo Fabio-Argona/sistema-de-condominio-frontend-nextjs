@@ -9,7 +9,7 @@ import DataTable from '@/components/ui/DataTable';
 import { Reserva, AreaComum, ReservaStatus } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
-import { DashboardPage } from '@/components/layout/RoleDashboard';
+import { DashboardPage, DashboardHero } from '@/components/layout/RoleDashboard';
 
 const statusColors: Record<ReservaStatus, 'success' | 'warning' | 'danger' | 'info'> = { PENDENTE: 'warning', APROVADA: 'success', REJEITADA: 'danger', CANCELADA: 'info' };
 const statusLabels: Record<ReservaStatus, string> = { PENDENTE: 'Pendente', APROVADA: 'Aprovada', REJEITADA: 'Rejeitada', CANCELADA: 'Cancelada' };
@@ -108,10 +108,11 @@ export default function ReservasPage() {
 
   return (
     <DashboardPage>
-      <div className="animate-slide-up">
-        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Reservas</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Gerencie as reservas de áreas comuns</p>
-      </div>
+      <DashboardHero
+        eyebrow="Reservas"
+        title="Gerencie as reservas de áreas comuns"
+        description="Aprove, rejeite ou cancele solicitações de reserva dos condôminos e acompanhe a ocupação de cada espaço disponível."
+      />
 
       {/* Areas Comuns Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 animate-slide-up">

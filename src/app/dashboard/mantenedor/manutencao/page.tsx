@@ -10,7 +10,7 @@ import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
 import { Ocorrencia, OcorrenciaStatus } from '@/types';
 import toast from 'react-hot-toast';
-import { DashboardPage } from '@/components/layout/RoleDashboard';
+import { DashboardPage, DashboardHero } from '@/components/layout/RoleDashboard';
 
 const statusColors: Record<OcorrenciaStatus, 'danger' | 'warning' | 'success' | 'info'> = {
   ABERTA: 'danger',
@@ -71,10 +71,11 @@ export default function ManutencaoProfissionalPage() {
 
   return (
     <DashboardPage>
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Fila de Manutenção</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Atualize o andamento dos chamados que foram encaminhados para você.</p>
-        </div>
+      <DashboardHero
+        eyebrow="Manutenção"
+        title="Fila de manutenção"
+        description="Atualize o andamento dos chamados que foram encaminhados para você. Registre tratativas para manter o síndico informado sobre cada atendimento."
+      />
 
         <Card>
           <CardHeader>

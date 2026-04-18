@@ -11,7 +11,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Boleto } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
-import { DashboardPage } from '@/components/layout/RoleDashboard';
+import { DashboardPage, DashboardHero } from '@/components/layout/RoleDashboard';
 
 type GroupedHistorico = {
   usuarioId: number;
@@ -169,35 +169,27 @@ export default function HistoricoBoletosPage() {
 
   return (
     <DashboardPage>
-
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Link
-                href="/dashboard/sindico/pagamentos"
-                className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                title="Voltar para Pagamentos"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      <DashboardHero
+        eyebrow="Financeiro"
+        title="Histórico de envio de boletos"
+        description="Visualize todos os boletos enviados e agrupados por usuário. Acompanhe inadimplência e histórico de pagamentos de forma consolidada."
+        aside={
+          <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Ações</p>
+            <div className="mt-4 space-y-2">
+              <Button variant="outline" onClick={loadBoletos} className="w-full">
+                <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
+                Atualizar
+              </Button>
+              <Link href="/dashboard/sindico/pagamentos" className="block">
+                <Button variant="ghost" className="w-full">← Voltar para Pagamentos</Button>
               </Link>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                Histórico de Envio de Boletos
-              </h1>
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 ml-7">
-              Visualize todos os boletos enviados agrupados por usuário
-            </p>
           </div>
-          <Button variant="outline" size="sm" onClick={loadBoletos}>
-            <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Atualizar
-          </Button>
-        </div>
+        }
+      />
 
         {/* Filtros */}
         <Card>

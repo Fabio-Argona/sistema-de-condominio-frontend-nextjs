@@ -14,7 +14,7 @@ import { Boleto, Usuario } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
 import * as pdfjsLib from 'pdfjs-dist';
-import { DashboardPage } from '@/components/layout/RoleDashboard';
+import { DashboardPage, DashboardHero } from '@/components/layout/RoleDashboard';
 
 // Força o Next.js a usar a mesmíssima versão do worker que você instalou para não dar incompatibilidade
 if (typeof window !== 'undefined') {
@@ -556,35 +556,29 @@ export default function GestaoPagamentosPage() {
 
   return (
     <DashboardPage>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestão de Boletos</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Acompanhe os boletos das cotas condominiais e gere cobranças.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/dashboard/sindico/pagamentos/historico">
-            <Button variant="outline">
-              <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Histórico
-            </Button>
-          </Link>
-          <Link href="/dashboard/sindico/pagamentos/downloads">
-            <Button variant="outline">
-              <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16.5l4.5-4.5m-4.5 4.5L7.5 12m4.5 4.5V3m-7.5 15.75v.75A2.25 2.25 0 006.75 21h10.5a2.25 2.25 0 002.25-2.25v-.75" />
-              </svg>
-              Downloads
-            </Button>
-          </Link>
-          <Button onClick={abrirModalEmissao}>
-            Anexar Boleto
-          </Button>
-        </div>
-      </div>
+      <DashboardHero
+        eyebrow="Financeiro"
+        title="Gestão de boletos"
+        description="Emita, envie e acompanhe o pagamento dos boletos de todos os moradores. Filtre por status, vencimento e unidade para manter a inadimplência sob controle."
+        aside={
+          <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Ações rápidas</p>
+            <div className="mt-4 space-y-2">
+              <Button onClick={abrirModalEmissao} className="w-full">
+                Anexar Boleto
+              </Button>
+              <div className="flex gap-2">
+                <Link href="/dashboard/sindico/pagamentos/historico" className="flex-1">
+                  <Button variant="outline" className="w-full">Histórico</Button>
+                </Link>
+                <Link href="/dashboard/sindico/pagamentos/downloads" className="flex-1">
+                  <Button variant="outline" className="w-full">Downloads</Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        }
+      />
 
       <Card>
         <CardHeader>

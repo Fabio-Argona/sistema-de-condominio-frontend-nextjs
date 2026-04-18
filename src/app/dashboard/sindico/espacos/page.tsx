@@ -10,7 +10,7 @@ import DataTable from '@/components/ui/DataTable';
 import { AreaComum } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
-import { DashboardPage } from '@/components/layout/RoleDashboard';
+import { DashboardPage, DashboardHero } from '@/components/layout/RoleDashboard';
 
 export default function EspacosPage() {
   const [areas, setAreas] = useState<AreaComum[]>([]);
@@ -121,15 +121,21 @@ export default function EspacosPage() {
 
   return (
     <DashboardPage>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-slide-up">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Gerenciar Espaços</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Configure quiosques, piscinas e áreas comuns</p>
-        </div>
-        <Button onClick={() => setIsModalOpen(true)} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
-          Novo Espaço
-        </Button>
-      </div>
+      <DashboardHero
+        eyebrow="Condomínio"
+        title="Gerenciar áreas comuns"
+        description="Configure quiosques, piscinas, salões e todos os espaços do condomínio. Ative ou desative disponibilidade e defina valores de reserva."
+        aside={
+          <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Ação rápida</p>
+            <div className="mt-4">
+              <Button onClick={() => setIsModalOpen(true)} className="w-full" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
+                Novo Espaço
+              </Button>
+            </div>
+          </div>
+        }
+      />
 
       <Card className="animate-slide-up">
         <DataTable columns={columns} data={areas} isLoading={isLoading && areas.length === 0} emptyMessage="Nenhum espaço cadastrado." keyExtractor={(a) => a.id} />

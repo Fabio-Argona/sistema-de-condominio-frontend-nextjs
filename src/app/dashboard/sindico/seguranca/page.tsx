@@ -7,7 +7,7 @@ import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 import { useApi } from '@/hooks/useApi';
 import { Ocorrencia, Visitante } from '@/types';
-import { DashboardPage } from '@/components/layout/RoleDashboard';
+import { DashboardPage, DashboardHero } from '@/components/layout/RoleDashboard';
 
 export default function SegurancaPage() {
   const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
@@ -70,10 +70,11 @@ export default function SegurancaPage() {
 
   return (
     <DashboardPage>
-        <div className="animate-slide-up">
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Segurança</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Ocorrências de segurança, visitantes e monitoramento operacional</p>
-        </div>
+      <DashboardHero
+        eyebrow="Segurança"
+        title="Monitoramento e controle de ocorrências"
+        description="Acompanhe ocorrências de segurança, registros de visitantes e indicadores operacionais do condomínio em tempo real."
+      />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card><CardContent className="py-5"><p className="text-sm text-slate-500">Visitantes Hoje</p><p className="text-3xl font-bold text-blue-600">{resumo.visitantesHoje}</p></CardContent></Card>

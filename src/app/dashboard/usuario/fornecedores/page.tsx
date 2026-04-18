@@ -12,7 +12,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { Fornecedor, FornecedorFormData } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
-import { DashboardPage } from '@/components/layout/RoleDashboard';
+import { DashboardPage, DashboardHero } from '@/components/layout/RoleDashboard';
 
 const emptyForm: FornecedorFormData = { nome: '', comentario: '', vigencia: '', contato: '', valor: '' };
 
@@ -100,18 +100,21 @@ export default function UsuarioFornecedoresPage() {
 
   return (
     <DashboardPage>
-        <div className="animate-slide-up flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Fornecedores Recomendados</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">Profissionais e empresas de confiança do condomínio. Fique à vontade para fazer suas indicações!</p>
+      <DashboardHero
+        eyebrow="Serviços"
+        title="Fornecedores recomendados"
+        description="Profissionais e empresas de confiança indicados pelos moradores. Conheça os parceiros do condomínio e faça suas próprias indicações."
+        aside={
+          <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Nova indicação</p>
+            <div className="mt-4">
+              <Button onClick={openCreate} className="w-full" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
+                Indicar Fornecedor
+              </Button>
+            </div>
           </div>
-          <Button variant="primary" onClick={openCreate} className="shrink-0">
-            <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Indicar Fornecedor
-          </Button>
-        </div>
+        }
+      />
 
         <div className="animate-slide-up">
           <Input

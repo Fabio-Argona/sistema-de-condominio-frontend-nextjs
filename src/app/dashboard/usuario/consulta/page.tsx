@@ -5,7 +5,7 @@ import Card, { CardContent } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import { Usuario } from '@/types';
 import { useApi } from '@/hooks/useApi';
-import { DashboardPage } from '@/components/layout/RoleDashboard';
+import { DashboardPage, DashboardHero } from '@/components/layout/RoleDashboard';
 
 export default function UsuarioConsultaPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,11 +37,11 @@ export default function UsuarioConsultaPage() {
 
   return (
     <DashboardPage>
-
-        <div className="animate-slide-up">
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Consulta de Usuários</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Encontre usuários e apartamentos do condomínio</p>
-        </div>
+      <DashboardHero
+        eyebrow="Condomínio"
+        title="Consulta de usuários"
+        description="Encontre qualquer morador pelo nome, número do apartamento ou bloco para visualizar seus dados de contato e unidade."
+      />
 
         <div className="animate-slide-up">
           <Input

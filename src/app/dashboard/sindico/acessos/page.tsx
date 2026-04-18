@@ -6,7 +6,7 @@ import Badge from '@/components/ui/Badge';
 import Pagination from '@/components/ui/Pagination';
 import { useApi } from '@/hooks/useApi';
 import { LogAcesso } from '@/types';
-import { DashboardPage } from '@/components/layout/RoleDashboard';
+import { DashboardPage, DashboardHero } from '@/components/layout/RoleDashboard';
 
 type GrupoAcesso = {
   key: string;
@@ -173,21 +173,11 @@ export default function AcessosPage() {
 
   return (
     <DashboardPage>
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Histórico de Acesso</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Histórico de entradas no portal do condomínio</p>
-            </div>
-          </div>
-        </div>
+      <DashboardHero
+        eyebrow="Segurança"
+        title="Histórico de acessos"
+        description="Visualize e filtre todos os registros de entrada e saída do condomínio. Monitore padrões de acesso por role, bloco ou período."
+      />
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

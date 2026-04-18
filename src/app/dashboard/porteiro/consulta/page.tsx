@@ -7,7 +7,7 @@ import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 import { Usuario } from '@/types';
 import { useApi } from '@/hooks/useApi';
-import { DashboardPage } from '@/components/layout/RoleDashboard';
+import { DashboardPage, DashboardHero } from '@/components/layout/RoleDashboard';
 
 export default function PorteiroConsultaPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,10 +40,11 @@ export default function PorteiroConsultaPage() {
 
   return (
     <DashboardPage>
-      <div className="animate-slide-up">
-        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Consulta Rápida</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Busque usuários e apartamentos do condomínio</p>
-      </div>
+      <DashboardHero
+        eyebrow="Portaria"
+        title="Consulta rápida de moradores"
+        description="Busque qualquer usuário pelo nome, número do apartamento, bloco ou telefone para localizar informações rapidamente."
+      />
 
       <div className="animate-slide-up">
         <Input

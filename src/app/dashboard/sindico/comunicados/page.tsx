@@ -11,7 +11,7 @@ import { Comunicado } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
-import { DashboardPage } from '@/components/layout/RoleDashboard';
+import { DashboardPage, DashboardHero } from '@/components/layout/RoleDashboard';
 
 interface Poll {
   id: number;
@@ -165,15 +165,21 @@ export default function ComunicadosPage() {
 
   return (
     <DashboardPage>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-slide-up">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Comunicados</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Publique e gerencie comunicados</p>
-        </div>
-        <Button onClick={() => { setSelectedComunicado(null); setFormData({ titulo: '', conteudo: '', categoria: 'Geral', importante: false }); setIsModalOpen(true); }} icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
-          Novo Comunicado
-        </Button>
-      </div>
+      <DashboardHero
+        eyebrow="Gestão"
+        title="Comunicados do condomínio"
+        description="Publique avisos, regras e notícias importantes para todos os moradores. Use enquetes para registrar decisões coletivas."
+        aside={
+          <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Novo comunicado</p>
+            <div className="mt-4">
+              <Button onClick={() => { setSelectedComunicado(null); setFormData({ titulo: '', conteudo: '', categoria: 'Geral', importante: false }); setIsModalOpen(true); }} className="w-full" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
+                Publicar Comunicado
+              </Button>
+            </div>
+          </div>
+        }
+      />
 
       <div className="space-y-4">
         {comunicados.length === 0 ? (
