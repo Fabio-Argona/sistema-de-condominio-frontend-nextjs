@@ -35,20 +35,34 @@ export default function UsuarioConsultaPage() {
     (a.nome || '').localeCompare(b.nome || '', 'pt-BR')
   );
 
+  // Resumo dos usuários
+  const resumo = {
+    total: usuarios.length,
+    ativos: usuarios.filter((u) => u.ativo).length,
+    blocos: Array.from(new Set(usuarios.map((u) => u.bloco))).length,
+  };
+
   return (
     <DashboardPage>
       <DashboardHero
-        eyebrow="Condomínio"
-        title="Consulta de usuários"
-        description="Encontre qualquer morador pelo nome, número do apartamento ou bloco para visualizar seus dados de contato e unidade."
+        eyebrow="Consulta"
+        title="Encontre moradores rapidamente"
+        description="Busque por nome, apartamento ou bloco para visualizar dados de contato e unidade."
+        status={
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge variant="success">{resumo.ativos} ativos</Badge>
+            <Badge variant="info">{resumo.total} usuários</Badge>
+            <Badge variant="blue">{resumo.blocos} blocos</Badge>
+          </div>
+        }
       />
 
-        <div className="animate-slide-up">
+      <section className="space-y-4 animate-slide-up">
+        <div className="max-w-xl">
           <Input
             placeholder="Buscar por nome, apartamento ou bloco..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-xl"
             icon={
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -102,7 +116,7 @@ export default function UsuarioConsultaPage() {
             <p className="text-sm mt-1">Tente buscar por outro termo</p>
           </div>
         )}
-
+      </section>
     </DashboardPage>
   );
 }

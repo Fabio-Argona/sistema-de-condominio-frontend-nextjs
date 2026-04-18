@@ -5,9 +5,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
 
   // Resolve warning de múltiplos lockfiles
-  turbopack: {
-    root: '..',
-  },
+  // turbopack.root removido para evitar conflito com outputFileTracingRoot
   
   // Permitir imagens externas (se necessário)
   images: {

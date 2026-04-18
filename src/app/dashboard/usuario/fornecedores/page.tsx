@@ -93,89 +93,105 @@ export default function UsuarioFornecedoresPage() {
       setIsDeleteOpen(false);
       setDeleteId(null);
       await load();
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+    // Resumo dos fornecedores
+    const resumo = {
+      total: fornecedores.length,
+      meus: fornecedores.filter(isOwner).length,
+      vigentes: fornecedores.filter((f) => f.vigencia).length,
+    };
 
-  return (
-    <DashboardPage>
-      <DashboardHero
-        eyebrow="Serviços"
-        title="Fornecedores recomendados"
-        description="Profissionais e empresas de confiança indicados pelos moradores. Conheça os parceiros do condomínio e faça suas próprias indicações."
-        aside={
-          <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Nova indicação</p>
-            <div className="mt-4">
-              <Button onClick={openCreate} className="w-full" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
-                Indicar Fornecedor
-              </Button>
+    return (
+      <DashboardPage>
+        <DashboardHero
+          eyebrow="Fornecedores"
+          title="Profissionais e empresas recomendados"
+          description="Conheça os parceiros do condomínio, faça buscas e cadastre novas indicações."
+          status={
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge variant="success">{resumo.meus} meus</Badge>
+              <Badge variant="info">{resumo.total} fornecedores</Badge>
+              <Badge variant="blue">{resumo.vigentes} vigentes</Badge>
             </div>
-          </div>
-        }
-      />
+          }
+          aside={
+            <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Nova indicação</p>
+              <div className="mt-4">
+                <Button onClick={openCreate} className="w-full" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
+                  Indicar Fornecedor
+                </Button>
+              </div>
+            </div>
+          }
+        />
 
-        <div className="animate-slide-up">
-          <Input
-            placeholder="Buscar por nome, descrição ou contato..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            icon={
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            }
-          />
-        </div>
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-40 bg-slate-200 dark:bg-slate-700/50 animate-pulse rounded-2xl" />
-            ))}
+        <section className="space-y-4 animate-slide-up">
+          <div className="max-w-xl">
+            <Input
+              placeholder="Buscar por nome, descrição ou contato..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              }
+            />
           </div>
-        ) : filtrados.length === 0 ? (
-          <EmptyState
-            title={searchTerm ? 'Nenhum fornecedor encontrado' : 'Nenhum fornecedor cadastrado'}
-            description={searchTerm ? 'Tente ajustar a busca por nome, contato ou período de vigência para localizar outro fornecedor.' : 'Quando novos fornecedores forem cadastrados, eles aparecerão aqui para consulta e gestão.'}
-            action={!searchTerm ? <Button onClick={() => setIsModalOpen(true)}>Adicionar fornecedor</Button> : undefined}
-          />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-slide-up">
-            {filtrados.map((f) => (
-              <Card key={f.id} hover gradient>
-                <CardContent className="p-5 space-y-3">
-                  {/* Header */}
-                  <div className="flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 shadow bg-gradient-to-br ${isOwner(f) ? 'from-emerald-500 to-teal-600' : 'from-blue-500 to-indigo-600'}`}>
-                      {f.nome.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-bold text-slate-900 dark:text-white text-sm leading-tight">{f.nome}</p>
-                        {isOwner(f) && <Badge variant="success" size="sm">Meu cadastro</Badge>}
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-40 bg-slate-200 dark:bg-slate-700/50 animate-pulse rounded-2xl" />
+              ))}
+            </div>
+          ) : filtrados.length === 0 ? (
+            <EmptyState
+              title={searchTerm ? 'Nenhum fornecedor encontrado' : 'Nenhum fornecedor cadastrado'}
+              description={searchTerm ? 'Tente ajustar a busca por nome, contato ou período de vigência para localizar outro fornecedor.' : 'Quando novos fornecedores forem cadastrados, eles aparecerão aqui para consulta e gestão.'}
+              action={!searchTerm ? <Button onClick={() => setIsModalOpen(true)}>Adicionar fornecedor</Button> : undefined}
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-slide-up">
+              {filtrados.map((f) => (
+                <Card key={f.id} hover gradient>
+                  <CardContent className="p-5 space-y-3">
+                    {/* Header */}
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 shadow bg-gradient-to-br ${isOwner(f) ? 'from-emerald-500 to-teal-600' : 'from-blue-500 to-indigo-600'}`}>
+                        {f.nome.charAt(0).toUpperCase()}
                       </div>
-                      {f.valor && (
-                        <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">{f.valor}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-bold text-slate-900 dark:text-white text-sm leading-tight">{f.nome}</p>
+                          {isOwner(f) && <Badge variant="success" size="sm">Meu cadastro</Badge>}
+                        </div>
+                        {f.valor && (
+                          <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">{f.valor}</p>
+                        )}
+                        {f.vigencia && (
+                          <p className="text-xs text-slate-400">Vigência: {f.vigencia}</p>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{f.comentario}</p>
+                    {f.contato && <p className="text-xs text-slate-400">Contato: {f.contato}</p>}
+                    <div className="flex gap-2 pt-2">
+                      {isOwner(f) && (
+                        <Button size="sm" variant="outline" onClick={() => openEdit(f)}>Editar</Button>
+                      )}
+                      {isOwner(f) && (
+                        <Button size="sm" variant="danger" onClick={() => openDelete(f.id)} isLoading={isDeleting && deleteId === f.id}>Excluir</Button>
                       )}
                     </div>
-                    {/* Action buttons — only owner */}
-                    {isOwner(f) && (
-                      <div className="flex gap-1 shrink-0">
-                        <button
-                          onClick={() => openEdit(f)}
-                          title="Editar"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => openDelete(f.id)}
-                          title="Excluir"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+      </DashboardPage>
+    );
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
