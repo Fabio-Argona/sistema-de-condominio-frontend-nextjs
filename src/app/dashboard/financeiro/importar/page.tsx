@@ -1,6 +1,6 @@
-import api from "@/lib/api";
-"use client";
 
+"use client";
+import api from "@/lib/api";
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 
