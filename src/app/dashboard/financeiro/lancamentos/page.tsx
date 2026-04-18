@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import api from "@/lib/api";
 
 interface LancamentoFinanceiro {
   id: number;
@@ -19,9 +20,8 @@ export default function ListaLancamentosPage() {
   const [editTipo, setEditTipo] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/financeiro/lancamentos")
-      .then((res) => res.json())
-      .then((data) => setLancamentos(data))
+    api.get("/financeiro/lancamentos")
+      .then((res) => setLancamentos(res.data))
       .finally(() => setLoading(false));
   }, []);
 
@@ -42,18 +42,19 @@ export default function ListaLancamentosPage() {
   };
 
   const saveEdit = async (id: number) => {
-    const res = await fetch(`http://localhost:8080/api/financeiro/lancamentos/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ descricao: editDescricao, tipo: editTipo }),
-    });
-    if (res.ok) {
+    try {
+      const res = await api.put(`/financeiro/lancamentos/${id}`, {
+        descricao: editDescricao,
+        tipo: editTipo,
+      });
       setLancamentos((prev) =>
         prev.map((l) =>
           l.id === id ? { ...l, descricao: editDescricao, tipo: editTipo } : l
         )
       );
       cancelEdit();
+    } catch (err) {
+      // erro opcional
     }
   };
 

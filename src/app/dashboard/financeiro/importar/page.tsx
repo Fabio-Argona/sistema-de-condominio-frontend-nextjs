@@ -1,3 +1,4 @@
+import api from "@/lib/api";
 "use client";
 
 import { useState } from "react";
@@ -22,12 +23,10 @@ export default function ImportarFinanceiroPage() {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const res = await fetch("http://localhost:8080/api/financeiro/importar", {
-        method: "POST",
-        body: formData,
+      const res = await api.post("/financeiro/importar", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      const data = await res.text();
-      setResult(data);
+      setResult(res.data);
     } catch (err) {
       setResult("Erro ao enviar arquivo.");
     } finally {
