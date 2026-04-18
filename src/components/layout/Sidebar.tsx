@@ -228,9 +228,9 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps)
     // Match exato: sempre ativo
     if (pathname === href) return true;
     // Match por prefixo: só ativo se nenhum outro href mais específico também casar
-    if (pathname.startsWith(`${href}/`)) {
+    if (pathname?.startsWith(`${href}/`)) {
       const hasMoreSpecificMatch = allHrefs.some(
-        (other) => other !== href && other.startsWith(`${href}/`) && (pathname === other || pathname.startsWith(`${other}/`))
+        (other) => other !== href && other.startsWith(`${href}/`) && (pathname === other || pathname?.startsWith(`${other}/`))
       );
       return !hasMoreSpecificMatch;
     }
