@@ -66,18 +66,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log("Arquivo lido, tamanho:", buffer.length);
 
     try {
-      console.log("Carregando pdf-parse");
-      const pdf = require("pdf-parse");
-      const data = await pdf(buffer);
-      console.log("PDF parseado com sucesso");
+      console.log("Carregando pdfjs-dist (legacy)");
+      // @ts-ignore
+      const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+      
+      // No Node.js com pdfjs-dist v5, precisamos configurar o worker manualmente
+      if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+        // @ts-ignore
+        const pdfjsWorker = await import("pdfjs-dist/legacy/build/pdf.worker.mjs");
+        pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+      }
+      
+      const loadingTask = pdfjs.getDocument({
+        data: new Uint8Array(buffer),
+        useWorkerFetch: false,
+        isEvalSupported: false,
+        disableRange: true,
+      });
+
+      const pdfDocument = await loadingTask.promise;
+      console.log(`PDF carregado: ${pdfDocument.numPages} páginas`);
+      
+      let fullText = "";
+      for (let i = 1; i <= pdfDocument.numPages; i++) {
+        const page = await pdfDocument.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(" ");
+        fullText += pageText + "\n";
+      }
+
+      console.log("Extração de texto concluída");
       
       return res.status(200).json({
         message: "Arquivo processado com sucesso",
-        texto: data.text
+        texto: fullText
       });
     } catch (pdfErr: any) {
-      console.error("Erro no pdf-parse:", pdfErr);
-      return res.status(500).json({ message: "Erro ao extrair texto do PDF", error: pdfErr.message });
+      console.error("Erro no pdfjs-dist:", pdfErr);
+      return res.status(500).json({ message: "Erro ao extrair texto do PDF (pdfjs)", error: pdfErr.message });
     }
 
   } catch (err: any) {
