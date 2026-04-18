@@ -27,8 +27,10 @@ export default function ImportarFinanceiroPage() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setResult(res.data);
-    } catch (err) {
-      setResult("Erro ao enviar arquivo.");
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || "Erro ao enviar arquivo.";
+      setResult(`Erro: ${errorMsg}`);
+      console.error("Erro na importação:", err.response?.data || err.message);
     } finally {
       setLoading(false);
     }

@@ -1,10 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { IncomingForm } from "formidable";
 import fs from "fs";
-import * as pdf from "pdf-parse";
 
-// Forçamos o tipo para evitar erros de lint e garantir que funcionará tanto como import padrão quanto nomeado
-const parsePdf = (pdf as any).default || pdf;
+// Usando require para evitar problemas de compatibilidade com CommonJS/ESM
+const pdf = require("pdf-parse");
 
 export const config = {
   api: {
@@ -13,17 +12,25 @@ export const config = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Método não permitido" });
-  }
-
-  const form = new IncomingForm();
-
   try {
+    console.log("Chamada recebida em /api/financeiro/importar", { method: req.method });
+    if (req.method !== "POST") {
+      return res.status(405).json({ message: "Método não permitido" });
+    }
+
+    const form = new IncomingForm({
+      uploadDir: "/tmp",
+      keepExtensions: true,
+    });
+
     const { fields, files } = await new Promise<{ fields: any, files: any }>((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
-        else resolve({ fields, files });
+        if (err) {
+          console.error("Erro no form.parse:", err);
+          reject(err);
+        } else {
+          resolve({ fields, files });
+        }
       });
     });
     
@@ -41,9 +48,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const buffer = fs.readFileSync(filepath);
+    console.log("Arquivo lido com sucesso, tamanho:", buffer.length);
     
     try {
-      const data = await parsePdf(buffer);
+      console.log("Iniciando parse do PDF...");
+      const data = await pdf(buffer);
+      console.log("Parse do PDF concluído com sucesso.");
       const texto = data.text;
       
       // TODO: Parsear texto e salvar no banco
@@ -55,8 +65,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error("Erro no pdf-parse:", pdfError);
       return res.status(500).json({ message: "Erro ao processar conteúdo do PDF", error: pdfError.message });
     }
-  } catch (formError: any) {
-    console.error("Erro no formidable:", formError);
-    return res.status(500).json({ message: "Erro ao processar formulário", error: formError.message });
+  } catch (globalError: any) {
+    console.error("Erro Global na API:", globalError);
+    return res.status(500).json({ 
+      message: "Erro interno inesperado", 
+      error: globalError.message,
+      stack: globalError.stack 
+    });
   }
 }
