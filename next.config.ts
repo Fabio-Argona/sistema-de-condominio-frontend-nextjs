@@ -22,6 +22,15 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const backendUrl = process.env.BACKEND_URL || 'http://100.51.89.148:8080';
     return [
+      // Excluir rotas de API locais do proxy
+      {
+        source: '/api/financeiro/importar',
+        destination: '/api/financeiro/importar',
+      },
+      {
+        source: '/api/teste-api',
+        destination: '/api/teste-api',
+      },
       {
         source: '/api/:path*',
         destination: `${backendUrl}/api/:path*`,

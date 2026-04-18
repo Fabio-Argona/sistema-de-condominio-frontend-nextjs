@@ -1,9 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { IncomingForm } from "formidable";
 import fs from "fs";
-
-// Usando require para evitar problemas de compatibilidade com CommonJS/ESM
-const pdf = require("pdf-parse");
 
 export const config = {
   api: {
@@ -12,65 +8,69 @@ export const config = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log("Início do handler importar.ts");
+  
   try {
-    console.log("Chamada recebida em /api/financeiro/importar", { method: req.method });
     if (req.method !== "POST") {
       return res.status(405).json({ message: "Método não permitido" });
     }
 
-    const form = new IncomingForm({
+    // Carregamento dinâmico do formidable
+    const formidable = require("formidable");
+    const form = new formidable.IncomingForm({
       uploadDir: "/tmp",
       keepExtensions: true,
     });
 
+    console.log("Iniciando form.parse");
     const { fields, files } = await new Promise<{ fields: any, files: any }>((resolve, reject) => {
-      form.parse(req, (err, fields, files) => {
+      form.parse(req, (err: any, fields: any, files: any) => {
         if (err) {
-          console.error("Erro no form.parse:", err);
+          console.error("Erro formidable:", err);
           reject(err);
         } else {
           resolve({ fields, files });
         }
       });
     });
-    
-    const file = files.file;
 
+    const file = files.file;
     if (!file) {
-      return res.status(400).json({ message: "Arquivo não enviado" });
+      console.log("Arquivo não encontrado no request");
+      return res.status(400).json({ message: "Arquivo (campo 'file') não enviado" });
     }
 
     const fileObj = Array.isArray(file) ? file[0] : file;
-    const filepath = (fileObj as any).filepath || (fileObj as any).path;
-
+    const filepath = fileObj.filepath || fileObj.path;
+    
     if (!filepath) {
-      return res.status(400).json({ message: "Caminho do arquivo não encontrado" });
+      return res.status(400).json({ message: "Erro ao localizar caminho temporário do arquivo" });
     }
 
     const buffer = fs.readFileSync(filepath);
-    console.log("Arquivo lido com sucesso, tamanho:", buffer.length);
-    
+    console.log("Arquivo lido, tamanho:", buffer.length);
+
     try {
-      console.log("Iniciando parse do PDF...");
+      console.log("Carregando pdf-parse");
+      const pdf = require("pdf-parse");
       const data = await pdf(buffer);
-      console.log("Parse do PDF concluído com sucesso.");
-      const texto = data.text;
+      console.log("PDF parseado com sucesso");
       
-      // TODO: Parsear texto e salvar no banco
-      return res.status(200).json({ 
-        message: "Arquivo processado com sucesso", 
-        texto: texto
+      return res.status(200).json({
+        message: "Arquivo processado com sucesso",
+        texto: data.text
       });
-    } catch (pdfError: any) {
-      console.error("Erro no pdf-parse:", pdfError);
-      return res.status(500).json({ message: "Erro ao processar conteúdo do PDF", error: pdfError.message });
+    } catch (pdfErr: any) {
+      console.error("Erro no pdf-parse:", pdfErr);
+      return res.status(500).json({ message: "Erro ao extrair texto do PDF", error: pdfErr.message });
     }
-  } catch (globalError: any) {
-    console.error("Erro Global na API:", globalError);
+
+  } catch (err: any) {
+    console.error("Erro crítico na API:", err);
     return res.status(500).json({ 
-      message: "Erro interno inesperado", 
-      error: globalError.message,
-      stack: globalError.stack 
+      message: "Falha crítica no processamento", 
+      error: err.message,
+      stack: err.stack 
     });
   }
 }
