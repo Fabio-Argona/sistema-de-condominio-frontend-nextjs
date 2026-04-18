@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Card, { CardContent } from '@/components/ui/Card';
+import Badge from '@/components/ui/Badge';
 import Input from '@/components/ui/Input';
 import { Usuario } from '@/types';
 import { useApi } from '@/hooks/useApi';
@@ -52,7 +53,7 @@ export default function UsuarioConsultaPage() {
           <div className="flex flex-wrap items-center gap-3">
             <Badge variant="success">{resumo.ativos} ativos</Badge>
             <Badge variant="info">{resumo.total} usuários</Badge>
-            <Badge variant="blue">{resumo.blocos} blocos</Badge>
+            <Badge variant="info">{resumo.blocos} blocos</Badge>
           </div>
         }
       />

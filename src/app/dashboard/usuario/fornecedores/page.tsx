@@ -93,37 +93,43 @@ export default function UsuarioFornecedoresPage() {
       setIsDeleteOpen(false);
       setDeleteId(null);
       await load();
-    // Resumo dos fornecedores
-    const resumo = {
-      total: fornecedores.length,
-      meus: fornecedores.filter(isOwner).length,
-      vigentes: fornecedores.filter((f) => f.vigencia).length,
-    };
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
-    return (
-      <DashboardPage>
-        <DashboardHero
-          eyebrow="Fornecedores"
-          title="Profissionais e empresas recomendados"
-          description="Conheça os parceiros do condomínio, faça buscas e cadastre novas indicações."
-          status={
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge variant="success">{resumo.meus} meus</Badge>
-              <Badge variant="info">{resumo.total} fornecedores</Badge>
-              <Badge variant="blue">{resumo.vigentes} vigentes</Badge>
+
+  // Resumo dos fornecedores
+  const resumo = {
+    total: fornecedores.length,
+    meus: fornecedores.filter(isOwner).length,
+    vigentes: fornecedores.filter((f) => f.vigencia).length,
+  };
+
+  return (
+    <DashboardPage>
+      <DashboardHero
+        eyebrow="Fornecedores"
+        title="Profissionais e empresas recomendados"
+        description="Conheça os parceiros do condomínio, faça buscas e cadastre novas indicações."
+        status={
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge variant="success">{resumo.meus} meus</Badge>
+            <Badge variant="info">{resumo.total} fornecedores</Badge>
+            <Badge variant="info">{resumo.vigentes} vigentes</Badge>
+          </div>
+        }
+        aside={
+          <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Nova indicação</p>
+            <div className="mt-4">
+              <Button onClick={openCreate} className="w-full" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
+                Indicar Fornecedor
+              </Button>
             </div>
-          }
-          aside={
-            <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Nova indicação</p>
-              <div className="mt-4">
-                <Button onClick={openCreate} className="w-full" icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}>
-                  Indicar Fornecedor
-                </Button>
-              </div>
-            </div>
-          }
-        />
+          </div>
+        }
+      />
 
         <section className="space-y-4 animate-slide-up">
           <div className="max-w-xl">
@@ -190,8 +196,11 @@ export default function UsuarioFornecedoresPage() {
             </div>
           )}
         </section>
-      </DashboardPage>
-    );
+      {/* Modal criar/editar */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingId ? 'Editar Fornecedor' : 'Indicar Fornecedor'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
