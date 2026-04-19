@@ -198,7 +198,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Converte o Map de volta para array mantendo a ordem original (aproximada)
       const listaFinal = Array.from(mapAgrupado.values());
 
-      const saldoTotal = listaFinal.length > 0 ? (listaFinal[listaFinal.length - 1].saldo ?? 0) : 0;
+      // Remover linhas de "SALDO APLIC. AUT." da tabela
+      const transacoesSemAplicAut = listaFinal.filter(
+        (tr) => !tr.descricao.includes("SALDO APLIC") && !tr.descricao.includes("APLIC. AUT")
+      );
+
+      // Pegar o último "SALDO TOTAL DISPONÍVEL" como saldo final
+      const saldoTotalEntry = listaFinal
+        .filter((tr) => tr.descricao.includes("SALDO TOTAL") || tr.descricao.includes("DISPONÍVEL") || tr.descricao.includes("DISPONIVEL"))
+        .pop();
+
+      // Fallback: último saldo da lista completa
+      const saldoTotal = saldoTotalEntry?.saldo ?? saldoTotalEntry?.valor ?? (listaFinal.length > 0 ? (listaFinal[listaFinal.length - 1].saldo ?? 0) : 0);
 
       return res.status(200).json({
         message: "Arquivo processado com sucesso",
@@ -209,7 +220,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           utilizado: 0,
           disponivel: saldoTotal
         },
-        transacoes: listaFinal
+        transacoes: transacoesSemAplicAut
       });
     } catch (pdfErr: any) {
       console.error("Erro no pdfjs-dist:", pdfErr);
