@@ -175,6 +175,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const isResAplicAut = (d: string) =>
         d.includes("RES APLIC") || d.includes("REND APLIC") || d.includes("APLIC AUT") || d.includes("APLIC. AUT");
 
+      const isRendPago = (d: string) =>
+        d.includes("RENDIMENTOS") || d.includes("REND PAGO");
+
       const isSaldoDisponivel = (d: string) =>
         d.includes("SALDO TOTAL") || d.includes("DISPONÍVEL") || d.includes("DISPONIVEL") || d.includes("SALDO DISP");
 
@@ -187,29 +190,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // ─── 2. Agrupar RES APLIC AUT em uma única linha (soma dos valores) ─────
       let somaResAplicAut = 0;
       let primeiroResAplicAut: any = null;
-      const semResAplicAut: any[] = [];
+      let somaRendPago = 0;
+      let primeiroRendPago: any = null;
+      const filtradas: any[] = [];
 
       for (const tr of semSaldoMovConta) {
         if (isResAplicAut(tr.descricao)) {
           somaResAplicAut += tr.valor;
           if (!primeiroResAplicAut) primeiroResAplicAut = { ...tr };
+        } else if (isRendPago(tr.descricao)) {
+          somaRendPago += tr.valor;
+          if (!primeiroRendPago) primeiroRendPago = { ...tr };
         } else {
-          semResAplicAut.push(tr);
+          filtradas.push(tr);
         }
       }
 
       // Insere a linha consolidada de RES APLIC AUT (se houver)
       if (primeiroResAplicAut) {
         primeiroResAplicAut.valor = somaResAplicAut;
-        primeiroResAplicAut.saldo = null; // saldo não faz sentido consolidado
-        semResAplicAut.push(primeiroResAplicAut);
+        primeiroResAplicAut.saldo = null;
+        filtradas.push(primeiroResAplicAut);
+      }
+
+      // Insere a linha consolidada de RENDIMENTOS REND PAGO (se houver)
+      if (primeiroRendPago) {
+        primeiroRendPago.descricao = "RENDIMENTOS REND PAGO";
+        primeiroRendPago.valor = somaRendPago;
+        primeiroRendPago.saldo = null;
+        filtradas.push(primeiroRendPago);
       }
 
       // ─── 3. Remover SALDO APLIC. AUT. ───────────────────────────────────────
-      const semSaldoAplicAut = semResAplicAut.filter((tr) => !isSaldoAplicAut(tr.descricao));
+      const semSaldoAplicAut = filtradas.filter((tr) => !isSaldoAplicAut(tr.descricao));
 
       // ─── 4. Manter apenas o SALDO DISPONIVEL mais recente ───────────────────
-      //        Todos os outros são removidos; o mais recente vai para o final
       const saldoDisponivelEntries = semSaldoAplicAut.filter((tr) => isSaldoDisponivel(tr.descricao));
       const ultimoSaldoDisponivel = saldoDisponivelEntries[saldoDisponivelEntries.length - 1] ?? null;
 
