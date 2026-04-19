@@ -100,31 +100,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       console.log("Extração de texto concluída");
       
-      // Lógica de parsing aprimorada para capturar Razão Social, CNPJ e Saldo
       const transacoes: any[] = [];
-      const lines = fullText.split('\n');
-      
       const periodoMatch = fullText.match(/(\d{2}\/\d{2}\/\d{4})\s*até\s*(\d{2}\/\d{2}\/\d{4})/);
       const periodo = periodoMatch ? `${periodoMatch[1]} até ${periodoMatch[2]}` : "Período não identificado";
 
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line.length < 15) continue;
+      // Regex para encontrar blocos de transação que começam com data
+      // O padrão usa um Lookahead positivo para encontrar a próxima data ou o fim do arquivo
+      const blockRegex = /(\d{2}\/\d{2}\/\d{4})([\s\S]+?)(?=\d{2}\/\d{2}\/\d{4}|$)/g;
+      
+      let blockMatch;
+      while ((blockMatch = blockRegex.exec(fullText)) !== null) {
+        const data = blockMatch[1];
+        const content = blockMatch[2].replace(/\s+/g, " ").trim();
+        
+        if (content.length < 5) continue;
 
-        // Cada transação geralmente começa com uma data
-        const dateMatch = line.match(/^(\d{2}\/\d{2}\/\d{4})/);
-        if (!dateMatch) continue;
-
-        const data = dateMatch[1];
-        let remaining = line.substring(data.length).trim();
-
-        // Regex para encontrar valores monetários no formato 1.234,56 ou -1.234,56
+        // Encontrar valores no formato 1.234,56 ou -1.234,56
         const moneyRegex = /(-?[\d.]*,\d{2})(?=\s|$)/g;
-        const moneyMatches = Array.from(remaining.matchAll(moneyRegex));
+        const moneyMatches = Array.from(content.matchAll(moneyRegex));
 
         if (moneyMatches.length >= 1) {
-          // O último valor costuma ser o saldo (se houver mais de um), o penúltimo é o valor da transação
-          // Se houver apenas um, é o valor da transação
+          // Último é Saldo, penúltimo (ou único) é Valor
           let valorStr = "";
           let saldoStr = "";
 
@@ -135,37 +131,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             valorStr = moneyMatches[0][0];
           }
 
-          // Extrair o texto central (Descrição + Razão Social + CNPJ)
-          const valorIndex = remaining.indexOf(valorStr);
-          let middleText = remaining.substring(0, valorIndex).trim();
+          // Texto entre a data e o valor
+          const valorIndex = content.indexOf(valorStr);
+          let middle = content.substring(0, valorIndex).trim();
 
-          // Tentar extrair CNPJ/CPF
+          // Extrair CNPJ/CPF
           const cnpjRegex = /(\d{2,3}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}|\d{3}\.?\d{3}\.?\d{3}-?\d{2})/;
-          const cnpjMatch = middleText.match(cnpjRegex);
+          const cnpjMatch = middle.match(cnpjRegex);
           let cnpj = "";
-          let infoRestante = middleText;
+          let textoLimpo = middle;
 
           if (cnpjMatch) {
             cnpj = cnpjMatch[0];
-            infoRestante = middleText.replace(cnpj, "").trim();
+            textoLimpo = middle.replace(cnpj, "").trim();
           }
 
-          // Tentar separar Descrição de Razão Social
-          // Geralmente a descrição é curta (até 2 ou 3 palavras)
-          const partes = infoRestante.split(/\s{2,}/); // Tenta separar por espaços duplos
-          let descricao = infoRestante;
-          let razaoSocial = "";
-
-          if (partes.length >= 2) {
-            descricao = partes[0].trim();
-            razaoSocial = partes.slice(1).join(" ").trim();
-          } else {
-            // Se não houver espaços duplos, tenta um corte arbitrário ou mantém tudo na descrição
-            if (infoRestante.length > 25) {
-               descricao = infoRestante.substring(0, 25).trim();
-               razaoSocial = infoRestante.substring(25).trim();
-            }
-          }
+          // Separar Lançamento de Razão Social
+          // Tentamos pegar as primeiras 3-4 palavras como lançamento/descrição curta
+          const palavras = textoLimpo.split(" ");
+          const descricao = palavras.slice(0, 3).join(" ");
+          const razaoSocial = palavras.slice(3).join(" ");
 
           const valor = parseFloat(valorStr.replace(/\./g, "").replace(",", "."));
           const saldo = saldoStr ? parseFloat(saldoStr.replace(/\./g, "").replace(",", ".")) : null;
