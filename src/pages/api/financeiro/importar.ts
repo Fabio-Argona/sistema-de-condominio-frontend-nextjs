@@ -168,7 +168,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
-      const saldoTotal = transacoes.length > 0 ? (transacoes[transacoes.length - 1].saldo ?? 0) : 0;
+      // Agrupamento de lançamentos (Somar os que forem do mesmo tipo no mesmo dia)
+      // E regra especial: se for "SALDO...", manter apenas o mais recente do dia
+      const transacoesAgrupadas: any[] = [];
+      const mapAgrupado = new Map<string, any>();
+
+      for (const tr of transacoes) {
+        // Chave de agrupamento: Data + Descrição + Razão Social
+        const key = `${tr.data}-${tr.descricao}-${tr.razaoSocial}`;
+        
+        if (mapAgrupado.has(key)) {
+          const existente = mapAgrupado.get(key);
+          
+          if (tr.descricao.startsWith("SALDO")) {
+            // Se for saldo, apenas atualiza para o mais recente (não soma)
+            existente.valor = tr.valor;
+            existente.saldo = tr.saldo;
+          } else {
+            // Se for transação comum, soma os valores
+            existente.valor += tr.valor;
+            // O saldo final do grupo é sempre o último saldo visto
+            if (tr.saldo !== null) existente.saldo = tr.saldo;
+          }
+        } else {
+          mapAgrupado.set(key, { ...tr });
+        }
+      }
+
+      // Converte o Map de volta para array mantendo a ordem original (aproximada)
+      const listaFinal = Array.from(mapAgrupado.values());
+
+      const saldoTotal = listaFinal.length > 0 ? (listaFinal[listaFinal.length - 1].saldo ?? 0) : 0;
 
       return res.status(200).json({
         message: "Arquivo processado com sucesso",
@@ -179,7 +209,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           utilizado: 0,
           disponivel: saldoTotal
         },
-        transacoes
+        transacoes: listaFinal
       });
     } catch (pdfErr: any) {
       console.error("Erro no pdfjs-dist:", pdfErr);
