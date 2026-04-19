@@ -100,31 +100,89 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       console.log("Extração de texto concluída");
       
-      // Lógica de parsing básica para extrair transações do texto
+      // Lógica de parsing aprimorada para capturar Razão Social, CNPJ e Saldo
       const transacoes: any[] = [];
       const lines = fullText.split('\n');
-      // Regex para capturar padrões comuns de extrato: 18/04/2026 Descrição 100,00
-      const regex = /(\d{2}\/\d{2}(?:\/\d{2,4})?)\s+(.*?)\s+(-?[\d.,]+)(?=\s|$)/g;
       
-      let match;
-      while ((match = regex.exec(fullText)) !== null) {
-        // Tenta filtrar ruídos (valores que não parecem dinheiro)
-        const valorRaw = match[3].replace('.', '').replace(',', '.');
-        const valor = parseFloat(valorRaw);
+      // Tentar capturar o período
+      const periodoMatch = fullText.match(/(\d{2}\/\d{2}\/\d{4})\s*até\s*(\d{2}\/\d{2}\/\d{4})/);
+      const periodo = periodoMatch ? `${periodoMatch[1]} até ${periodoMatch[2]}` : "Período não identificado";
+
+      // Regex mais complexa para capturar colunas extras
+      // Padrao esperado: Data Descricao [RazaoSocial] [CNPJ] Valor [Saldo]
+      const linesProcessed = lines.filter(l => l.trim().length > 10);
+      
+      for (const line of linesProcessed) {
+        // Ignorar linhas de cabeçalho comuns
+        if (line.includes("Saldo total") || line.includes("Lançamentos do período")) continue;
+
+        // Regex para capturar data no início
+        const dateMatch = line.match(/^(\d{2}\/\d{2}\/\d{4})/);
+        if (!dateMatch) continue;
+
+        const data = dateMatch[1];
+        let remaining = line.substring(data.length).trim();
+
+        // Encontrar o valor (geralmente o penúltimo ou último número formatado)
+        // Valores costumam ter o formato 1.234,56 ou -1.234,56
+        const moneyRegex = /(-?[\d.]*,\d{2})/g;
+        const matches = Array.from(remaining.matchAll(moneyRegex));
         
-        if (!isNaN(valor) && match[2].length > 2) {
-          transacoes.push({
-            data: match[1],
-            descricao: match[2].trim(),
-            valor: valor,
-            valorFormatado: match[3]
-          });
+        if (matches.length > 0) {
+          const valorRaw = matches[matches.length - 2] ? matches[matches.length - 2][0] : matches[matches.length - 1][0];
+          const saldoRaw = matches.length >= 2 ? matches[matches.length - 1][0] : "";
+          
+          let middleText = remaining;
+          const valorIndex = remaining.lastIndexOf(valorRaw);
+          if (valorIndex !== -1) {
+            middleText = remaining.substring(0, valorIndex).trim();
+          }
+
+          // Tentar separar Descrição de Razão Social/CNPJ
+          // Padrão comum: CPF/CNPJ no fim do texto do meio
+          const cnpjRegex = /(\d{2,3}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}|\d{3}\.?\d{3}\.?\d{3}-?\d{2})/g;
+          const cnpjMatch = middleText.match(cnpjRegex);
+          let cnpj = "";
+          let razaoSocial = "";
+          let descricao = middleText;
+
+          if (cnpjMatch) {
+            cnpj = cnpjMatch[0];
+            const cnpjIndex = middleText.indexOf(cnpj);
+            razaoSocial = middleText.substring(0, cnpjIndex).trim();
+            // A descrição costuma vir antes da razão social, mas aqui simplificamos
+            descricao = middleText.substring(0, 20); // Pega os primeiros 20 caracteres como descrição
+            razaoSocial = middleText.substring(20, cnpjIndex).trim();
+          }
+
+          const valorFinal = parseFloat(valorRaw.replace('.', '').replace(',', '.'));
+          const saldoFinal = saldoRaw ? parseFloat(saldoRaw.replace('.', '').replace(',', '.')) : null;
+
+          if (!isNaN(valorFinal)) {
+            transacoes.push({
+              data,
+              descricao: razaoSocial ? descricao : middleText,
+              razaoSocial: razaoSocial || "",
+              cnpj: cnpj || "",
+              valor: valorFinal,
+              saldo: saldoFinal
+            });
+          }
         }
       }
 
+      // Calcular resumos simples
+      const saldoTotal = transacoes.length > 0 ? transacoes[transacoes.length - 1].saldo || 0 : 0;
+
       return res.status(200).json({
         message: "Arquivo processado com sucesso",
-        texto: fullText,
+        periodo,
+        resumo: {
+          saldoTotal,
+          limite: 0,
+          utilizado: 0,
+          disponivel: saldoTotal
+        },
         transacoes: transacoes.length > 0 ? transacoes : null
       });
     } catch (pdfErr: any) {
