@@ -168,48 +168,63 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
-      // Agrupamento de lançamentos (Somar os que forem do mesmo tipo no mesmo dia)
-      // E regra especial: se for "SALDO...", manter apenas o mais recente do dia
-      const transacoesAgrupadas: any[] = [];
-      const mapAgrupado = new Map<string, any>();
+      // ─── Helpers de identificação ───────────────────────────────────────────
+      const isSaldoMovConta = (d: string) =>
+        d.includes("SALDO MOVIMENTA") || d.includes("SALDO MOV") || d.includes("MOV CONTA");
 
-      for (const tr of transacoes) {
-        // Chave de agrupamento: Data + Descrição + Razão Social
-        const key = `${tr.data}-${tr.descricao}-${tr.razaoSocial}`;
-        
-        if (mapAgrupado.has(key)) {
-          const existente = mapAgrupado.get(key);
-          
-          if (tr.descricao.startsWith("SALDO")) {
-            // Se for saldo, apenas atualiza para o mais recente (não soma)
-            existente.valor = tr.valor;
-            existente.saldo = tr.saldo;
-          } else {
-            // Se for transação comum, soma os valores
-            existente.valor += tr.valor;
-            // O saldo final do grupo é sempre o último saldo visto
-            if (tr.saldo !== null) existente.saldo = tr.saldo;
-          }
+      const isResAplicAut = (d: string) =>
+        d.includes("RES APLIC") || d.includes("REND APLIC") || d.includes("APLIC AUT") || d.includes("APLIC. AUT");
+
+      const isSaldoDisponivel = (d: string) =>
+        d.includes("SALDO TOTAL") || d.includes("DISPONÍVEL") || d.includes("DISPONIVEL") || d.includes("SALDO DISP");
+
+      const isSaldoAplicAut = (d: string) =>
+        d.includes("SALDO APLIC");
+
+      // ─── 1. Remover SALDO MOVIMENTAÇÃO CONTA ────────────────────────────────
+      const semSaldoMovConta = transacoes.filter((tr) => !isSaldoMovConta(tr.descricao));
+
+      // ─── 2. Agrupar RES APLIC AUT em uma única linha (soma dos valores) ─────
+      let somaResAplicAut = 0;
+      let primeiroResAplicAut: any = null;
+      const semResAplicAut: any[] = [];
+
+      for (const tr of semSaldoMovConta) {
+        if (isResAplicAut(tr.descricao)) {
+          somaResAplicAut += tr.valor;
+          if (!primeiroResAplicAut) primeiroResAplicAut = { ...tr };
         } else {
-          mapAgrupado.set(key, { ...tr });
+          semResAplicAut.push(tr);
         }
       }
 
-      // Converte o Map de volta para array mantendo a ordem original (aproximada)
-      const listaFinal = Array.from(mapAgrupado.values());
+      // Insere a linha consolidada de RES APLIC AUT (se houver)
+      if (primeiroResAplicAut) {
+        primeiroResAplicAut.valor = somaResAplicAut;
+        primeiroResAplicAut.saldo = null; // saldo não faz sentido consolidado
+        semResAplicAut.push(primeiroResAplicAut);
+      }
 
-      // Remover linhas de "SALDO APLIC. AUT." da tabela
-      const transacoesSemAplicAut = listaFinal.filter(
-        (tr) => !tr.descricao.includes("SALDO APLIC") && !tr.descricao.includes("APLIC. AUT")
-      );
+      // ─── 3. Remover SALDO APLIC. AUT. ───────────────────────────────────────
+      const semSaldoAplicAut = semResAplicAut.filter((tr) => !isSaldoAplicAut(tr.descricao));
 
-      // Pegar o último "SALDO TOTAL DISPONÍVEL" como saldo final
-      const saldoTotalEntry = listaFinal
-        .filter((tr) => tr.descricao.includes("SALDO TOTAL") || tr.descricao.includes("DISPONÍVEL") || tr.descricao.includes("DISPONIVEL"))
-        .pop();
+      // ─── 4. Manter apenas o SALDO DISPONIVEL mais recente ───────────────────
+      //        Todos os outros são removidos; o mais recente vai para o final
+      const saldoDisponivelEntries = semSaldoAplicAut.filter((tr) => isSaldoDisponivel(tr.descricao));
+      const ultimoSaldoDisponivel = saldoDisponivelEntries[saldoDisponivelEntries.length - 1] ?? null;
 
-      // Fallback: último saldo da lista completa
-      const saldoTotal = saldoTotalEntry?.saldo ?? saldoTotalEntry?.valor ?? (listaFinal.length > 0 ? (listaFinal[listaFinal.length - 1].saldo ?? 0) : 0);
+      const semSaldosAntigos = semSaldoAplicAut.filter((tr) => !isSaldoDisponivel(tr.descricao));
+
+      // Re-adiciona apenas o último SALDO DISPONÍVEL ao final da lista
+      const listaFinal = ultimoSaldoDisponivel
+        ? [...semSaldosAntigos, ultimoSaldoDisponivel]
+        : semSaldosAntigos;
+
+      // ─── Saldo total = valor/saldo do último SALDO DISPONÍVEL ────────────────
+      const saldoTotal =
+        ultimoSaldoDisponivel?.saldo ??
+        ultimoSaldoDisponivel?.valor ??
+        (listaFinal.length > 0 ? (listaFinal[listaFinal.length - 1].saldo ?? 0) : 0);
 
       return res.status(200).json({
         message: "Arquivo processado com sucesso",
@@ -220,7 +235,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           utilizado: 0,
           disponivel: saldoTotal
         },
-        transacoes: transacoesSemAplicAut
+        transacoes: listaFinal
       });
     } catch (pdfErr: any) {
       console.error("Erro no pdfjs-dist:", pdfErr);
