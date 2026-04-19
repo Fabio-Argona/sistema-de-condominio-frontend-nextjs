@@ -149,8 +149,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           // Separar Lançamento de Razão Social
           // Tentamos pegar as primeiras 3-4 palavras como lançamento/descrição curta
           const palavras = textoLimpo.split(" ");
-          const descricao = palavras.slice(0, 3).join(" ");
-          const razaoSocial = palavras.slice(3).join(" ");
+          let descricao = palavras.slice(0, 3).join(" ").toUpperCase();
+          let razaoSocial = palavras.slice(3).join(" ").toUpperCase();
+
+          // Regras de substituição solicitadas pelo usuário
+          if (descricao.includes("PIX ENVIADO FABIO")) {
+            descricao = descricao.replace("PIX ENVIADO FABIO", "PIX ENVIADO Adm");
+          }
+          
+          if (descricao.includes("LUIS ARGONA")) {
+            descricao = descricao.replace("LUIS ARGONA", "ADMINISTRACAO RESIDENCIAL OCEANO");
+          }
+          if (razaoSocial.includes("LUIS ARGONA")) {
+            razaoSocial = razaoSocial.replace("LUIS ARGONA", "ADMINISTRACAO RESIDENCIAL OCEANO");
+          }
 
           const valor = parseFloat(valorStr.replace(/\./g, "").replace(",", "."));
           const saldo = saldoStr ? parseFloat(saldoStr.replace(/\./g, "").replace(",", ".")) : null;
@@ -158,8 +170,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (!isNaN(valor)) {
             transacoes.push({
               data,
-              descricao: descricao.toUpperCase(),
-              razaoSocial: razaoSocial.toUpperCase(),
+              descricao,
+              razaoSocial,
               cnpj,
               valor,
               saldo
