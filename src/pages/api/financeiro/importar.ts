@@ -104,75 +104,86 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const transacoes: any[] = [];
       const lines = fullText.split('\n');
       
-      // Tentar capturar o período
       const periodoMatch = fullText.match(/(\d{2}\/\d{2}\/\d{4})\s*até\s*(\d{2}\/\d{2}\/\d{4})/);
       const periodo = periodoMatch ? `${periodoMatch[1]} até ${periodoMatch[2]}` : "Período não identificado";
 
-      // Regex mais complexa para capturar colunas extras
-      // Padrao esperado: Data Descricao [RazaoSocial] [CNPJ] Valor [Saldo]
-      const linesProcessed = lines.filter(l => l.trim().length > 10);
-      
-      for (const line of linesProcessed) {
-        // Ignorar linhas de cabeçalho comuns
-        if (line.includes("Saldo total") || line.includes("Lançamentos do período")) continue;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.length < 15) continue;
 
-        // Regex para capturar data no início
+        // Cada transação geralmente começa com uma data
         const dateMatch = line.match(/^(\d{2}\/\d{2}\/\d{4})/);
         if (!dateMatch) continue;
 
         const data = dateMatch[1];
         let remaining = line.substring(data.length).trim();
 
-        // Encontrar o valor (geralmente o penúltimo ou último número formatado)
-        // Valores costumam ter o formato 1.234,56 ou -1.234,56
-        const moneyRegex = /(-?[\d.]*,\d{2})/g;
-        const matches = Array.from(remaining.matchAll(moneyRegex));
-        
-        if (matches.length > 0) {
-          const valorRaw = matches[matches.length - 2] ? matches[matches.length - 2][0] : matches[matches.length - 1][0];
-          const saldoRaw = matches.length >= 2 ? matches[matches.length - 1][0] : "";
-          
-          let middleText = remaining;
-          const valorIndex = remaining.lastIndexOf(valorRaw);
-          if (valorIndex !== -1) {
-            middleText = remaining.substring(0, valorIndex).trim();
+        // Regex para encontrar valores monetários no formato 1.234,56 ou -1.234,56
+        const moneyRegex = /(-?[\d.]*,\d{2})(?=\s|$)/g;
+        const moneyMatches = Array.from(remaining.matchAll(moneyRegex));
+
+        if (moneyMatches.length >= 1) {
+          // O último valor costuma ser o saldo (se houver mais de um), o penúltimo é o valor da transação
+          // Se houver apenas um, é o valor da transação
+          let valorStr = "";
+          let saldoStr = "";
+
+          if (moneyMatches.length >= 2) {
+            valorStr = moneyMatches[moneyMatches.length - 2][0];
+            saldoStr = moneyMatches[moneyMatches.length - 1][0];
+          } else {
+            valorStr = moneyMatches[0][0];
           }
 
-          // Tentar separar Descrição de Razão Social/CNPJ
-          // Padrão comum: CPF/CNPJ no fim do texto do meio
-          const cnpjRegex = /(\d{2,3}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}|\d{3}\.?\d{3}\.?\d{3}-?\d{2})/g;
+          // Extrair o texto central (Descrição + Razão Social + CNPJ)
+          const valorIndex = remaining.indexOf(valorStr);
+          let middleText = remaining.substring(0, valorIndex).trim();
+
+          // Tentar extrair CNPJ/CPF
+          const cnpjRegex = /(\d{2,3}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}|\d{3}\.?\d{3}\.?\d{3}-?\d{2})/;
           const cnpjMatch = middleText.match(cnpjRegex);
           let cnpj = "";
-          let razaoSocial = "";
-          let descricao = middleText;
+          let infoRestante = middleText;
 
           if (cnpjMatch) {
             cnpj = cnpjMatch[0];
-            const cnpjIndex = middleText.indexOf(cnpj);
-            razaoSocial = middleText.substring(0, cnpjIndex).trim();
-            // A descrição costuma vir antes da razão social, mas aqui simplificamos
-            descricao = middleText.substring(0, 20); // Pega os primeiros 20 caracteres como descrição
-            razaoSocial = middleText.substring(20, cnpjIndex).trim();
+            infoRestante = middleText.replace(cnpj, "").trim();
           }
 
-          const valorFinal = parseFloat(valorRaw.replace('.', '').replace(',', '.'));
-          const saldoFinal = saldoRaw ? parseFloat(saldoRaw.replace('.', '').replace(',', '.')) : null;
+          // Tentar separar Descrição de Razão Social
+          // Geralmente a descrição é curta (até 2 ou 3 palavras)
+          const partes = infoRestante.split(/\s{2,}/); // Tenta separar por espaços duplos
+          let descricao = infoRestante;
+          let razaoSocial = "";
 
-          if (!isNaN(valorFinal)) {
+          if (partes.length >= 2) {
+            descricao = partes[0].trim();
+            razaoSocial = partes.slice(1).join(" ").trim();
+          } else {
+            // Se não houver espaços duplos, tenta um corte arbitrário ou mantém tudo na descrição
+            if (infoRestante.length > 25) {
+               descricao = infoRestante.substring(0, 25).trim();
+               razaoSocial = infoRestante.substring(25).trim();
+            }
+          }
+
+          const valor = parseFloat(valorStr.replace(/\./g, "").replace(",", "."));
+          const saldo = saldoStr ? parseFloat(saldoStr.replace(/\./g, "").replace(",", ".")) : null;
+
+          if (!isNaN(valor)) {
             transacoes.push({
               data,
-              descricao: razaoSocial ? descricao : middleText,
-              razaoSocial: razaoSocial || "",
-              cnpj: cnpj || "",
-              valor: valorFinal,
-              saldo: saldoFinal
+              descricao: descricao.toUpperCase(),
+              razaoSocial: razaoSocial.toUpperCase(),
+              cnpj,
+              valor,
+              saldo
             });
           }
         }
       }
 
-      // Calcular resumos simples
-      const saldoTotal = transacoes.length > 0 ? transacoes[transacoes.length - 1].saldo || 0 : 0;
+      const saldoTotal = transacoes.length > 0 ? (transacoes[transacoes.length - 1].saldo ?? 0) : 0;
 
       return res.status(200).json({
         message: "Arquivo processado com sucesso",
@@ -183,7 +194,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           utilizado: 0,
           disponivel: saldoTotal
         },
-        transacoes: transacoes.length > 0 ? transacoes : null
+        transacoes
       });
     } catch (pdfErr: any) {
       console.error("Erro no pdfjs-dist:", pdfErr);
