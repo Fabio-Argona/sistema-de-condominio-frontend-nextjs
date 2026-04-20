@@ -1,10 +1,90 @@
-
 "use client";
 
 import api from "@/lib/api";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import * as pdfjsLib from "pdfjs-dist";
+
 import Button from "@/components/ui/Button";
+
+// Função para transformar texto extraído em lançamentos estruturados
+function parseLancamentosFromText(text: string) {
+  const linhas = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const lancamentos = [];
+  for (const linha of linhas) {
+    // Regex: Data, Descrição, Razão Social (opcional), CNPJ/CPF (opcional), Valor
+    const regex = /^(\d{2}\/\d{2}\/\d{4})\s+([^\t]+)(?:\s+([^\t]+))?\s+([^\t]*)\s+(-?\d{1,3}(?:\.\d{3})*,\d{2})$/;
+    const match = linha.match(regex);
+    if (match) {
+      lancamentos.push({
+        data: match[1],
+        descricao: match[2].trim(),
+        razaoSocial: match[3]?.trim() || "",
+        cnpj: match[4]?.trim() || "",
+        valor: parseFloat(match[5].replace('.', '').replace(',', '.')),
+      });
+    }
+  }
+  return lancamentos;
+
+}
+
+export default function ImportarFinanceiroPage() {
+  useEffect(() => {
+    // Configura o worker do pdfjs para funcionar no Next.js
+    // @ts-ignore
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  }, []);
+
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<string>("");
+  const [transactions, setTransactions] = useState<any[] | null>(null);
+  const [summary, setSummary] = useState<any | null>(null);
+  const [periodo, setPeriodo] = useState<string>("");
+  const [pdfText, setPdfText] = useState<string>("");
   const [saving, setSaving] = useState(false);
+
+  // Handler para mudança de arquivo
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  // Handler para submit do formulário
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (file) {
+      setLoading(true);
+      setResult("");
+      setTransactions(null);
+      setSummary(null);
+      try {
+        await handlePdfParse(file);
+      } catch (err: any) {
+        setResult("Erro ao processar PDF.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Função para ler, extrair texto e montar lançamentos do PDF no frontend
+  const handlePdfParse = async (file: File) => {
+    setPdfText("");
+    setTransactions(null);
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map((item: any) => item.str).join(" \t ") + "\n";
+    }
+    setPdfText(text);
+    setTransactions(parseLancamentosFromText(text));
+  };
+
   // Função para persistir os lançamentos no backend
   const handleConfirmImport = async () => {
     if (!transactions || transactions.length === 0) return;
@@ -22,48 +102,6 @@ import Button from "@/components/ui/Button";
       console.error("Erro ao salvar lançamentos:", err.response?.data || err.message);
     } finally {
       setSaving(false);
-    }
-  };
-
-export default function ImportarFinanceiroPage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string>("");
-  const [transactions, setTransactions] = useState<any[] | null>(null);
-  const [summary, setSummary] = useState<any | null>(null);
-  const [periodo, setPeriodo] = useState<string>("");
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) return;
-    setLoading(true);
-    setResult("");
-    setTransactions(null);
-    setSummary(null);
-    const formData = new FormData();
-    formData.append("file", file);
-    try {
-      const res = await api.post("/financeiro/importar", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setResult(res.data.message);
-      if (res.data.transacoes) {
-        setTransactions(res.data.transacoes);
-        setSummary(res.data.resumo);
-        setPeriodo(res.data.periodo);
-      }
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.message || err.response?.data?.error || "Erro ao enviar arquivo.";
-      setResult(`Erro: ${errorMsg}`);
-      console.error("Erro na importação:", err.response?.data || err.message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -88,6 +126,14 @@ export default function ImportarFinanceiroPage() {
           </Button>
         </form>
       </div>
+
+      {pdfText && (
+        <div className="mb-6 p-4 bg-slate-50 rounded text-xs text-slate-700 whitespace-pre-wrap max-h-64 overflow-auto">
+          <b>Texto extraído do PDF:</b>
+          <br />
+          {pdfText}
+        </div>
+      )}
 
       {summary && (
         <div className="mb-10">
