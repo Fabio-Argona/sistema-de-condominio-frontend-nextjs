@@ -1,154 +1,128 @@
 "use client";
 
-import api from "@/lib/api";
 import "@/app/globals.css";
 import { useState, useEffect } from "react";
-import * as pdfjsLib from "pdfjs-dist";
-
 import Button from "@/components/ui/Button";
 
-// Função para transformar texto extraído em lançamentos estruturados
-function parseLancamentosFromText(text: string) {
-  const linhas = text.split(/\n|\r/).map(l => l.trim()).filter(Boolean);
-  const lancamentos = [];
-  for (const linha of linhas) {
-    // Ignorar linhas de cabeçalho, saldo, rodapé, etc
-    if (/^Saldo|^Agência|^Conta|^CNPJ|^CONDOMINIO|^Lançamentos do período|^Data\s|^Descrição|^Valor|^Disponível|^Limite|^Utilizado|^Saldo da conta corrente|^VALOR TOTAL|^RENDIMENTOS|^SALDO DISPONÍVEL|^Lançamentos futuros|^Os saldos acima|^Operação pós-fixada|^atualizado em|^Em caso de dúvidas|^Reclamações|^Data\t|^Confirmar e Importar/i.test(linha)) {
-      continue;
-    }
-
-    // Regex para: data, descrição, [razaoSocial], [cnpj], valor
-    // Aceita: data descr [razaoSocial] [cnpj] valor
-    // Exemplo: 09/03/2026  PIX ENVIADO  ZELAR LAR E CONSTRUCAO  11.007.757/0001-23  -602,76
-    // Ou:     06/03/2026  BOLETO RECEBIDO 06/03S  1.000,00
-    const regex = /^(\d{2}\/\d{2}\/\d{4})\s+(.+?)(?:\s{2,}|\t+)([A-Z0-9][A-Z0-9 .\/-]+)?(?:\s{2,}|\t+)?(\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}|\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}|\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}|\d{3}\.\d{3}\.\d{3}-\d{2})?(?:\s{2,}|\t+)?(-?\d{1,3}(?:\.\d{3})*,\d{2})$/;
-
-    // Alternativa: data descr valor
-    const regexSimples = /^(\d{2}\/\d{2}\/\d{4})\s+(.+?)\s+(-?\d{1,3}(?:\.\d{3})*,\d{2})$/;
-
-    let match = linha.match(regex);
-    if (match) {
-      lancamentos.push({
-        data: match[1],
-        descricao: match[2].trim(),
-        razaoSocial: match[3]?.trim() || "",
-        cnpj: match[4]?.trim() || "",
-        valor: parseFloat(match[5].replace(/\./g, '').replace(',', '.')),
-      });
-      continue;
-    }
-    // Tenta o simples
-    match = linha.match(regexSimples);
-    if (match) {
-      lancamentos.push({
-        data: match[1],
-        descricao: match[2].trim(),
-        razaoSocial: "",
-        cnpj: "",
-        valor: parseFloat(match[3].replace(/\./g, '').replace(',', '.')),
-      });
-    }
-  }
-  return lancamentos;
-}
+interface Lancamento {
+  data: string;
+  descricao: string;
+  razaoSocial: string;
+  cnpj?: string;
+  valor: number;
+  saldo: number | null;
 }
 
 export default function ImportarFinanceiroPage() {
-  useEffect(() => {
-    // Configura o worker do pdfjs para funcionar no Next.js, servindo localmente
-    // @ts-ignore
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
-  }, []);
-
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string>("");
-  const [transactions, setTransactions] = useState<any[] | null>(null);
+  const [transactions, setTransactions] = useState<Lancamento[] | null>(null);
   const [summary, setSummary] = useState<any | null>(null);
   const [periodo, setPeriodo] = useState<string>("");
-  const [pdfText, setPdfText] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
   // Handler para mudança de arquivo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
-    }
-  };
-
-  // Handler para submit do formulário
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (file) {
-      setLoading(true);
       setResult("");
       setTransactions(null);
       setSummary(null);
-      try {
-        await handlePdfParse(file);
-      } catch (err: any) {
-        setResult("Erro ao processar PDF.");
-      } finally {
-        setLoading(false);
-      }
     }
   };
 
-  // Função para ler, extrair texto e montar lançamentos do PDF no frontend
-  const handlePdfParse = async (file: File) => {
-    setPdfText("");
+  // Handler para submit do formulário — envia o PDF para a API
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) return;
+
+    setLoading(true);
+    setResult("");
     setTransactions(null);
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let text = "";
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      text += content.items.map((item: any) => item.str).join(" \t ") + "\n";
+    setSummary(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const resp = await fetch("/api/financeiro/importar", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        setResult(`Erro ao processar PDF: ${data.message || resp.statusText}`);
+        return;
+      }
+
+      setTransactions(data.transacoes || []);
+      setSummary(data.resumo || null);
+      setPeriodo(data.periodo || "");
+    } catch (err: any) {
+      setResult("Erro ao processar PDF: " + (err.message || "desconhecido"));
+    } finally {
+      setLoading(false);
     }
-    console.log("[DEBUG] Texto extraído do PDF:\n", text);
-    setPdfText(text);
-    const parsed = parseLancamentosFromText(text);
-    console.log("[DEBUG] Resultado do parser:", parsed);
-    setTransactions(parsed);
   };
 
-  // Função para persistir os lançamentos no backend
+  // Função para persistir os lançamentos no banco via API Next.js
   const handleConfirmImport = async () => {
-    console.log("[DEBUG] Clique no botão Confirmar e Importar");
-    console.log("[DEBUG] Transactions:", transactions);
     if (!transactions || transactions.length === 0) {
       setResult("Nenhum lançamento para importar.");
       return;
     }
+
     setSaving(true);
     setResult("");
+
     try {
-      await api.post("/financeiro/lancamentos", transactions);
-      setResult("Lançamentos importados com sucesso!");
+      const resp = await fetch("/api/financeiro/lancamentos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          periodo,
+          resumo: summary,
+          lancamentos: transactions,
+        }),
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        setResult(`Erro: ${data.message || "Falha ao salvar lançamentos."}`);
+        return;
+      }
+
+      setResult("✅ Lançamentos importados com sucesso!");
       setTransactions(null);
       setSummary(null);
       setPeriodo("");
+      setFile(null);
     } catch (err: any) {
-      const errorMsg = err.response?.data?.message || err.response?.data?.error || "Erro ao salvar lançamentos.";
-      setResult(`Erro: ${errorMsg}`);
-      console.error("Erro ao salvar lançamentos:", err.response?.data || err.message);
+      setResult("Erro ao salvar: " + (err.message || "desconhecido"));
     } finally {
       setSaving(false);
     }
   };
 
   const formatCurrency = (val: number) => {
-    return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return val.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   };
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-6 font-sans text-slate-900">
       <h1 className="text-2xl font-bold mb-8">Importar Extrato Bancário</h1>
-      
+
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-10">
         <form onSubmit={handleSubmit} className="flex gap-4 items-center">
           <input
+            key={file ? file.name : "empty"}
             type="file"
             accept="application/pdf"
             onChange={handleFileChange}
@@ -160,80 +134,97 @@ export default function ImportarFinanceiroPage() {
         </form>
       </div>
 
-      {pdfText && (
-        <div className="mb-6 p-4 bg-slate-50 rounded text-xs text-slate-700 whitespace-pre-wrap max-h-64 overflow-auto">
-          <b>Texto extraído do PDF:</b>
-          <br />
-          {pdfText}
-        </div>
-      )}
-
       {summary && (
         <div className="mb-10">
-          <div className="grid grid-cols-4 gap-8 mb-8">
-            <div>
-              <p className="text-sm font-bold text-slate-800 mb-1">Saldo total</p>
-              <p className="text-xl font-bold">R$ {formatCurrency(summary.saldoTotal)}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+              <p className="text-xs font-semibold text-blue-600 mb-1 uppercase tracking-wide">Saldo Total</p>
+              <p className="text-lg font-bold text-slate-800">R$ {formatCurrency(summary.saldoTotal ?? 0)}</p>
             </div>
-            <div>
-              <p className="text-sm font-bold text-slate-800 mb-1">Limite da conta</p>
-              <p className="text-xl font-bold">R$ {formatCurrency(summary.limite)}</p>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <p className="text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Disponível</p>
+              <p className="text-lg font-bold text-slate-800">R$ {formatCurrency(summary.disponivel ?? 0)}</p>
             </div>
-            <div>
-              <p className="text-sm font-bold text-slate-800 mb-1">Utilizado</p>
-              <p className="text-xl font-bold">R$ {formatCurrency(summary.utilizado)}</p>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <p className="text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Limite</p>
+              <p className="text-lg font-bold text-slate-800">R$ {formatCurrency(summary.limite ?? 0)}</p>
             </div>
-            <div>
-              <p className="text-sm font-bold text-slate-800 mb-1">Disponível</p>
-              <p className="text-xl font-bold">R$ {formatCurrency(summary.disponivel)}</p>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <p className="text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Utilizado</p>
+              <p className="text-lg font-bold text-slate-800">R$ {formatCurrency(summary.utilizado ?? 0)}</p>
             </div>
           </div>
-          <p className="text-sm font-bold mb-6">Lançamentos do período: <span className="font-normal">{periodo}</span></p>
+          {periodo && (
+            <p className="text-sm text-slate-600">
+              <span className="font-semibold">Período:</span> {periodo}
+            </p>
+          )}
         </div>
       )}
 
-      {transactions && (
+      {transactions && transactions.length > 0 && (
         <div className="w-full">
-          <div className="overflow-x-auto border-t border-slate-200">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+            <table className="w-full text-left border-collapse bg-white">
               <thead>
-                <tr className="text-sm font-bold border-b border-slate-200">
-                  <th className="py-3 pr-4">Data</th>
-                  <th className="py-3 pr-4">Lançamentos</th>
-                  <th className="py-3 pr-4">Razão Social</th>
-                  <th className="py-3 pr-4">CNPJ/CPF</th>
-                  <th className="py-3 pr-4 text-right">Valor (R$)</th>
-                  <th className="py-3 text-right">Saldo (R$)</th>
+                <tr className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-500 border-b border-slate-200">
+                  <th className="py-3 px-4">Data</th>
+                  <th className="py-3 px-4">Lançamento</th>
+                  <th className="py-3 px-4">Razão Social</th>
+                  <th className="py-3 px-4">CNPJ/CPF</th>
+                  <th className="py-3 px-4 text-right">Valor (R$)</th>
+                  <th className="py-3 px-4 text-right">Saldo (R$)</th>
                 </tr>
               </thead>
-              <tbody className="text-xs">
+              <tbody className="text-sm divide-y divide-slate-100">
                 {transactions.map((tr, idx) => (
-                  <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-3 pr-4 whitespace-nowrap">{tr.data}</td>
-                    <td className="py-3 pr-4 font-medium uppercase">{tr.descricao}</td>
-                    <td className="py-3 pr-4 uppercase text-slate-500">{tr.razaoSocial}</td>
-                    <td className="py-3 pr-4 text-slate-500">{tr.cnpj}</td>
-                    <td className={`py-3 pr-4 text-right font-medium ${tr.valor < 0 ? 'text-red-500' : (tr.valor > 0 ? 'text-green-600' : '')}`}>
+                  <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-3 px-4 whitespace-nowrap text-slate-600">{tr.data}</td>
+                    <td className="py-3 px-4 font-medium text-slate-800 uppercase">{tr.descricao}</td>
+                    <td className="py-3 px-4 text-slate-500 uppercase">{tr.razaoSocial}</td>
+                    <td className="py-3 px-4 text-slate-400 text-xs font-mono">{tr.cnpj || ""}</td>
+                    <td
+                      className={`py-3 px-4 text-right font-semibold ${
+                        tr.valor < 0 ? "text-red-500" : tr.valor > 0 ? "text-green-600" : "text-slate-600"
+                      }`}
+                    >
                       {formatCurrency(tr.valor)}
                     </td>
-                    <td className="py-3 text-right font-medium">
-                      {tr.saldo !== null ? formatCurrency(tr.saldo) : ""}
+                    <td className="py-3 px-4 text-right text-slate-500 font-mono text-xs">
+                      {tr.saldo !== null && tr.saldo !== undefined ? formatCurrency(tr.saldo) : "—"}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="mt-10 flex justify-end">
-            <Button size="lg" onClick={handleConfirmImport} isLoading={saving} disabled={saving}>
-              Confirmar e Importar
+
+          <p className="text-xs text-slate-400 mt-2 mb-6">
+            {transactions.length} lançamento{transactions.length !== 1 ? "s" : ""} encontrado{transactions.length !== 1 ? "s" : ""}
+          </p>
+
+          <div className="flex justify-end">
+            <Button size="lg" onClick={handleConfirmImport} disabled={saving}>
+              {saving ? "Salvando..." : "Confirmar e Importar"}
             </Button>
           </div>
         </div>
       )}
 
-      {result && !transactions && (
-        <div className="p-4 bg-slate-50 rounded-lg text-slate-600 italic">
+      {transactions && transactions.length === 0 && (
+        <div className="p-6 bg-yellow-50 rounded-xl border border-yellow-200 text-yellow-700">
+          Nenhum lançamento foi encontrado no PDF. Verifique o arquivo e tente novamente.
+        </div>
+      )}
+
+      {result && (
+        <div
+          className={`mt-6 p-4 rounded-xl border text-sm ${
+            result.startsWith("✅")
+              ? "bg-green-50 border-green-200 text-green-700"
+              : "bg-red-50 border-red-200 text-red-700"
+          }`}
+        >
           {result}
         </div>
       )}
