@@ -28,6 +28,10 @@ const nextConfig: NextConfig = {
         destination: '/api/financeiro/importar',
       },
       {
+        source: '/api/financeiro/lancamentos',
+        destination: '/api/financeiro/lancamentos',
+      },
+      {
         source: '/api/teste-api',
         destination: '/api/teste-api',
       },
