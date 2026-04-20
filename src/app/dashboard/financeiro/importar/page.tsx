@@ -1,8 +1,10 @@
 "use client";
 
 import "@/app/globals.css";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Button from "@/components/ui/Button";
+import api from "@/lib/api";
+import Cookies from "js-cookie";
 
 interface Lancamento {
   data: string;
@@ -46,8 +48,14 @@ export default function ImportarFinanceiroPage() {
       const formData = new FormData();
       formData.append("file", file);
 
+      // Inclui o token JWT no header para autenticação no backend
+      const token = Cookies.get("token");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const resp = await fetch("/api/financeiro/importar", {
         method: "POST",
+        headers,
         body: formData,
       });
 
@@ -79,22 +87,22 @@ export default function ImportarFinanceiroPage() {
     setResult("");
 
     try {
-      const resp = await fetch("/api/financeiro/lancamentos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          periodo,
-          resumo: summary,
-          lancamentos: transactions,
-        }),
+      // Converte para o formato esperado pelo backend Spring Boot:
+      // { data: "yyyy-MM-dd", descricao: string, valor: number, tipo: "RECEITA"|"GASTO" }
+      const payload = transactions.map((t) => {
+        // Converte "dd/MM/yyyy" → "yyyy-MM-dd"
+        const [dia, mes, ano] = t.data.split("/");
+        const dataISO = `${ano}-${mes}-${dia}`;
+        const desc = [t.descricao, t.razaoSocial].filter(Boolean).join(" — ");
+        return {
+          data: dataISO,
+          descricao: desc.substring(0, 255),
+          valor: Math.abs(t.valor),
+          tipo: t.valor >= 0 ? "RECEITA" : "GASTO",
+        };
       });
 
-      const data = await resp.json();
-
-      if (!resp.ok) {
-        setResult(`Erro: ${data.message || "Falha ao salvar lançamentos."}`);
-        return;
-      }
+      await api.post("/financeiro/lancamentos", payload);
 
       setResult("✅ Lançamentos importados com sucesso!");
       setTransactions(null);
@@ -102,7 +110,13 @@ export default function ImportarFinanceiroPage() {
       setPeriodo("");
       setFile(null);
     } catch (err: any) {
-      setResult("Erro ao salvar: " + (err.message || "desconhecido"));
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Erro ao salvar lançamentos.";
+      setResult(`Erro: ${msg}`);
+      console.error("[Confirmar Importar]", err.response?.data || err.message);
     } finally {
       setSaving(false);
     }
