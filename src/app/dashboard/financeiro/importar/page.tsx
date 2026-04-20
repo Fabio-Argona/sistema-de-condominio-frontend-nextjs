@@ -1,8 +1,29 @@
 
 "use client";
+
 import api from "@/lib/api";
 import { useState } from "react";
 import Button from "@/components/ui/Button";
+  const [saving, setSaving] = useState(false);
+  // Função para persistir os lançamentos no backend
+  const handleConfirmImport = async () => {
+    if (!transactions || transactions.length === 0) return;
+    setSaving(true);
+    setResult("");
+    try {
+      await api.post("/financeiro/lancamentos", transactions);
+      setResult("Lançamentos importados com sucesso!");
+      setTransactions(null);
+      setSummary(null);
+      setPeriodo("");
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || "Erro ao salvar lançamentos.";
+      setResult(`Erro: ${errorMsg}`);
+      console.error("Erro ao salvar lançamentos:", err.response?.data || err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
 export default function ImportarFinanceiroPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -125,7 +146,9 @@ export default function ImportarFinanceiroPage() {
             </table>
           </div>
           <div className="mt-10 flex justify-end">
-            <Button size="lg" onClick={() => alert("Extrato pronto para integração!")}>Confirmar e Importar</Button>
+            <Button size="lg" onClick={handleConfirmImport} isLoading={saving} disabled={saving}>
+              Confirmar e Importar
+            </Button>
           </div>
         </div>
       )}
