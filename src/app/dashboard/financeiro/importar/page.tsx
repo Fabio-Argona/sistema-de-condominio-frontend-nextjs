@@ -30,9 +30,9 @@ function parseLancamentosFromText(text: string) {
 
 export default function ImportarFinanceiroPage() {
   useEffect(() => {
-    // Configura o worker do pdfjs para funcionar no Next.js
+    // Configura o worker do pdfjs para funcionar no Next.js, servindo localmente
     // @ts-ignore
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
   }, []);
 
   const [file, setFile] = useState<File | null>(null);
