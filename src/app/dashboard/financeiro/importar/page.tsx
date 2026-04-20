@@ -1,6 +1,7 @@
 "use client";
 
 import api from "@/lib/api";
+import "@/app/globals.css";
 import { useState, useEffect } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 
@@ -87,7 +88,12 @@ export default function ImportarFinanceiroPage() {
 
   // Função para persistir os lançamentos no backend
   const handleConfirmImport = async () => {
-    if (!transactions || transactions.length === 0) return;
+    console.log("[DEBUG] Clique no botão Confirmar e Importar");
+    console.log("[DEBUG] Transactions:", transactions);
+    if (!transactions || transactions.length === 0) {
+      setResult("Nenhum lançamento para importar.");
+      return;
+    }
     setSaving(true);
     setResult("");
     try {
