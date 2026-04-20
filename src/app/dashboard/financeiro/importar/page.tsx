@@ -9,24 +9,48 @@ import Button from "@/components/ui/Button";
 
 // Função para transformar texto extraído em lançamentos estruturados
 function parseLancamentosFromText(text: string) {
-  const linhas = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const linhas = text.split(/\n|\r/).map(l => l.trim()).filter(Boolean);
   const lancamentos = [];
   for (const linha of linhas) {
-    // Regex: Data, Descrição, Razão Social (opcional), CNPJ/CPF (opcional), Valor
-    const regex = /^(\d{2}\/\d{2}\/\d{4})\s+([^\t]+)(?:\s+([^\t]+))?\s+([^\t]*)\s+(-?\d{1,3}(?:\.\d{3})*,\d{2})$/;
-    const match = linha.match(regex);
+    // Ignorar linhas de cabeçalho, saldo, rodapé, etc
+    if (/^Saldo|^Agência|^Conta|^CNPJ|^CONDOMINIO|^Lançamentos do período|^Data\s|^Descrição|^Valor|^Disponível|^Limite|^Utilizado|^Saldo da conta corrente|^VALOR TOTAL|^RENDIMENTOS|^SALDO DISPONÍVEL|^Lançamentos futuros|^Os saldos acima|^Operação pós-fixada|^atualizado em|^Em caso de dúvidas|^Reclamações|^Data\t|^Confirmar e Importar/i.test(linha)) {
+      continue;
+    }
+
+    // Regex para: data, descrição, [razaoSocial], [cnpj], valor
+    // Aceita: data descr [razaoSocial] [cnpj] valor
+    // Exemplo: 09/03/2026  PIX ENVIADO  ZELAR LAR E CONSTRUCAO  11.007.757/0001-23  -602,76
+    // Ou:     06/03/2026  BOLETO RECEBIDO 06/03S  1.000,00
+    const regex = /^(\d{2}\/\d{2}\/\d{4})\s+(.+?)(?:\s{2,}|\t+)([A-Z0-9][A-Z0-9 .\/-]+)?(?:\s{2,}|\t+)?(\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}|\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}|\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}|\d{3}\.\d{3}\.\d{3}-\d{2})?(?:\s{2,}|\t+)?(-?\d{1,3}(?:\.\d{3})*,\d{2})$/;
+
+    // Alternativa: data descr valor
+    const regexSimples = /^(\d{2}\/\d{2}\/\d{4})\s+(.+?)\s+(-?\d{1,3}(?:\.\d{3})*,\d{2})$/;
+
+    let match = linha.match(regex);
     if (match) {
       lancamentos.push({
         data: match[1],
         descricao: match[2].trim(),
         razaoSocial: match[3]?.trim() || "",
         cnpj: match[4]?.trim() || "",
-        valor: parseFloat(match[5].replace('.', '').replace(',', '.')),
+        valor: parseFloat(match[5].replace(/\./g, '').replace(',', '.')),
+      });
+      continue;
+    }
+    // Tenta o simples
+    match = linha.match(regexSimples);
+    if (match) {
+      lancamentos.push({
+        data: match[1],
+        descricao: match[2].trim(),
+        razaoSocial: "",
+        cnpj: "",
+        valor: parseFloat(match[3].replace(/\./g, '').replace(',', '.')),
       });
     }
   }
   return lancamentos;
-
+}
 }
 
 export default function ImportarFinanceiroPage() {
@@ -82,8 +106,11 @@ export default function ImportarFinanceiroPage() {
       const content = await page.getTextContent();
       text += content.items.map((item: any) => item.str).join(" \t ") + "\n";
     }
+    console.log("[DEBUG] Texto extraído do PDF:\n", text);
     setPdfText(text);
-    setTransactions(parseLancamentosFromText(text));
+    const parsed = parseLancamentosFromText(text);
+    console.log("[DEBUG] Resultado do parser:", parsed);
+    setTransactions(parsed);
   };
 
   // Função para persistir os lançamentos no backend
