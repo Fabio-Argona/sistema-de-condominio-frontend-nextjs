@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Cookies from "js-cookie";
 import api from "@/lib/api";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
@@ -31,12 +32,29 @@ export default function ListaLancamentosPage() {
   const [pagina, setPagina] = useState(1);
   const [itensPorPagina, setItensPorPagina] = useState(20);
 
+  // Role do usuário logado
+  const [userRole, setUserRole] = useState<string>("");
+  const isSomenteLeitura = userRole === "MORADOR";
+
   // Carrossel de meses
   const carrosselRef = useRef<HTMLDivElement>(null);
   const mesRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
     carregarLancamentos();
+  }, []);
+
+  // Decodificar JWT para obter role
+  useEffect(() => {
+    try {
+      const token = Cookies.get("token");
+      if (token) {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setUserRole(payload.role || "");
+      }
+    } catch {
+      // ignora erro de decode
+    }
   }, []);
 
   // Centraliza o mes selecionado no carrossel
@@ -256,11 +274,11 @@ export default function ListaLancamentosPage() {
           {/* Container carrossel */}
           <div
             ref={carrosselRef}
-            className="flex gap-3 overflow-x-auto pb-3"
+            className="flex gap-1 overflow-x-auto pb-3"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {/* Card "Todos" */}
-            {(() => {
+            {/* Card "Todos" -- somente SINDICO/admin */}
+            {!isSomenteLeitura && (() => {
               const ativo = mesFiltro === "";
               const distancia = mesFiltro === "" ? 0 : Math.min(mesesDisponiveis.length, 3);
               const scale = distancia === 0 ? 1 : distancia === 1 ? 0.9 : 0.8;
@@ -353,7 +371,7 @@ export default function ListaLancamentosPage() {
           <option value="GASTO">Despesas</option>
           <option value="RECEITA">Receitas</option>
         </select>
-        {mesFiltro && (
+        {mesFiltro && !isSomenteLeitura && (
           <button
             onClick={() => setConfirmarDeletarMes(true)}
             disabled={deletandoMes}
@@ -392,7 +410,7 @@ export default function ListaLancamentosPage() {
                     <p className="text-xs text-slate-400 mt-1">{formatDate(l.data)}</p>
                   </div>
                   <div className="flex gap-1 shrink-0 mt-0.5">
-                    {editId === l.id ? (
+                    {!isSomenteLeitura && (editId === l.id ? (
                       <>
                         <button onClick={() => saveEdit(l.id)} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50" title="Salvar"><IconCheck /></button>
                         <button onClick={cancelEdit} className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100" title="Cancelar"><IconX /></button>
@@ -409,7 +427,7 @@ export default function ListaLancamentosPage() {
                           {deletandoId === l.id ? <IconSpin /> : <IconTrash />}
                         </button>
                       </>
-                    )}
+                    ))}
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-2">
@@ -444,7 +462,7 @@ export default function ListaLancamentosPage() {
                   <th className="py-3 px-4">Descrição</th>
                   <th className="py-3 px-4 text-right bg-red-50 text-red-400 whitespace-nowrap">Despesa (R$)</th>
                   <th className="py-3 px-4 text-right bg-green-50 text-green-500 whitespace-nowrap">Receita (R$)</th>
-                  <th className="py-3 px-4 text-center">Ações</th>
+                  {!isSomenteLeitura && <th className="py-3 px-4 text-center">Ações</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
@@ -472,26 +490,28 @@ export default function ListaLancamentosPage() {
                     <td className="py-3 px-4 text-right bg-green-50/40 font-semibold text-green-600">
                       {l.tipo === "RECEITA" ? `R$ ${formatCurrency(Number(l.valor))}` : ""}
                     </td>
-                    <td className="py-3 px-4 text-center">
-                      {editId === l.id ? (
-                        <div className="flex gap-1 justify-center">
-                          <button onClick={() => saveEdit(l.id)} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="Salvar"><IconCheck /></button>
-                          <button onClick={cancelEdit} className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors" title="Cancelar"><IconX /></button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-1 justify-center">
-                          <button onClick={() => startEdit(l)} className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors" title="Editar"><IconEdit /></button>
-                          <button
-                            onClick={() => setLancamentoParaDeletar(l)}
-                            disabled={deletandoId === l.id}
-                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
-                            title="Excluir"
-                          >
-                            {deletandoId === l.id ? <IconSpin /> : <IconTrash />}
-                          </button>
-                        </div>
-                      )}
-                    </td>
+                    {!isSomenteLeitura && (
+                      <td className="py-3 px-4 text-center">
+                        {editId === l.id ? (
+                          <div className="flex gap-1 justify-center">
+                            <button onClick={() => saveEdit(l.id)} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="Salvar"><IconCheck /></button>
+                            <button onClick={cancelEdit} className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors" title="Cancelar"><IconX /></button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-1 justify-center">
+                            <button onClick={() => startEdit(l)} className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors" title="Editar"><IconEdit /></button>
+                            <button
+                              onClick={() => setLancamentoParaDeletar(l)}
+                              disabled={deletandoId === l.id}
+                              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                              title="Excluir"
+                            >
+                              {deletandoId === l.id ? <IconSpin /> : <IconTrash />}
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
