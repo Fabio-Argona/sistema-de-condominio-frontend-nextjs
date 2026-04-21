@@ -51,9 +51,18 @@ export default function ListaLancamentosPage() {
   );
 
   // Totais gerais (para os cards)
-  const totalDespesas = lancamentosBase
-    .filter((l) => l.tipo === "GASTO")
+  // Termos que identificam despesas com cobranças bancárias
+  const TERMOS_COBRANCA = ["TAR/CUSTAS COBRANCA", "TAR COBRANCA EXP", "SERV SEM NOME CONTRAPART"];
+
+  const ehCobrancaBancaria = (descricao: string) =>
+    TERMOS_COBRANCA.some((t) => descricao.toUpperCase().includes(t.toUpperCase()));
+
+  const totalDespesasCobrancas = lancamentosBase
+    .filter((l) => l.tipo === "GASTO" && ehCobrancaBancaria(l.descricao))
     .reduce((acc, l) => acc + Number(l.valor), 0);
+
+  const qtdDespesasCobrancas = lancamentosBase
+    .filter((l) => l.tipo === "GASTO" && ehCobrancaBancaria(l.descricao)).length;
 
   const totalReceitas = lancamentosBase
     .filter((l) => l.tipo === "RECEITA")
@@ -194,16 +203,16 @@ export default function ListaLancamentosPage() {
           </div>
         )}
 
-        {/* Card: Total Despesas */}
+        {/* Card: Total Despesas com Cobranças */}
         <div className="rounded-xl p-5 border bg-red-50 border-red-200">
           <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-red-500">
-            Total Despesas
+            Total Despesas com Cobranças
           </p>
           <p className="text-2xl font-bold text-red-600">
-            R$ {formatCurrency(totalDespesas)}
+            R$ {formatCurrency(totalDespesasCobrancas)}
           </p>
           <p className="text-xs text-red-300 mt-1">
-            {lancamentosBase.filter((l) => l.tipo === "GASTO").length} lançamento(s)
+            {qtdDespesasCobrancas} cobrança(s) bancária(s)
           </p>
         </div>
 
