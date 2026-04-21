@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "@/lib/api";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
@@ -27,9 +27,29 @@ export default function ListaLancamentosPage() {
   const [lancamentoParaDeletar, setLancamentoParaDeletar] = useState<LancamentoFinanceiro | null>(null);
   const [confirmarDeletarMes, setConfirmarDeletarMes] = useState(false);
 
+  // Paginação
+  const [pagina, setPagina] = useState(1);
+  const [itensPorPagina, setItensPorPagina] = useState(20);
+
+  // Carrossel de meses
+  const carrosselRef = useRef<HTMLDivElement>(null);
+  const mesRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
   useEffect(() => {
     carregarLancamentos();
   }, []);
+
+  // Centraliza o mes selecionado no carrossel
+  useEffect(() => {
+    const key = mesFiltro || "todos";
+    const el = mesRefs.current[key];
+    const container = carrosselRef.current;
+    if (el && container) {
+      const containerCenter = container.offsetWidth / 2;
+      const elementCenter = el.offsetLeft + el.offsetWidth / 2;
+      container.scrollTo({ left: elementCenter - containerCenter, behavior: "smooth" });
+    }
+  }, [mesFiltro]);
 
   const carregarLancamentos = () => {
     setLoading(true);
@@ -69,6 +89,19 @@ export default function ListaLancamentosPage() {
     .filter((l) => (tipoFiltro ? l.tipo === tipoFiltro : true))
     .filter((l) => (mesFiltro ? l.data.startsWith(mesFiltro) : true))
     .filter((l) => busca ? l.descricao.toLowerCase().includes(busca.toLowerCase()) : true);
+
+  // Paginação
+  const totalPaginas = Math.max(1, Math.ceil(lancamentosFiltrados.length / itensPorPagina));
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const inicio = (paginaAtual - 1) * itensPorPagina;
+  const lancamentosPagina = lancamentosFiltrados.slice(inicio, inicio + itensPorPagina);
+
+  const irParaPagina = (p: number) => setPagina(Math.max(1, Math.min(p, totalPaginas)));
+
+  // Reset paginação ao filtrar
+  const handleBusca = (v: string) => { setBusca(v); setPagina(1); };
+  const handleTipoFiltro = (v: string) => { setTipoFiltro(v); setPagina(1); };
+  const handleMesFiltro = (v: string) => { setMesFiltro(v); setPagina(1); };
 
   const mesesDisponiveis = Array.from(
     new Set(lancamentosBase.map((l) => l.data.substring(0, 7)))
@@ -215,22 +248,49 @@ export default function ListaLancamentosPage() {
         </div>
       )}
 
-      {/* ── Escala de meses ── */}
+      {/* ── Carrossel de meses ── */}
       {mesesDisponiveis.length > 0 && (
-        <div className="mb-5">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2">Navegar por mês</p>
-          <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: "thin" }}>
-            <button
-              onClick={() => setMesFiltro("")}
-              className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${
-                mesFiltro === "" ? "bg-slate-800 text-white border-slate-800 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
-              }`}
-            >
-              <span className="text-[9px] uppercase tracking-wide">Todos</span>
-              <span className="text-sm font-bold">{lancamentosBase.length}</span>
-              <span className="text-[9px] opacity-70">itens</span>
-            </button>
-            {mesesDisponiveis.map((ym) => {
+        <div className="mb-6">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-3">Navegar por mês</p>
+
+          {/* Container carrossel */}
+          <div
+            ref={carrosselRef}
+            className="flex gap-3 overflow-x-auto pb-3"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {/* Card "Todos" */}
+            {(() => {
+              const ativo = mesFiltro === "";
+              const distancia = mesFiltro === "" ? 0 : Math.min(mesesDisponiveis.length, 3);
+              const scale = distancia === 0 ? 1 : distancia === 1 ? 0.9 : 0.8;
+              const opacity = distancia === 0 ? 1 : distancia === 1 ? 0.85 : 0.65;
+              return (
+                <button
+                  ref={(el) => { mesRefs.current["todos"] = el; }}
+                  onClick={() => handleMesFiltro("")}
+                  style={{ transform: `scale(${scale})`, opacity, transformOrigin: "bottom center" }}
+                  className={`flex-shrink-0 flex flex-col items-center w-32 px-4 py-4 rounded-2xl border-2 transition-all duration-300 ${
+                    ativo
+                      ? "bg-slate-800 text-white border-slate-700 shadow-xl"
+                      : "bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:shadow-md"
+                  }`}
+                >
+                  <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${ativo ? "text-slate-300" : "text-slate-400"}`}>Todos</span>
+                  <span className="text-2xl font-extrabold">{lancamentosBase.length}</span>
+                  <span className={`text-[10px] mt-1 ${ativo ? "text-slate-400" : "text-slate-400"}`}>lançamentos</span>
+                </button>
+              );
+            })()}
+
+            {/* Cards por mês */}
+            {mesesDisponiveis.map((ym, idx) => {
+              const idxSelecionado = mesesDisponiveis.indexOf(mesFiltro);
+              const distancia = mesFiltro === "" ? idx + 1 : Math.abs(idx - idxSelecionado);
+              const scale = distancia === 0 ? 1 : distancia === 1 ? 0.9 : distancia === 2 ? 0.82 : 0.75;
+              const opacity = distancia === 0 ? 1 : distancia === 1 ? 0.88 : distancia === 2 ? 0.7 : 0.5;
+              const ativo = mesFiltro === ym;
+
               const qtdMes = lancamentosBase.filter((l) => l.data.startsWith(ym)).length;
               const cobMes = lancamentosBase
                 .filter((l) => l.data.startsWith(ym) && l.tipo === "GASTO" && ehCobrancaBancaria(l.descricao))
@@ -238,22 +298,35 @@ export default function ListaLancamentosPage() {
               const recMes = lancamentosBase
                 .filter((l) => l.data.startsWith(ym) && l.tipo === "RECEITA")
                 .reduce((acc, l) => acc + Number(l.valor), 0);
-              const ativo = mesFiltro === ym;
+
               return (
                 <button
                   key={ym}
-                  onClick={() => setMesFiltro(ym)}
-                  className={`flex-shrink-0 flex flex-col items-start px-3 py-2 rounded-xl border transition-all ${
-                    ativo ? "bg-blue-600 text-white border-blue-600 shadow-md" : "bg-white text-slate-600 border-slate-200 hover:border-blue-300"
+                  ref={(el) => { mesRefs.current[ym] = el; }}
+                  onClick={() => handleMesFiltro(ym)}
+                  style={{ transform: `scale(${scale})`, opacity, transformOrigin: "bottom center" }}
+                  className={`flex-shrink-0 flex flex-col items-start w-36 px-4 py-4 rounded-2xl border-2 transition-all duration-300 ${
+                    ativo
+                      ? "bg-blue-600 text-white border-blue-500 shadow-xl"
+                      : "bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:shadow-md"
                   }`}
                 >
-                  <span className={`text-[9px] uppercase tracking-wide font-bold ${ativo ? "text-blue-100" : "text-slate-400"}`}>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${ativo ? "text-blue-200" : "text-slate-400"}`}>
                     {formatMesLabel(ym)}
                   </span>
-                  <span className="text-sm font-bold mt-0.5">{qtdMes} itens</span>
-                  <div className="flex flex-col text-[9px] mt-0.5">
-                    {recMes > 0 && <span className={ativo ? "text-green-200" : "text-green-600 font-semibold"}>+{formatCurrency(recMes)}</span>}
-                    {cobMes > 0 && <span className={ativo ? "text-red-200" : "text-red-500"}>-{formatCurrency(cobMes)}</span>}
+                  <span className="text-2xl font-extrabold mb-1">{qtdMes}</span>
+                  <span className={`text-[10px] mb-2 ${ativo ? "text-blue-200" : "text-slate-400"}`}>lançamentos</span>
+                  <div className="flex flex-col gap-0.5 w-full">
+                    {recMes > 0 && (
+                      <span className={`text-[10px] font-semibold ${
+                        ativo ? "text-green-200" : "text-green-600"
+                      }`}>+ R$ {formatCurrency(recMes)}</span>
+                    )}
+                    {cobMes > 0 && (
+                      <span className={`text-[10px] ${
+                        ativo ? "text-red-200" : "text-red-500"
+                      }`}>- R$ {formatCurrency(cobMes)}</span>
+                    )}
                   </div>
                 </button>
               );
@@ -268,12 +341,12 @@ export default function ListaLancamentosPage() {
           type="text"
           placeholder="Buscar descrição..."
           value={busca}
-          onChange={(e) => setBusca(e.target.value)}
+          onChange={(e) => handleBusca(e.target.value)}
           className="border border-slate-200 rounded-lg px-4 py-2 text-sm flex-1 min-w-0 focus:outline-none focus:ring-2 focus:ring-blue-300"
         />
         <select
           value={tipoFiltro}
-          onChange={(e) => setTipoFiltro(e.target.value)}
+          onChange={(e) => handleTipoFiltro(e.target.value)}
           className="border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
         >
           <option value="">Todos os tipos</option>
@@ -303,7 +376,7 @@ export default function ListaLancamentosPage() {
         <>
           {/* ── MOBILE: cards empilhados (< md) ── */}
           <div className="md:hidden space-y-3">
-            {lancamentosFiltrados.map((l) => (
+            {lancamentosPagina.map((l) => (
               <div key={l.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="flex-1 min-w-0">
@@ -354,7 +427,7 @@ export default function ListaLancamentosPage() {
             ))}
             {/* Totais mobile */}
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 flex flex-wrap justify-between gap-2 text-sm font-bold">
-              <span className="text-slate-500">{lancamentosFiltrados.length} lançamento(s)</span>
+              <span className="text-slate-500">p. {paginaAtual}/{totalPaginas} — {lancamentosFiltrados.length} lançamento(s)</span>
               <div className="flex gap-4">
                 {totalFiltradoDespesas > 0 && <span className="text-red-600">− R$ {formatCurrency(totalFiltradoDespesas)}</span>}
                 {totalFiltradoReceitas > 0 && <span className="text-green-700">+ R$ {formatCurrency(totalFiltradoReceitas)}</span>}
@@ -375,7 +448,7 @@ export default function ListaLancamentosPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
-                {lancamentosFiltrados.map((l) => (
+                {lancamentosPagina.map((l) => (
                   <tr key={l.id} className="hover:bg-slate-50 transition-colors">
                     <td className="py-3 px-4 text-slate-500 whitespace-nowrap">{formatDate(l.data)}</td>
                     <td className="py-3 px-4 font-medium text-slate-800">
@@ -438,6 +511,86 @@ export default function ListaLancamentosPage() {
               </tfoot>
             </table>
           </div>
+
+          {/* ── Controles de Paginação ── */}
+          {totalPaginas > 1 && (
+            <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+              {/* Info + itens por página */}
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <span>Exibindo {inicio + 1}–{Math.min(inicio + itensPorPagina, lancamentosFiltrados.length)} de {lancamentosFiltrados.length}</span>
+                <select
+                  value={itensPorPagina}
+                  onChange={(e) => { setItensPorPagina(Number(e.target.value)); setPagina(1); }}
+                  className="border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-300"
+                >
+                  {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n} por pág.</option>)}
+                </select>
+              </div>
+
+              {/* Botões de navegação */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => irParaPagina(1)}
+                  disabled={paginaAtual === 1}
+                  className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors"
+                  title="Primeira página"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                </button>
+                <button
+                  onClick={() => irParaPagina(paginaAtual - 1)}
+                  disabled={paginaAtual === 1}
+                  className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors"
+                  title="Página anterior"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                </button>
+
+                {/* Números de página */}
+                {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPaginas || Math.abs(p - paginaAtual) <= 1)
+                  .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && typeof arr[idx - 1] === "number" && (p as number) - (arr[idx - 1] as number) > 1) acc.push("...");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, i) =>
+                    p === "..." ? (
+                      <span key={`ellipsis-${i}`} className="px-1.5 text-slate-400 text-sm">...</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => irParaPagina(p as number)}
+                        className={`min-w-[32px] h-8 rounded-lg text-xs font-semibold transition-colors ${
+                          paginaAtual === p
+                            ? "bg-blue-600 text-white"
+                            : "text-slate-600 hover:bg-slate-100"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+
+                <button
+                  onClick={() => irParaPagina(paginaAtual + 1)}
+                  disabled={paginaAtual === totalPaginas}
+                  className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors"
+                  title="Próxima página"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </button>
+                <button
+                  onClick={() => irParaPagina(totalPaginas)}
+                  disabled={paginaAtual === totalPaginas}
+                  className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors"
+                  title="Última página"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
 
