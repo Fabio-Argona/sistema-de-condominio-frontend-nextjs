@@ -392,8 +392,8 @@ export default function ListaLancamentosPage() {
         </div>
       ) : (
         <>
-          {/* ── MOBILE: cards empilhados (< md) ── */}
-          <div className="md:hidden space-y-3">
+          {/* ── MOBILE: cards empilhados (< md) — somente para não-MORADOR ── */}
+          <div className={isSomenteLeitura ? "hidden" : "md:hidden space-y-3"}>
             {lancamentosPagina.map((l) => (
               <div key={l.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-2 mb-3">
@@ -453,8 +453,8 @@ export default function ListaLancamentosPage() {
             </div>
           </div>
 
-          {/* ── DESKTOP/TABLET: tabela (>= md) ── */}
-          <div className="hidden md:block rounded-xl border border-slate-200 overflow-x-auto shadow-sm">
+          {/* ── DESKTOP/TABLET: tabela ── */}
+          <div className={isSomenteLeitura ? "block rounded-xl border border-slate-200 overflow-x-auto shadow-sm" : "hidden md:block rounded-xl border border-slate-200 overflow-x-auto shadow-sm"}>
             <table className="w-full text-left bg-white min-w-[640px]">
               <thead>
                 <tr className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-400 border-b border-slate-200">
