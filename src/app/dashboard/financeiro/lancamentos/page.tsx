@@ -19,19 +19,24 @@ export default function ListaLancamentosPage() {
   const [editDescricao, setEditDescricao] = useState("");
   const [editTipo, setEditTipo] = useState("");
   const [busca, setBusca] = useState("");
+  const [deletandoId, setDeletandoId] = useState<number | null>(null);
 
   useEffect(() => {
+    carregarLancamentos();
+  }, []);
+
+  const carregarLancamentos = () => {
+    setLoading(true);
     api
       .get("/financeiro/lancamentos")
       .then((res) => {
-        // Ordena por data decrescente (mais recente primeiro)
         const sorted = [...res.data].sort((a: LancamentoFinanceiro, b: LancamentoFinanceiro) =>
           b.data.localeCompare(a.data)
         );
         setLancamentos(sorted);
       })
       .finally(() => setLoading(false));
-  }, []);
+  };
 
   // Lançamento mais recente com "SALDO TOTAL" na descrição
   const saldoEntry = lancamentos.find((l) =>
@@ -43,28 +48,28 @@ export default function ListaLancamentosPage() {
     (l) => !l.descricao.toUpperCase().includes("SALDO TOTAL")
   );
 
-  // Totais gerais (sem filtro de tipo) para os cards
+  // Totais gerais (para os cards)
   const totalDespesas = lancamentosBase
     .filter((l) => l.tipo === "GASTO")
     .reduce((acc, l) => acc + Number(l.valor), 0);
 
-  const totalCobracas = lancamentosBase
+  const totalReceitas = lancamentosBase
     .filter((l) => l.tipo === "RECEITA")
     .reduce((acc, l) => acc + Number(l.valor), 0);
 
-  // Lançamentos da tabela: aplica filtros
+  // Lançamentos da tabela com filtros aplicados
   const lancamentosFiltrados = lancamentosBase
     .filter((l) => (tipoFiltro ? l.tipo === tipoFiltro : true))
     .filter((l) =>
       busca ? l.descricao.toLowerCase().includes(busca.toLowerCase()) : true
     );
 
-  // Totais das linhas filtradas (para o rodapé da tabela)
+  // Totais das linhas filtradas (rodapé)
   const totalFiltradoDespesas = lancamentosFiltrados
     .filter((l) => l.tipo === "GASTO")
     .reduce((acc, l) => acc + Number(l.valor), 0);
 
-  const totalFiltradoCobracas = lancamentosFiltrados
+  const totalFiltradoReceitas = lancamentosFiltrados
     .filter((l) => l.tipo === "RECEITA")
     .reduce((acc, l) => acc + Number(l.valor), 0);
 
@@ -103,6 +108,19 @@ export default function ListaLancamentosPage() {
       cancelEdit();
     } catch {
       alert("Erro ao salvar alteração.");
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir este lançamento?")) return;
+    setDeletandoId(id);
+    try {
+      await api.delete(`/financeiro/lancamentos/${id}`);
+      setLancamentos((prev) => prev.filter((l) => l.id !== id));
+    } catch {
+      alert("Erro ao excluir lançamento.");
+    } finally {
+      setDeletandoId(null);
     }
   };
 
@@ -156,13 +174,13 @@ export default function ListaLancamentosPage() {
           </p>
         </div>
 
-        {/* Card: Total Cobranças */}
+        {/* Card: Total Receitas */}
         <div className="rounded-xl p-5 border bg-green-50 border-green-200">
           <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-green-600">
-            Total Cobranças / Receitas
+            Total Receitas
           </p>
           <p className="text-2xl font-bold text-green-700">
-            R$ {formatCurrency(totalCobracas)}
+            R$ {formatCurrency(totalReceitas)}
           </p>
           <p className="text-xs text-green-400 mt-1">
             {lancamentosBase.filter((l) => l.tipo === "RECEITA").length} lançamento(s)
@@ -186,7 +204,7 @@ export default function ListaLancamentosPage() {
         >
           <option value="">Todos os tipos</option>
           <option value="GASTO">Despesas</option>
-          <option value="RECEITA">Cobranças / Receitas</option>
+          <option value="RECEITA">Receitas</option>
         </select>
       </div>
 
@@ -208,7 +226,7 @@ export default function ListaLancamentosPage() {
                 <th className="py-3 px-4">Descrição</th>
                 <th className="py-3 px-4">Tipo</th>
                 <th className="py-3 px-4 text-right bg-red-50 text-red-400">Despesa (R$)</th>
-                <th className="py-3 px-4 text-right bg-green-50 text-green-500">Cobrança (R$)</th>
+                <th className="py-3 px-4 text-right bg-green-50 text-green-500">Receita (R$)</th>
                 <th className="py-3 px-4 text-center">Ações</th>
               </tr>
             </thead>
@@ -236,7 +254,7 @@ export default function ListaLancamentosPage() {
                         onChange={(e) => setEditTipo(e.target.value)}
                         className="border border-slate-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
                       >
-                        <option value="RECEITA">Cobrança / Receita</option>
+                        <option value="RECEITA">Receita</option>
                         <option value="GASTO">Despesa</option>
                       </select>
                     ) : (
@@ -247,48 +265,77 @@ export default function ListaLancamentosPage() {
                             : "bg-red-100 text-red-600"
                         }`}
                       >
-                        {l.tipo === "RECEITA" ? "Cobrança" : "Despesa"}
+                        {l.tipo === "RECEITA" ? "Receita" : "Despesa"}
                       </span>
                     )}
                   </td>
 
-                  {/* Coluna Despesa — só preenchida para GASTO */}
+                  {/* Coluna Despesa */}
                   <td className="py-3 px-4 text-right bg-red-50/40 font-semibold text-red-500">
-                    {l.tipo === "GASTO"
-                      ? `R$ ${formatCurrency(Number(l.valor))}`
-                      : ""}
+                    {l.tipo === "GASTO" ? `R$ ${formatCurrency(Number(l.valor))}` : ""}
                   </td>
 
-                  {/* Coluna Cobrança — só preenchida para RECEITA */}
+                  {/* Coluna Receita */}
                   <td className="py-3 px-4 text-right bg-green-50/40 font-semibold text-green-600">
-                    {l.tipo === "RECEITA"
-                      ? `R$ ${formatCurrency(Number(l.valor))}`
-                      : ""}
+                    {l.tipo === "RECEITA" ? `R$ ${formatCurrency(Number(l.valor))}` : ""}
                   </td>
 
+                  {/* Ações */}
                   <td className="py-3 px-4 text-center">
                     {editId === l.id ? (
-                      <div className="flex gap-2 justify-center">
+                      <div className="flex gap-1 justify-center">
+                        {/* Salvar */}
                         <button
                           onClick={() => saveEdit(l.id)}
-                          className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-lg transition-colors"
+                          className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
+                          title="Salvar"
                         >
-                          Salvar
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
                         </button>
+                        {/* Cancelar */}
                         <button
                           onClick={cancelEdit}
-                          className="text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1 rounded-lg border border-slate-200 transition-colors"
+                          className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+                          title="Cancelar"
                         >
-                          Cancelar
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                         </button>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => startEdit(l)}
-                        className="text-xs font-semibold text-blue-600 hover:text-blue-800 px-3 py-1 rounded-lg border border-blue-100 hover:border-blue-300 transition-colors"
-                      >
-                        Editar
-                      </button>
+                      <div className="flex gap-1 justify-center">
+                        {/* Editar */}
+                        <button
+                          onClick={() => startEdit(l)}
+                          className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"
+                          title="Editar"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        {/* Excluir */}
+                        <button
+                          onClick={() => handleDelete(l.id)}
+                          disabled={deletandoId === l.id}
+                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                          title="Excluir"
+                        >
+                          {deletandoId === l.id ? (
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -302,14 +349,10 @@ export default function ListaLancamentosPage() {
                   Total ({lancamentosFiltrados.length} lançamento{lancamentosFiltrados.length !== 1 ? "s" : ""})
                 </td>
                 <td className="py-3 px-4 text-right bg-red-100 text-red-600">
-                  {totalFiltradoDespesas > 0
-                    ? `R$ ${formatCurrency(totalFiltradoDespesas)}`
-                    : "—"}
+                  {totalFiltradoDespesas > 0 ? `R$ ${formatCurrency(totalFiltradoDespesas)}` : "—"}
                 </td>
                 <td className="py-3 px-4 text-right bg-green-100 text-green-700">
-                  {totalFiltradoCobracas > 0
-                    ? `R$ ${formatCurrency(totalFiltradoCobracas)}`
-                    : "—"}
+                  {totalFiltradoReceitas > 0 ? `R$ ${formatCurrency(totalFiltradoReceitas)}` : "—"}
                 </td>
                 <td />
               </tr>
