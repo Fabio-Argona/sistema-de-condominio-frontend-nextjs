@@ -5,6 +5,8 @@ import Cookies from "js-cookie";
 import api from "@/lib/api";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
+import Card, { CardContent, CardHeader } from "@/components/ui/Card";
+import { DashboardPage, DashboardHero, DashboardSectionTitle } from "@/components/layout/RoleDashboard";
 
 interface LancamentoFinanceiro {
   id: number;
@@ -245,47 +247,53 @@ export default function ListaLancamentosPage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto py-6 px-4 sm:px-6 font-sans text-slate-900">
+  return (
+    <DashboardPage>
+      <DashboardHero
+        eyebrow="Financeiro"
+        title="Lançamentos"
+        description="Consulte e gerencie todos os lançamentos financeiros do condomínio por mês."
+        status={
+          !isSomenteLeitura && (
+            <a
+              href="/dashboard/financeiro/importar"
+              className="inline-flex items-center gap-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              Importar Extrato
+            </a>
+          )
+        }
+        aside={
+          saldoEntry ? (
+            <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Saldo em Conta Corrente</p>
+              <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">R$ {formatCurrency(Number(saldoEntry.valor))}</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Ref: {formatDate(saldoEntry.data)}</p>
+            </div>
+          ) : (
+            <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Saldo em Conta Corrente</p>
+              <p className="mt-2 text-sm text-slate-400">Nenhum saldo encontrado.</p>
+            </div>
+          )
+        }
+      />
 
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold">Lançamentos Financeiros</h1>
-        <a
-          href="/dashboard/financeiro/importar"
-          className="inline-flex items-center justify-center gap-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-          </svg>
-          Importar Extrato
-        </a>
-      </div>
+      {/* ── Card principal ── */}
+      <Card gradient>
 
-      {/* ── Card Saldo em Conta Corrente ── */}
-      {saldoEntry ? (
-        <div className="rounded-xl p-4 sm:p-5 border bg-blue-50 border-blue-200 mb-6">
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-blue-600">Saldo em Conta Corrente</p>
-          <p className="text-xl sm:text-3xl font-bold text-blue-700">R$ {formatCurrency(Number(saldoEntry.valor))}</p>
-          <p className="text-[10px] sm:text-xs text-blue-400 mt-1">Ref: {formatDate(saldoEntry.data)}</p>
-        </div>
-      ) : (
-        <div className="rounded-xl p-4 sm:p-5 border bg-slate-50 border-slate-200 mb-6">
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-slate-400">Saldo em Conta Corrente</p>
-          <p className="text-slate-400 text-sm">Nenhum saldo encontrado nos lançamentos importados.</p>
-        </div>
-      )}
-
-      {/* ── Carrossel de meses ── */}
-      {mesesDisponiveis.length > 0 && (
-        <div className="mb-6">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-3">Navegar por mês</p>
-
-          {/* Container carrossel */}
-          <div
-            ref={carrosselRef}
-            className="flex gap-1 overflow-x-auto pb-3"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
+        {/* ── Carrossel de meses ── */}
+        {mesesDisponiveis.length > 0 && (
+          <CardHeader>
+            <DashboardSectionTitle title="Navegar por mês" />
+            <div
+              ref={carrosselRef}
+              className="flex gap-1 overflow-x-auto pb-2 mt-3"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
             {/* Card "Todos" -- somente SINDICO/admin */}
             {!isSomenteLeitura && (() => {
               const ativo = mesFiltro === "";
@@ -358,12 +366,13 @@ export default function ListaLancamentosPage() {
                 </button>
               );
             })}
-          </div>
-        </div>
-      )}
+            </div>
+          </CardHeader>
+        )}
 
-      {/* ── Filtros ── */}
-      <div className="flex flex-col sm:flex-row flex-wrap gap-2 mb-5">
+        <CardContent className="space-y-4">
+          {/* ── Filtros ── */}
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2">
         <input
           type="text"
           placeholder="Buscar descrição..."
@@ -653,6 +662,9 @@ export default function ListaLancamentosPage() {
         </>
       )}
 
+        </CardContent>
+      </Card>
+
       {/* Modal: confirmar excluir lancamento */}
       <Modal isOpen={!!lancamentoParaDeletar} onClose={() => setLancamentoParaDeletar(null)} title="Excluir Lancamento" size="sm">
         <div className="space-y-4">
@@ -696,6 +708,6 @@ export default function ListaLancamentosPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </DashboardPage>
   );
 }
