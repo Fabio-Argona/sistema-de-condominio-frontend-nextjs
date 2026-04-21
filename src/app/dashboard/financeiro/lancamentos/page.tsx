@@ -247,7 +247,6 @@ export default function ListaLancamentosPage() {
   );
 
   return (
-  return (
     <DashboardPage>
       <DashboardHero
         eyebrow="Financeiro"
