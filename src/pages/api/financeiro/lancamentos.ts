@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       // Converte para formato Spring Boot: { data: "yyyy-MM-dd", descricao, valor, tipo }
-      const payload = lancamentos.map((l: any) => {
+      const payloadBruto = lancamentos.map((l: any) => {
         let dataISO = l.data;
         if (l.data && l.data.includes("/")) {
           const [dia, mes, ano] = l.data.split("/");
@@ -57,6 +57,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           valor: Math.abs(Number(l.valor)),
           tipo: l.tipo || (Number(l.valor) >= 0 ? "RECEITA" : "GASTO"),
         };
+      });
+
+      // Remove duplicatas internas do lote (mesma data + descrição + valor)
+      const seen = new Set<string>();
+      const payload = payloadBruto.filter((l: any) => {
+        const chave = `${l.data}|${l.descricao}|${l.valor}`;
+        if (seen.has(chave)) return false;
+        seen.add(chave);
+        return true;
       });
 
       const response = await axios.post(
