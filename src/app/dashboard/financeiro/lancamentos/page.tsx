@@ -45,10 +45,10 @@ export default function ListaLancamentosPage() {
   };
 
   const saldoEntry = lancamentos.find((l) =>
-    l.descricao.toUpperCase().includes("SALDO TOTAL")
+    l.descricao.toUpperCase().includes("SALDO EM CONTA CORRENTE")
   );
 
-  const DESCRICOES_SALDO = ["SALDO TOTAL", "SALDO ANTERIOR"];
+  const DESCRICOES_SALDO = ["SALDO TOTAL", "SALDO ANTERIOR", "SALDO EM CONTA CORRENTE"];
   const lancamentosBase = lancamentos.filter(
     (l) => !DESCRICOES_SALDO.some((s) => l.descricao.toUpperCase().includes(s))
   );
@@ -56,15 +56,6 @@ export default function ListaLancamentosPage() {
   const TERMOS_COBRANCA = ["TAR/CUSTAS COBRANCA", "TAR COBRANCA EXP", "SERV SEM NOME CONTRAPART"];
   const ehCobrancaBancaria = (descricao: string) =>
     TERMOS_COBRANCA.some((t) => descricao.toUpperCase().includes(t.toUpperCase()));
-
-  // Rendimentos: aplicações automáticas
-  const TERMOS_RENDIMENTOS = ["RENDIMENTOS", "REND PAGO", "APLIC AUT"];
-  const ehRendimento = (descricao: string) =>
-    TERMOS_RENDIMENTOS.some((t) => descricao.toUpperCase().includes(t.toUpperCase()));
-
-  const totalRendimentos = lancamentosBase
-    .filter((l) => ehRendimento(l.descricao))
-    .reduce((acc, l) => acc + Number(l.valor), 0);
 
   const totalGastos = lancamentosBase
     .filter((l) => l.tipo === "GASTO")
@@ -210,32 +201,23 @@ export default function ListaLancamentosPage() {
         </a>
       </div>
 
-      {/* ── 4 Cards de resumo (2x2) ── */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
-        {/* Saldo Total Disponível */}
+      {/* ── 3 Cards de resumo ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+        {/* Saldo em Conta Corrente */}
         {saldoEntry ? (
           <div className="rounded-xl p-4 sm:p-5 border bg-blue-50 border-blue-200">
-            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-blue-600">Saldo Total Disponível</p>
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-blue-600">Saldo em Conta Corrente</p>
             <p className="text-base sm:text-2xl font-bold text-blue-700">R$ {formatCurrency(Number(saldoEntry.valor))}</p>
             <p className="text-[10px] sm:text-xs text-blue-400 mt-1">Ref: {formatDate(saldoEntry.data)}</p>
           </div>
         ) : (
           <div className="rounded-xl p-4 sm:p-5 border bg-slate-50 border-slate-200">
-            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-slate-400">Saldo Total Disponível</p>
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-slate-400">Saldo em Conta Corrente</p>
             <p className="text-slate-400">—</p>
           </div>
         )}
 
-        {/* Rendimentos (REND PAGO / APLIC AUT) */}
-        <div className="rounded-xl p-4 sm:p-5 border bg-purple-50 border-purple-200">
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-purple-600">Rendimentos</p>
-          <p className="text-base sm:text-2xl font-bold text-purple-700">R$ {formatCurrency(totalRendimentos)}</p>
-          <p className="text-[10px] sm:text-xs text-purple-400 mt-1">
-            {lancamentosBase.filter((l) => ehRendimento(l.descricao)).length} lançamento(s)
-          </p>
-        </div>
-
-        {/* Gasto Total com Cobranças */}
+        {/* Gasto Total */}
         <div className="rounded-xl p-4 sm:p-5 border bg-red-50 border-red-200">
           <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-red-500">Gasto Total</p>
           <p className="text-base sm:text-2xl font-bold text-red-600">R$ {formatCurrency(totalGastos)}</p>
