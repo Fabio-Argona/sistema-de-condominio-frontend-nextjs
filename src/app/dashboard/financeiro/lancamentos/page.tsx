@@ -14,7 +14,7 @@ interface LancamentoFinanceiro {
 export default function ListaLancamentosPage() {
   const [lancamentos, setLancamentos] = useState<LancamentoFinanceiro[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tipoFiltro, setTipoFiltro] = useState<string>("");
+  const [tipoFiltro, setTipoFiltro] = useState<string>("GASTO");
   const [editId, setEditId] = useState<number | null>(null);
   const [editDescricao, setEditDescricao] = useState("");
   const [editTipo, setEditTipo] = useState("");
@@ -23,27 +23,30 @@ export default function ListaLancamentosPage() {
   useEffect(() => {
     api
       .get("/financeiro/lancamentos")
-      .then((res) => setLancamentos(res.data))
+      .then((res) => {
+        // Ordena por data decrescente (mais recente primeiro)
+        const sorted = [...res.data].sort((a: LancamentoFinanceiro, b: LancamentoFinanceiro) =>
+          b.data.localeCompare(a.data)
+        );
+        setLancamentos(sorted);
+      })
       .finally(() => setLoading(false));
   }, []);
 
+  // Encontra o lançamento mais recente com "SALDO TOTAL" na descrição
+  const saldoEntry = lancamentos.find((l) =>
+    l.descricao.toUpperCase().includes("SALDO TOTAL")
+  );
+
+  // Lançamentos da tabela: exclui entradas de SALDO TOTAL (são apenas referência)
   const lancamentosFiltrados = lancamentos
+    .filter((l) => !l.descricao.toUpperCase().includes("SALDO TOTAL"))
     .filter((l) => (tipoFiltro ? l.tipo === tipoFiltro : true))
     .filter((l) =>
       busca
         ? l.descricao.toLowerCase().includes(busca.toLowerCase())
         : true
     );
-
-  const totalReceitas = lancamentosFiltrados
-    .filter((l) => l.tipo === "RECEITA")
-    .reduce((acc, l) => acc + Number(l.valor), 0);
-
-  const totalGastos = lancamentosFiltrados
-    .filter((l) => l.tipo === "GASTO")
-    .reduce((acc, l) => acc + Number(l.valor), 0);
-
-  const saldo = totalReceitas - totalGastos;
 
   const formatCurrency = (val: number) =>
     val.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -96,46 +99,28 @@ export default function ListaLancamentosPage() {
         </a>
       </div>
 
-      {/* Cards de resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-green-50 border border-green-200 rounded-xl p-5">
-          <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">
-            Total Receitas
-          </p>
-          <p className="text-2xl font-bold text-green-700">
-            R$ {formatCurrency(totalReceitas)}
-          </p>
-        </div>
-        <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-          <p className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-1">
-            Total Despesas
-          </p>
-          <p className="text-2xl font-bold text-red-600">
-            R$ {formatCurrency(totalGastos)}
-          </p>
-        </div>
-        <div
-          className={`rounded-xl p-5 border ${
-            saldo >= 0
-              ? "bg-blue-50 border-blue-200"
-              : "bg-orange-50 border-orange-200"
-          }`}
-        >
-          <p
-            className={`text-xs font-semibold uppercase tracking-wide mb-1 ${
-              saldo >= 0 ? "text-blue-600" : "text-orange-600"
-            }`}
-          >
-            Saldo
-          </p>
-          <p
-            className={`text-2xl font-bold ${
-              saldo >= 0 ? "text-blue-700" : "text-orange-600"
-            }`}
-          >
-            R$ {formatCurrency(Math.abs(saldo))}
-          </p>
-        </div>
+      {/* Card de Saldo Total Disponível */}
+      <div className="mb-8">
+        {saldoEntry ? (
+          <div className="inline-block rounded-xl p-5 border bg-blue-50 border-blue-200">
+            <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-blue-600">
+              Saldo Total Disponível
+            </p>
+            <p className="text-2xl font-bold text-blue-700">
+              R$ {formatCurrency(Number(saldoEntry.valor))}
+            </p>
+            <p className="text-xs text-blue-400 mt-1">
+              Referência: {formatDate(saldoEntry.data)}
+            </p>
+          </div>
+        ) : (
+          <div className="inline-block rounded-xl p-5 border bg-slate-50 border-slate-200">
+            <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-slate-400">
+              Saldo Total Disponível
+            </p>
+            <p className="text-lg text-slate-400">Nenhum registro encontrado</p>
+          </div>
+        )}
       </div>
 
       {/* Filtros */}
@@ -152,9 +137,9 @@ export default function ListaLancamentosPage() {
           onChange={(e) => setTipoFiltro(e.target.value)}
           className="border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
         >
+          <option value="GASTO">Despesas / Cobranças</option>
           <option value="">Todos os tipos</option>
           <option value="RECEITA">Receitas</option>
-          <option value="GASTO">Despesas</option>
         </select>
       </div>
 

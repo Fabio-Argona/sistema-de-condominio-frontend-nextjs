@@ -1,7 +1,7 @@
 "use client";
 
 import "@/app/globals.css";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import api from "@/lib/api";
 import Cookies from "js-cookie";
@@ -23,6 +23,7 @@ export default function ImportarFinanceiroPage() {
   const [summary, setSummary] = useState<any | null>(null);
   const [periodo, setPeriodo] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handler para mudança de arquivo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,6 +110,7 @@ export default function ImportarFinanceiroPage() {
       setSummary(null);
       setPeriodo("");
       setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err: any) {
       const msg =
         err.response?.data?.message ||
@@ -136,7 +138,7 @@ export default function ImportarFinanceiroPage() {
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-10">
         <form onSubmit={handleSubmit} className="flex gap-4 items-center">
           <input
-            key={file ? file.name : "empty"}
+            ref={fileInputRef}
             type="file"
             accept="application/pdf"
             onChange={handleFileChange}
