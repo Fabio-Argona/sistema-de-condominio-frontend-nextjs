@@ -45,10 +45,10 @@ export default function ListaLancamentosPage() {
   };
 
   const saldoEntry = lancamentos.find((l) =>
-    l.descricao.toUpperCase().includes("SALDO EM CONTA CORRENTE")
+    l.descricao.toUpperCase().includes("SALDO EM CONTA")
   );
 
-  const DESCRICOES_SALDO = ["SALDO TOTAL", "SALDO ANTERIOR", "SALDO EM CONTA CORRENTE"];
+  const DESCRICOES_SALDO = ["SALDO TOTAL", "SALDO ANTERIOR", "SALDO EM CONTA"];
   const lancamentosBase = lancamentos.filter(
     (l) => !DESCRICOES_SALDO.some((s) => l.descricao.toUpperCase().includes(s))
   );
@@ -201,40 +201,19 @@ export default function ListaLancamentosPage() {
         </a>
       </div>
 
-      {/* ── 3 Cards de resumo ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
-        {/* Saldo em Conta Corrente */}
-        {saldoEntry ? (
-          <div className="rounded-xl p-4 sm:p-5 border bg-blue-50 border-blue-200">
-            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-blue-600">Saldo em Conta Corrente</p>
-            <p className="text-base sm:text-2xl font-bold text-blue-700">R$ {formatCurrency(Number(saldoEntry.valor))}</p>
-            <p className="text-[10px] sm:text-xs text-blue-400 mt-1">Ref: {formatDate(saldoEntry.data)}</p>
-          </div>
-        ) : (
-          <div className="rounded-xl p-4 sm:p-5 border bg-slate-50 border-slate-200">
-            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-slate-400">Saldo em Conta Corrente</p>
-            <p className="text-slate-400">—</p>
-          </div>
-        )}
-
-        {/* Gasto Total */}
-        <div className="rounded-xl p-4 sm:p-5 border bg-red-50 border-red-200">
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-red-500">Gasto Total</p>
-          <p className="text-base sm:text-2xl font-bold text-red-600">R$ {formatCurrency(totalGastos)}</p>
-          <p className="text-[10px] sm:text-xs text-red-400 mt-1">
-            {lancamentosBase.filter((l) => l.tipo === "GASTO").length} lançamento(s)
-          </p>
+      {/* ── Card Saldo em Conta Corrente ── */}
+      {saldoEntry ? (
+        <div className="rounded-xl p-4 sm:p-5 border bg-blue-50 border-blue-200 mb-6">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-blue-600">Saldo em Conta Corrente</p>
+          <p className="text-xl sm:text-3xl font-bold text-blue-700">R$ {formatCurrency(Number(saldoEntry.valor))}</p>
+          <p className="text-[10px] sm:text-xs text-blue-400 mt-1">Ref: {formatDate(saldoEntry.data)}</p>
         </div>
-
-        {/* Total Receitas */}
-        <div className="rounded-xl p-4 sm:p-5 border bg-green-50 border-green-200">
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-green-600">Total Receitas</p>
-          <p className="text-base sm:text-2xl font-bold text-green-700">R$ {formatCurrency(totalReceitas)}</p>
-          <p className="text-[10px] sm:text-xs text-green-400 mt-1">
-            {lancamentosBase.filter((l) => l.tipo === "RECEITA").length} lançamento(s)
-          </p>
+      ) : (
+        <div className="rounded-xl p-4 sm:p-5 border bg-slate-50 border-slate-200 mb-6">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-slate-400">Saldo em Conta Corrente</p>
+          <p className="text-slate-400 text-sm">Nenhum saldo encontrado nos lançamentos importados.</p>
         </div>
-      </div>
+      )}
 
       {/* ── Escala de meses ── */}
       {mesesDisponiveis.length > 0 && (
