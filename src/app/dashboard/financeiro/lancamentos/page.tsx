@@ -57,6 +57,19 @@ export default function ListaLancamentosPage() {
   const ehCobrancaBancaria = (descricao: string) =>
     TERMOS_COBRANCA.some((t) => descricao.toUpperCase().includes(t.toUpperCase()));
 
+  // Rendimentos: aplicações automáticas
+  const TERMOS_RENDIMENTOS = ["RENDIMENTOS", "REND PAGO", "APLIC AUT"];
+  const ehRendimento = (descricao: string) =>
+    TERMOS_RENDIMENTOS.some((t) => descricao.toUpperCase().includes(t.toUpperCase()));
+
+  const totalRendimentos = lancamentosBase
+    .filter((l) => ehRendimento(l.descricao))
+    .reduce((acc, l) => acc + Number(l.valor), 0);
+
+  const totalGastos = lancamentosBase
+    .filter((l) => l.tipo === "GASTO")
+    .reduce((acc, l) => acc + Number(l.valor), 0);
+
   const totalReceitas = lancamentosBase
     .filter((l) => l.tipo === "RECEITA")
     .reduce((acc, l) => acc + Number(l.valor), 0);
@@ -197,8 +210,9 @@ export default function ListaLancamentosPage() {
         </a>
       </div>
 
-      {/* ── 2 Cards de resumo ── */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-5 mb-6">
+      {/* ── 4 Cards de resumo (2x2) ── */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+        {/* Saldo Total Disponível */}
         {saldoEntry ? (
           <div className="rounded-xl p-4 sm:p-5 border bg-blue-50 border-blue-200">
             <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-blue-600">Saldo Total Disponível</p>
@@ -211,6 +225,26 @@ export default function ListaLancamentosPage() {
             <p className="text-slate-400">—</p>
           </div>
         )}
+
+        {/* Rendimentos (REND PAGO / APLIC AUT) */}
+        <div className="rounded-xl p-4 sm:p-5 border bg-purple-50 border-purple-200">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-purple-600">Rendimentos</p>
+          <p className="text-base sm:text-2xl font-bold text-purple-700">R$ {formatCurrency(totalRendimentos)}</p>
+          <p className="text-[10px] sm:text-xs text-purple-400 mt-1">
+            {lancamentosBase.filter((l) => ehRendimento(l.descricao)).length} lançamento(s)
+          </p>
+        </div>
+
+        {/* Gasto Total com Cobranças */}
+        <div className="rounded-xl p-4 sm:p-5 border bg-red-50 border-red-200">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-red-500">Gasto Total</p>
+          <p className="text-base sm:text-2xl font-bold text-red-600">R$ {formatCurrency(totalGastos)}</p>
+          <p className="text-[10px] sm:text-xs text-red-400 mt-1">
+            {lancamentosBase.filter((l) => l.tipo === "GASTO").length} lançamento(s)
+          </p>
+        </div>
+
+        {/* Total Receitas */}
         <div className="rounded-xl p-4 sm:p-5 border bg-green-50 border-green-200">
           <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 text-green-600">Total Receitas</p>
           <p className="text-base sm:text-2xl font-bold text-green-700">R$ {formatCurrency(totalReceitas)}</p>
@@ -345,13 +379,13 @@ export default function ListaLancamentosPage() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  {editId === l.id ? (
+                  {editId === l.id && (
                     <select value={editTipo} onChange={(e) => setEditTipo(e.target.value)} className="border border-slate-300 rounded-lg px-2 py-1 text-xs">
                       <option value="RECEITA">Receita</option>
                       <option value="GASTO">Despesa</option>
                     </select>
-                  ) : <TipoBadge tipo={l.tipo} />}
-                  <span className={`text-sm font-bold ${l.tipo === "GASTO" ? "text-red-500" : "text-green-600"}`}>
+                  )}
+                  <span className={`text-sm font-bold ml-auto ${l.tipo === "GASTO" ? "text-red-500" : "text-green-600"}`}>
                     {l.tipo === "GASTO" ? "−" : "+"} R$ {formatCurrency(Number(l.valor))}
                   </span>
                 </div>
@@ -374,7 +408,6 @@ export default function ListaLancamentosPage() {
                 <tr className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-400 border-b border-slate-200">
                   <th className="py-3 px-4 whitespace-nowrap">Data</th>
                   <th className="py-3 px-4">Descrição</th>
-                  <th className="py-3 px-4">Tipo</th>
                   <th className="py-3 px-4 text-right bg-red-50 text-red-400 whitespace-nowrap">Despesa (R$)</th>
                   <th className="py-3 px-4 text-right bg-green-50 text-green-500 whitespace-nowrap">Receita (R$)</th>
                   <th className="py-3 px-4 text-center">Ações</th>
@@ -386,20 +419,18 @@ export default function ListaLancamentosPage() {
                     <td className="py-3 px-4 text-slate-500 whitespace-nowrap">{formatDate(l.data)}</td>
                     <td className="py-3 px-4 font-medium text-slate-800">
                       {editId === l.id ? (
-                        <input
-                          value={editDescricao}
-                          onChange={(e) => setEditDescricao(e.target.value)}
-                          className="border border-slate-300 rounded-lg px-3 py-1 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-                        />
+                        <div className="flex flex-col gap-1">
+                          <input
+                            value={editDescricao}
+                            onChange={(e) => setEditDescricao(e.target.value)}
+                            className="border border-slate-300 rounded-lg px-3 py-1 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                          />
+                          <select value={editTipo} onChange={(e) => setEditTipo(e.target.value)} className="border border-slate-300 rounded-lg px-2 py-1 text-xs w-fit">
+                            <option value="RECEITA">Receita</option>
+                            <option value="GASTO">Despesa</option>
+                          </select>
+                        </div>
                       ) : l.descricao}
-                    </td>
-                    <td className="py-3 px-4">
-                      {editId === l.id ? (
-                        <select value={editTipo} onChange={(e) => setEditTipo(e.target.value)} className="border border-slate-300 rounded-lg px-3 py-1 text-sm">
-                          <option value="RECEITA">Receita</option>
-                          <option value="GASTO">Despesa</option>
-                        </select>
-                      ) : <TipoBadge tipo={l.tipo} />}
                     </td>
                     <td className="py-3 px-4 text-right bg-red-50/40 font-semibold text-red-500">
                       {l.tipo === "GASTO" ? `R$ ${formatCurrency(Number(l.valor))}` : ""}
