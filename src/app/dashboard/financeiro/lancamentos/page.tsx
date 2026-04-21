@@ -14,7 +14,7 @@ interface LancamentoFinanceiro {
 export default function ListaLancamentosPage() {
   const [lancamentos, setLancamentos] = useState<LancamentoFinanceiro[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tipoFiltro, setTipoFiltro] = useState<string>("GASTO");
+  const [tipoFiltro, setTipoFiltro] = useState<string>("");
   const [editId, setEditId] = useState<number | null>(null);
   const [editDescricao, setEditDescricao] = useState("");
   const [editTipo, setEditTipo] = useState("");
@@ -33,27 +33,46 @@ export default function ListaLancamentosPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Encontra o lançamento mais recente com "SALDO TOTAL" na descrição
+  // Lançamento mais recente com "SALDO TOTAL" na descrição
   const saldoEntry = lancamentos.find((l) =>
     l.descricao.toUpperCase().includes("SALDO TOTAL")
   );
 
-  // Lançamentos da tabela: exclui entradas de SALDO TOTAL (são apenas referência)
-  const lancamentosFiltrados = lancamentos
-    .filter((l) => !l.descricao.toUpperCase().includes("SALDO TOTAL"))
+  // Base: exclui entradas de SALDO TOTAL da tabela
+  const lancamentosBase = lancamentos.filter(
+    (l) => !l.descricao.toUpperCase().includes("SALDO TOTAL")
+  );
+
+  // Totais gerais (sem filtro de tipo) para os cards
+  const totalDespesas = lancamentosBase
+    .filter((l) => l.tipo === "GASTO")
+    .reduce((acc, l) => acc + Number(l.valor), 0);
+
+  const totalCobracas = lancamentosBase
+    .filter((l) => l.tipo === "RECEITA")
+    .reduce((acc, l) => acc + Number(l.valor), 0);
+
+  // Lançamentos da tabela: aplica filtros
+  const lancamentosFiltrados = lancamentosBase
     .filter((l) => (tipoFiltro ? l.tipo === tipoFiltro : true))
     .filter((l) =>
-      busca
-        ? l.descricao.toLowerCase().includes(busca.toLowerCase())
-        : true
+      busca ? l.descricao.toLowerCase().includes(busca.toLowerCase()) : true
     );
+
+  // Totais das linhas filtradas (para o rodapé da tabela)
+  const totalFiltradoDespesas = lancamentosFiltrados
+    .filter((l) => l.tipo === "GASTO")
+    .reduce((acc, l) => acc + Number(l.valor), 0);
+
+  const totalFiltradoCobracas = lancamentosFiltrados
+    .filter((l) => l.tipo === "RECEITA")
+    .reduce((acc, l) => acc + Number(l.valor), 0);
 
   const formatCurrency = (val: number) =>
     val.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
-    // "2026-03-09" -> "09/03/2026"
     const [ano, mes, dia] = dateStr.split("-");
     return dia ? `${dia}/${mes}/${ano}` : dateStr;
   };
@@ -99,10 +118,12 @@ export default function ListaLancamentosPage() {
         </a>
       </div>
 
-      {/* Card de Saldo Total Disponível */}
-      <div className="mb-8">
+      {/* 3 Cards de resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+
+        {/* Card: Saldo Total Disponível */}
         {saldoEntry ? (
-          <div className="inline-block rounded-xl p-5 border bg-blue-50 border-blue-200">
+          <div className="rounded-xl p-5 border bg-blue-50 border-blue-200">
             <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-blue-600">
               Saldo Total Disponível
             </p>
@@ -114,13 +135,39 @@ export default function ListaLancamentosPage() {
             </p>
           </div>
         ) : (
-          <div className="inline-block rounded-xl p-5 border bg-slate-50 border-slate-200">
+          <div className="rounded-xl p-5 border bg-slate-50 border-slate-200">
             <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-slate-400">
               Saldo Total Disponível
             </p>
-            <p className="text-lg text-slate-400">Nenhum registro encontrado</p>
+            <p className="text-lg text-slate-400">—</p>
           </div>
         )}
+
+        {/* Card: Total Despesas */}
+        <div className="rounded-xl p-5 border bg-red-50 border-red-200">
+          <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-red-500">
+            Total Despesas
+          </p>
+          <p className="text-2xl font-bold text-red-600">
+            R$ {formatCurrency(totalDespesas)}
+          </p>
+          <p className="text-xs text-red-300 mt-1">
+            {lancamentosBase.filter((l) => l.tipo === "GASTO").length} lançamento(s)
+          </p>
+        </div>
+
+        {/* Card: Total Cobranças */}
+        <div className="rounded-xl p-5 border bg-green-50 border-green-200">
+          <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-green-600">
+            Total Cobranças / Receitas
+          </p>
+          <p className="text-2xl font-bold text-green-700">
+            R$ {formatCurrency(totalCobracas)}
+          </p>
+          <p className="text-xs text-green-400 mt-1">
+            {lancamentosBase.filter((l) => l.tipo === "RECEITA").length} lançamento(s)
+          </p>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -137,9 +184,9 @@ export default function ListaLancamentosPage() {
           onChange={(e) => setTipoFiltro(e.target.value)}
           className="border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
         >
-          <option value="GASTO">Despesas / Cobranças</option>
           <option value="">Todos os tipos</option>
-          <option value="RECEITA">Receitas</option>
+          <option value="GASTO">Despesas</option>
+          <option value="RECEITA">Cobranças / Receitas</option>
         </select>
       </div>
 
@@ -160,7 +207,8 @@ export default function ListaLancamentosPage() {
                 <th className="py-3 px-4">Data</th>
                 <th className="py-3 px-4">Descrição</th>
                 <th className="py-3 px-4">Tipo</th>
-                <th className="py-3 px-4 text-right">Valor (R$)</th>
+                <th className="py-3 px-4 text-right bg-red-50 text-red-400">Despesa (R$)</th>
+                <th className="py-3 px-4 text-right bg-green-50 text-green-500">Cobrança (R$)</th>
                 <th className="py-3 px-4 text-center">Ações</th>
               </tr>
             </thead>
@@ -188,7 +236,7 @@ export default function ListaLancamentosPage() {
                         onChange={(e) => setEditTipo(e.target.value)}
                         className="border border-slate-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
                       >
-                        <option value="RECEITA">Receita</option>
+                        <option value="RECEITA">Cobrança / Receita</option>
                         <option value="GASTO">Despesa</option>
                       </select>
                     ) : (
@@ -199,18 +247,25 @@ export default function ListaLancamentosPage() {
                             : "bg-red-100 text-red-600"
                         }`}
                       >
-                        {l.tipo === "RECEITA" ? "Receita" : "Despesa"}
+                        {l.tipo === "RECEITA" ? "Cobrança" : "Despesa"}
                       </span>
                     )}
                   </td>
-                  <td
-                    className={`py-3 px-4 text-right font-semibold ${
-                      l.tipo === "GASTO" ? "text-red-500" : "text-green-600"
-                    }`}
-                  >
-                    {l.tipo === "GASTO" ? "- " : "+ "}
-                    R$ {formatCurrency(Number(l.valor))}
+
+                  {/* Coluna Despesa — só preenchida para GASTO */}
+                  <td className="py-3 px-4 text-right bg-red-50/40 font-semibold text-red-500">
+                    {l.tipo === "GASTO"
+                      ? `R$ ${formatCurrency(Number(l.valor))}`
+                      : ""}
                   </td>
+
+                  {/* Coluna Cobrança — só preenchida para RECEITA */}
+                  <td className="py-3 px-4 text-right bg-green-50/40 font-semibold text-green-600">
+                    {l.tipo === "RECEITA"
+                      ? `R$ ${formatCurrency(Number(l.valor))}`
+                      : ""}
+                  </td>
+
                   <td className="py-3 px-4 text-center">
                     {editId === l.id ? (
                       <div className="flex gap-2 justify-center">
@@ -239,12 +294,27 @@ export default function ListaLancamentosPage() {
                 </tr>
               ))}
             </tbody>
+
+            {/* Rodapé com totais */}
+            <tfoot>
+              <tr className="border-t-2 border-slate-200 bg-slate-50 font-bold text-sm">
+                <td className="py-3 px-4 text-slate-500" colSpan={3}>
+                  Total ({lancamentosFiltrados.length} lançamento{lancamentosFiltrados.length !== 1 ? "s" : ""})
+                </td>
+                <td className="py-3 px-4 text-right bg-red-100 text-red-600">
+                  {totalFiltradoDespesas > 0
+                    ? `R$ ${formatCurrency(totalFiltradoDespesas)}`
+                    : "—"}
+                </td>
+                <td className="py-3 px-4 text-right bg-green-100 text-green-700">
+                  {totalFiltradoCobracas > 0
+                    ? `R$ ${formatCurrency(totalFiltradoCobracas)}`
+                    : "—"}
+                </td>
+                <td />
+              </tr>
+            </tfoot>
           </table>
-          <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-400">
-            {lancamentosFiltrados.length} lançamento
-            {lancamentosFiltrados.length !== 1 ? "s" : ""} encontrado
-            {lancamentosFiltrados.length !== 1 ? "s" : ""}
-          </div>
         </div>
       )}
     </div>
