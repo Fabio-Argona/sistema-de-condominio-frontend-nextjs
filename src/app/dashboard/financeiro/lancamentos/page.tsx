@@ -15,11 +15,13 @@ export default function ListaLancamentosPage() {
   const [lancamentos, setLancamentos] = useState<LancamentoFinanceiro[]>([]);
   const [loading, setLoading] = useState(true);
   const [tipoFiltro, setTipoFiltro] = useState<string>("");
+  const [mesFiltro, setMesFiltro] = useState<string>(""); // "yyyy-MM"
   const [editId, setEditId] = useState<number | null>(null);
   const [editDescricao, setEditDescricao] = useState("");
   const [editTipo, setEditTipo] = useState("");
   const [busca, setBusca] = useState("");
   const [deletandoId, setDeletandoId] = useState<number | null>(null);
+  const [deletandoMes, setDeletandoMes] = useState(false);
 
   useEffect(() => {
     carregarLancamentos();
@@ -60,9 +62,21 @@ export default function ListaLancamentosPage() {
   // Lançamentos da tabela com filtros aplicados
   const lancamentosFiltrados = lancamentosBase
     .filter((l) => (tipoFiltro ? l.tipo === tipoFiltro : true))
+    .filter((l) => (mesFiltro ? l.data.startsWith(mesFiltro) : true))
     .filter((l) =>
       busca ? l.descricao.toLowerCase().includes(busca.toLowerCase()) : true
     );
+
+  // Meses disponíveis (derivados dos dados)
+  const mesesDisponiveis = Array.from(
+    new Set(lancamentosBase.map((l) => l.data.substring(0, 7)))
+  ).sort((a, b) => b.localeCompare(a));
+
+  const formatMesLabel = (ym: string) => {
+    const [ano, mes] = ym.split("-");
+    const nomes = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+    return `${nomes[parseInt(mes) - 1]}/${ano}`;
+  };
 
   // Totais das linhas filtradas (rodapé)
   const totalFiltradoDespesas = lancamentosFiltrados
@@ -121,6 +135,24 @@ export default function ListaLancamentosPage() {
       alert("Erro ao excluir lançamento.");
     } finally {
       setDeletandoId(null);
+    }
+  };
+
+  const handleDeleteMes = async () => {
+    if (!mesFiltro) return;
+    const [ano, mes] = mesFiltro.split("-");
+    const label = formatMesLabel(mesFiltro);
+    const qtd = lancamentosBase.filter((l) => l.data.startsWith(mesFiltro)).length;
+    if (!confirm(`Excluir TODOS os ${qtd} lançamento(s) de ${label}? Esta ação não pode ser desfeita.`)) return;
+    setDeletandoMes(true);
+    try {
+      await api.delete(`/financeiro/lancamentos/mes?ano=${ano}&mes=${parseInt(mes)}`);
+      setLancamentos((prev) => prev.filter((l) => !l.data.startsWith(mesFiltro)));
+      setMesFiltro("");
+    } catch {
+      alert("Erro ao excluir lançamentos do mês.");
+    } finally {
+      setDeletandoMes(false);
     }
   };
 
@@ -188,8 +220,61 @@ export default function ListaLancamentosPage() {
         </div>
       </div>
 
+      {/* Escala de meses — clique para filtrar */}
+      {mesesDisponiveis.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Navegar por mês</p>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            {/* Botão "Todos" */}
+            <button
+              onClick={() => setMesFiltro("")}
+              className={`flex-shrink-0 flex flex-col items-center px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                mesFiltro === ""
+                  ? "bg-slate-800 text-white border-slate-800 shadow-md"
+                  : "bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-700"
+              }`}
+            >
+              <span className="text-[10px] uppercase tracking-wide">Todos</span>
+              <span className="text-base font-bold mt-0.5">{lancamentosBase.length}</span>
+              <span className="text-[10px] opacity-70">itens</span>
+            </button>
+
+            {mesesDisponiveis.map((ym) => {
+              const qtdMes = lancamentosBase.filter((l) => l.data.startsWith(ym)).length;
+              const despMes = lancamentosBase
+                .filter((l) => l.data.startsWith(ym) && l.tipo === "GASTO")
+                .reduce((acc, l) => acc + Number(l.valor), 0);
+              const recMes = lancamentosBase
+                .filter((l) => l.data.startsWith(ym) && l.tipo === "RECEITA")
+                .reduce((acc, l) => acc + Number(l.valor), 0);
+              const ativo = mesFiltro === ym;
+              return (
+                <button
+                  key={ym}
+                  onClick={() => setMesFiltro(ym)}
+                  className={`flex-shrink-0 flex flex-col items-start px-4 py-2.5 rounded-xl border text-xs transition-all ${
+                    ativo
+                      ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600"
+                  }`}
+                >
+                  <span className={`text-[10px] uppercase tracking-wide font-bold ${ ativo ? "text-blue-100" : "text-slate-400" }`}>
+                    {formatMesLabel(ym)}
+                  </span>
+                  <span className="text-base font-bold mt-0.5">{qtdMes}</span>
+                  <div className={`flex gap-2 text-[10px] mt-0.5 ${ ativo ? "text-blue-100" : "" }`}>
+                    {despMes > 0 && <span className={ativo ? "text-red-200" : "text-red-400"}>-{formatCurrency(despMes)}</span>}
+                    {recMes > 0 && <span className={ativo ? "text-green-200" : "text-green-500"}>+{formatCurrency(recMes)}</span>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Filtros */}
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="flex flex-wrap gap-3 mb-6 items-center">
         <input
           type="text"
           placeholder="Buscar descrição..."
@@ -206,6 +291,28 @@ export default function ListaLancamentosPage() {
           <option value="GASTO">Despesas</option>
           <option value="RECEITA">Receitas</option>
         </select>
+
+        {/* Botão apagar todos do mês selecionado */}
+        {mesFiltro && (
+          <button
+            onClick={handleDeleteMes}
+            disabled={deletandoMes}
+            title={`Apagar todos os lançamentos de ${formatMesLabel(mesFiltro)}`}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-colors disabled:opacity-50"
+          >
+            {deletandoMes ? (
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            )}
+            Apagar {formatMesLabel(mesFiltro)}
+          </button>
+        )}
       </div>
 
       {/* Tabela */}
