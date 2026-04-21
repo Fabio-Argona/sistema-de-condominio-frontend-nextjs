@@ -140,13 +140,14 @@ export default function ListaLancamentosPage() {
 
   const handleDeleteMes = async () => {
     if (!mesFiltro) return;
-    const [ano, mes] = mesFiltro.split("-");
     const label = formatMesLabel(mesFiltro);
-    const qtd = lancamentosBase.filter((l) => l.data.startsWith(mesFiltro)).length;
+    const doMes = lancamentosBase.filter((l) => l.data.startsWith(mesFiltro));
+    const qtd = doMes.length;
     if (!confirm(`Excluir TODOS os ${qtd} lançamento(s) de ${label}? Esta ação não pode ser desfeita.`)) return;
     setDeletandoMes(true);
     try {
-      await api.delete(`/financeiro/lancamentos/mes?ano=${ano}&mes=${parseInt(mes)}`);
+      // Deleta cada lançamento individualmente usando o endpoint existente
+      await Promise.all(doMes.map((l) => api.delete(`/financeiro/lancamentos/${l.id}`)));
       setLancamentos((prev) => prev.filter((l) => !l.data.startsWith(mesFiltro)));
       setMesFiltro("");
     } catch {
