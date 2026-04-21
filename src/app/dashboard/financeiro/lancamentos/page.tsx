@@ -78,6 +78,15 @@ export default function ListaLancamentosPage() {
           b.data.localeCompare(a.data)
         );
         setLancamentos(sorted);
+        // Seleciona automaticamente o mês mais recente
+        const DESCRICOES_EXCLUIR = ["SALDO TOTAL", "SALDO ANTERIOR", "SALDO EM CONTA"];
+        const base = sorted.filter(
+          (l: LancamentoFinanceiro) => !DESCRICOES_EXCLUIR.some((s) => l.descricao.toUpperCase().includes(s))
+        );
+        if (base.length > 0) {
+          const maisRecente = base[0].data.substring(0, 7);
+          setMesFiltro(maisRecente);
+        }
       })
       .finally(() => setLoading(false));
   };
@@ -455,11 +464,13 @@ export default function ListaLancamentosPage() {
 
           {/* ── MOBILE COMPACTO: somente MORADOR (< md) ── */}
           <div className={isSomenteLeitura ? "md:hidden" : "hidden"}>
+            {/* Título com o mês selecionado */}
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2 px-1">
+              {mesFiltro ? formatMesLabel(mesFiltro) : "Todos os meses"}
+            </p>
             <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm divide-y divide-slate-100">
               {lancamentosPagina.map((l) => (
                 <div key={l.id} className="flex items-center gap-3 px-3 py-2">
-                  {/* Barra lateral colorida */}
-                  <div className={`w-1 self-stretch rounded-full flex-shrink-0 ${l.tipo === "GASTO" ? "bg-red-400" : "bg-green-400"}`} />
                   {/* Data */}
                   <span className="text-[10px] text-slate-400 whitespace-nowrap w-14 flex-shrink-0">{formatDate(l.data)}</span>
                   {/* Descrição */}
