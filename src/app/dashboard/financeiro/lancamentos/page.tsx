@@ -265,20 +265,24 @@ export default function ListaLancamentosPage() {
               const distancia = mesFiltro === "" ? 0 : Math.min(mesesDisponiveis.length, 3);
               const scale = distancia === 0 ? 1 : distancia === 1 ? 0.9 : 0.8;
               const opacity = distancia === 0 ? 1 : distancia === 1 ? 0.85 : 0.65;
+              const totalRecTodos = lancamentosBase.filter((l) => l.tipo === "RECEITA").reduce((acc, l) => acc + Number(l.valor), 0);
+              const totalDesTodos = lancamentosBase.filter((l) => l.tipo === "GASTO").reduce((acc, l) => acc + Number(l.valor), 0);
               return (
                 <button
                   ref={(el) => { mesRefs.current["todos"] = el; }}
                   onClick={() => handleMesFiltro("")}
                   style={{ transform: `scale(${scale})`, opacity, transformOrigin: "bottom center" }}
-                  className={`flex-shrink-0 flex flex-col items-center w-32 px-4 py-4 rounded-2xl border-2 transition-all duration-300 ${
+                  className={`flex-shrink-0 flex flex-col items-start w-36 px-4 py-4 rounded-2xl border-2 transition-all duration-300 ${
                     ativo
                       ? "bg-slate-800 text-white border-slate-700 shadow-xl"
                       : "bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:shadow-md"
                   }`}
                 >
-                  <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${ativo ? "text-slate-300" : "text-slate-400"}`}>Todos</span>
-                  <span className="text-2xl font-extrabold">{lancamentosBase.length}</span>
-                  <span className={`text-[10px] mt-1 ${ativo ? "text-slate-400" : "text-slate-400"}`}>lançamentos</span>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${ativo ? "text-slate-300" : "text-slate-400"}`}>Todos</span>
+                  <div className="flex flex-col gap-1 w-full">
+                    <span className={`text-xs font-semibold ${ativo ? "text-green-300" : "text-green-600"}`}>+ R$ {formatCurrency(totalRecTodos)}</span>
+                    <span className={`text-xs ${ativo ? "text-red-300" : "text-red-500"}`}>− R$ {formatCurrency(totalDesTodos)}</span>
+                  </div>
                 </button>
               );
             })()}
@@ -291,9 +295,8 @@ export default function ListaLancamentosPage() {
               const opacity = distancia === 0 ? 1 : distancia === 1 ? 0.88 : distancia === 2 ? 0.7 : 0.5;
               const ativo = mesFiltro === ym;
 
-              const qtdMes = lancamentosBase.filter((l) => l.data.startsWith(ym)).length;
-              const cobMes = lancamentosBase
-                .filter((l) => l.data.startsWith(ym) && l.tipo === "GASTO" && ehCobrancaBancaria(l.descricao))
+              const despMes = lancamentosBase
+                .filter((l) => l.data.startsWith(ym) && l.tipo === "GASTO")
                 .reduce((acc, l) => acc + Number(l.valor), 0);
               const recMes = lancamentosBase
                 .filter((l) => l.data.startsWith(ym) && l.tipo === "RECEITA")
@@ -314,18 +317,15 @@ export default function ListaLancamentosPage() {
                   <span className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${ativo ? "text-blue-200" : "text-slate-400"}`}>
                     {formatMesLabel(ym)}
                   </span>
-                  <span className="text-2xl font-extrabold mb-1">{qtdMes}</span>
-                  <span className={`text-[10px] mb-2 ${ativo ? "text-blue-200" : "text-slate-400"}`}>lançamentos</span>
-                  <div className="flex flex-col gap-0.5 w-full">
+                  <div className="flex flex-col gap-1 w-full">
                     {recMes > 0 && (
-                      <span className={`text-[10px] font-semibold ${
-                        ativo ? "text-green-200" : "text-green-600"
-                      }`}>+ R$ {formatCurrency(recMes)}</span>
+                      <span className={`text-xs font-semibold ${ativo ? "text-green-200" : "text-green-600"}`}>+ R$ {formatCurrency(recMes)}</span>
                     )}
-                    {cobMes > 0 && (
-                      <span className={`text-[10px] ${
-                        ativo ? "text-red-200" : "text-red-500"
-                      }`}>- R$ {formatCurrency(cobMes)}</span>
+                    {despMes > 0 && (
+                      <span className={`text-xs ${ativo ? "text-red-200" : "text-red-500"}`}>− R$ {formatCurrency(despMes)}</span>
+                    )}
+                    {recMes === 0 && despMes === 0 && (
+                      <span className={`text-xs ${ativo ? "text-blue-200" : "text-slate-400"}`}>Sem valores</span>
                     )}
                   </div>
                 </button>
