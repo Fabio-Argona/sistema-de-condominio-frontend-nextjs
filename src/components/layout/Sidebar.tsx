@@ -118,6 +118,16 @@ const icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
     </svg>
   ),
+  lancamentos: (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  ),
+  importar: (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+    </svg>
+  ),
 };
 
 const navGroups: NavGroup[] = [
@@ -138,13 +148,15 @@ const navGroups: NavGroup[] = [
     category: 'Financeiro',
     roles: ['SINDICO', 'MORADOR'],
     items: [
-      { label: 'Financeiro',          href: '/dashboard/sindico/financeiro',           icon: icons.payment,  roles: ['SINDICO'] },
-      { label: 'Pagamentos',          href: '/dashboard/sindico/pagamentos',            icon: icons.payment,  roles: ['SINDICO'] },
-      { label: 'Histórico de Boletos',href: '/dashboard/sindico/pagamentos/historico', icon: icons.report,   roles: ['SINDICO'] },
-      { label: 'Histórico de Downloads', href: '/dashboard/sindico/pagamentos/downloads', icon: icons.access, roles: ['SINDICO'] },
-      { label: 'Relatórios',          href: '/dashboard/sindico/relatorios',            icon: icons.report,   roles: ['SINDICO'] },
+      { label: 'Financeiro',          href: '/dashboard/sindico/financeiro',           icon: icons.payment,      roles: ['SINDICO'] },
+      { label: 'Pagamentos',          href: '/dashboard/sindico/pagamentos',            icon: icons.payment,      roles: ['SINDICO'] },
+      { label: 'Histórico de Boletos',href: '/dashboard/sindico/pagamentos/historico', icon: icons.report,       roles: ['SINDICO'] },
+      { label: 'Histórico de Downloads', href: '/dashboard/sindico/pagamentos/downloads', icon: icons.access,   roles: ['SINDICO'] },
+      { label: 'Relatórios',          href: '/dashboard/sindico/relatorios',            icon: icons.report,       roles: ['SINDICO'] },
       { label: 'Histórico de E-mails',href: '/dashboard/sindico/emails',               icon: icons.announcement, roles: ['SINDICO'] },
-      { label: 'Pagamentos',          href: '/dashboard/usuario/pagamentos',            icon: icons.payment,  roles: ['MORADOR'] },
+      { label: 'Lançamentos',         href: '/dashboard/financeiro/lancamentos',        icon: icons.lancamentos,  roles: ['SINDICO'] },
+      { label: 'Importar Extrato',    href: '/dashboard/financeiro/importar',           icon: icons.importar,     roles: ['SINDICO'] },
+      { label: 'Pagamentos',          href: '/dashboard/usuario/pagamentos',            icon: icons.payment,      roles: ['MORADOR'] },
     ],
   },
 
