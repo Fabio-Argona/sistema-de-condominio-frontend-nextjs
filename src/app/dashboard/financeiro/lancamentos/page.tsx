@@ -45,9 +45,11 @@ export default function ListaLancamentosPage() {
     l.descricao.toUpperCase().includes("SALDO TOTAL")
   );
 
-  // Base: exclui entradas de SALDO TOTAL da tabela
+  // Base: exclui entradas de saldo (não são lançamentos reais)
+  const DESCRICOES_SALDO = ["SALDO TOTAL", "SALDO ANTERIOR"];
+
   const lancamentosBase = lancamentos.filter(
-    (l) => !l.descricao.toUpperCase().includes("SALDO TOTAL")
+    (l) => !DESCRICOES_SALDO.some((s) => l.descricao.toUpperCase().includes(s))
   );
 
   // Totais gerais (para os cards)
@@ -178,8 +180,8 @@ export default function ListaLancamentosPage() {
         </a>
       </div>
 
-      {/* 3 Cards de resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+      {/* 2 Cards de resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
 
         {/* Card: Saldo Total Disponível */}
         {saldoEntry ? (
@@ -202,19 +204,6 @@ export default function ListaLancamentosPage() {
             <p className="text-lg text-slate-400">—</p>
           </div>
         )}
-
-        {/* Card: Total Despesas com Cobranças */}
-        <div className="rounded-xl p-5 border bg-red-50 border-red-200">
-          <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-red-500">
-            Total Despesas com Cobranças
-          </p>
-          <p className="text-2xl font-bold text-red-600">
-            R$ {formatCurrency(totalDespesasCobrancas)}
-          </p>
-          <p className="text-xs text-red-300 mt-1">
-            {qtdDespesasCobrancas} cobrança(s) bancária(s)
-          </p>
-        </div>
 
         {/* Card: Total Receitas */}
         <div className="rounded-xl p-5 border bg-green-50 border-green-200">
@@ -251,8 +240,8 @@ export default function ListaLancamentosPage() {
 
             {mesesDisponiveis.map((ym) => {
               const qtdMes = lancamentosBase.filter((l) => l.data.startsWith(ym)).length;
-              const despMes = lancamentosBase
-                .filter((l) => l.data.startsWith(ym) && l.tipo === "GASTO")
+              const cobMes = lancamentosBase
+                .filter((l) => l.data.startsWith(ym) && l.tipo === "GASTO" && ehCobrancaBancaria(l.descricao))
                 .reduce((acc, l) => acc + Number(l.valor), 0);
               const recMes = lancamentosBase
                 .filter((l) => l.data.startsWith(ym) && l.tipo === "RECEITA")
@@ -271,10 +260,18 @@ export default function ListaLancamentosPage() {
                   <span className={`text-[10px] uppercase tracking-wide font-bold ${ ativo ? "text-blue-100" : "text-slate-400" }`}>
                     {formatMesLabel(ym)}
                   </span>
-                  <span className="text-base font-bold mt-0.5">{qtdMes}</span>
-                  <div className={`flex gap-2 text-[10px] mt-0.5 ${ ativo ? "text-blue-100" : "" }`}>
-                    {despMes > 0 && <span className={ativo ? "text-red-200" : "text-red-400"}>-{formatCurrency(despMes)}</span>}
-                    {recMes > 0 && <span className={ativo ? "text-green-200" : "text-green-500"}>+{formatCurrency(recMes)}</span>}
+                  <span className="text-base font-bold mt-0.5">{qtdMes} itens</span>
+                  <div className={`flex flex-col gap-0.5 text-[10px] mt-1`}>
+                    {recMes > 0 && (
+                      <span className={ativo ? "text-green-200" : "text-green-600 font-semibold"}>
+                        Rec: +{formatCurrency(recMes)}
+                      </span>
+                    )}
+                    {cobMes > 0 && (
+                      <span className={ativo ? "text-red-200" : "text-red-500"}>
+                        Cob: -{formatCurrency(cobMes)}
+                      </span>
+                    )}
                   </div>
                 </button>
               );
