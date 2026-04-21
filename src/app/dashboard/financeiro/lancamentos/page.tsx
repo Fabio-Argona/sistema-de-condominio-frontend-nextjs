@@ -392,7 +392,7 @@ export default function ListaLancamentosPage() {
         </div>
       ) : (
         <>
-          {/* ── MOBILE: cards empilhados (< md) — somente para não-MORADOR ── */}
+          {/* ── MOBILE: cards normais (< md) — SINDICO e outros ── */}
           <div className={isSomenteLeitura ? "hidden" : "md:hidden space-y-3"}>
             {lancamentosPagina.map((l) => (
               <div key={l.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -453,8 +453,36 @@ export default function ListaLancamentosPage() {
             </div>
           </div>
 
-          {/* ── DESKTOP/TABLET: tabela ── */}
-          <div className={isSomenteLeitura ? "block rounded-xl border border-slate-200 overflow-x-auto shadow-sm" : "hidden md:block rounded-xl border border-slate-200 overflow-x-auto shadow-sm"}>
+          {/* ── MOBILE COMPACTO: somente MORADOR (< md) ── */}
+          <div className={isSomenteLeitura ? "md:hidden" : "hidden"}>
+            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm divide-y divide-slate-100">
+              {lancamentosPagina.map((l) => (
+                <div key={l.id} className="flex items-center gap-3 px-3 py-2">
+                  {/* Barra lateral colorida */}
+                  <div className={`w-1 self-stretch rounded-full flex-shrink-0 ${l.tipo === "GASTO" ? "bg-red-400" : "bg-green-400"}`} />
+                  {/* Data */}
+                  <span className="text-[10px] text-slate-400 whitespace-nowrap w-14 flex-shrink-0">{formatDate(l.data)}</span>
+                  {/* Descrição */}
+                  <span className="text-xs text-slate-700 flex-1 min-w-0 truncate">{l.descricao}</span>
+                  {/* Valor */}
+                  <span className={`text-xs font-bold flex-shrink-0 ${l.tipo === "GASTO" ? "text-red-500" : "text-green-600"}`}>
+                    {l.tipo === "GASTO" ? "−" : "+"} {formatCurrency(Number(l.valor))}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {/* Totais compacto */}
+            <div className="mt-2 flex flex-wrap justify-between gap-2 text-xs text-slate-500 px-1">
+              <span>{lancamentosFiltrados.length} lançamento(s)</span>
+              <div className="flex gap-3">
+                {totalFiltradoDespesas > 0 && <span className="text-red-500 font-semibold">− R$ {formatCurrency(totalFiltradoDespesas)}</span>}
+                {totalFiltradoReceitas > 0 && <span className="text-green-600 font-semibold">+ R$ {formatCurrency(totalFiltradoReceitas)}</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* ── DESKTOP/TABLET: tabela (>= md) ── */}
+          <div className="hidden md:block rounded-xl border border-slate-200 overflow-x-auto shadow-sm">
             <table className="w-full text-left bg-white min-w-[640px]">
               <thead>
                 <tr className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-400 border-b border-slate-200">
