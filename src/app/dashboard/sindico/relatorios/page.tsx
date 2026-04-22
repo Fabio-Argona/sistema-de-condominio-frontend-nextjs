@@ -8,6 +8,8 @@ import { DashboardActions, DashboardHero, DashboardPage, DashboardSectionTitle }
 import toast from 'react-hot-toast';
 import { Boleto } from '@/types';
 import { useApi } from '@/hooks/useApi';
+import { getMesAbreviadoBR } from '@/utils/dateUtils';
+
 
 interface CashFlowMonth {
   mes: string;
@@ -44,9 +46,7 @@ export default function RelatoriosPage() {
         // ─── Processamento de Cobrança (Boletos) ───
         const billingMap: Record<string, { recebido: number, pendente: number, atrasado: number }> = {};
         boletos.forEach(b => {
-          const date = new Date(new Date(b.dataVencimento).getTime() + 86400000);
-          const monthName = date.toLocaleString('pt-BR', { month: 'short' });
-          const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1).replace('.', '');
+          const capitalizedMonth = getMesAbreviadoBR(b.dataVencimento);
           
           if (!billingMap[capitalizedMonth]) {
             billingMap[capitalizedMonth] = { recebido: 0, pendente: 0, atrasado: 0 };
@@ -64,9 +64,7 @@ export default function RelatoriosPage() {
         lancamentos.forEach(l => {
           if (DESCRICOES_SALDO.some(s => l.descricao.toUpperCase().includes(s))) return;
           
-          const date = new Date(l.data);
-          const monthName = date.toLocaleString('pt-BR', { month: 'short' });
-          const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1).replace('.', '');
+          const capitalizedMonth = getMesAbreviadoBR(l.data);
 
           if (!cashFlowMap[capitalizedMonth]) {
             cashFlowMap[capitalizedMonth] = { receita: 0, despesa: 0 };

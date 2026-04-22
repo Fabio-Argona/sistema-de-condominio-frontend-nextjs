@@ -10,6 +10,8 @@ import Button from '@/components/ui/Button';
 import { DashboardActions, DashboardHero, DashboardPage, DashboardSectionTitle } from '@/components/layout/RoleDashboard';
 import { Boleto, Comunicado, Ocorrencia, Reserva, Usuario, Visitante } from '@/types';
 import { useApi } from '@/hooks/useApi';
+import { getAgoraBR, parseDataBR, formatarDataBR } from '@/utils/dateUtils';
+
 
 const statusColors: Record<string, 'success' | 'warning' | 'danger' | 'info'> = {
   ABERTA: 'danger',
@@ -62,14 +64,13 @@ export default function SindicoDashboard() {
   useEffect(() => {
     const toDateOnly = (value?: string) => {
       if (!value) return null;
-      const dateStr = value.length >= 10 ? value.slice(0, 10) : value;
-      return new Date(`${dateStr}T00:00:00`);
+      return parseDataBR(value);
     };
 
     const isToday = (value?: string) => {
       const d = toDateOnly(value);
       if (!d || Number.isNaN(d.getTime())) return false;
-      const now = new Date();
+      const now = getAgoraBR();
       now.setHours(0, 0, 0, 0);
       return d.getTime() === now.getTime();
     };
@@ -122,7 +123,7 @@ export default function SindicoDashboard() {
         }
 
         if (boletosData) {
-          const now = new Date();
+          const now = getAgoraBR();
           now.setHours(0, 0, 0, 0);
           const mesAtual = now.getMonth();
           const anoAtual = now.getFullYear();
@@ -130,19 +131,19 @@ export default function SindicoDashboard() {
           const receita = boletosData
             .filter((item) => (item.status || '').toUpperCase() === 'PAGO')
             .filter((item) => {
-              const baseData = item.dataPagamento ? new Date(item.dataPagamento) : new Date(`${item.dataVencimento}T00:00:00`);
+              const baseData = item.dataPagamento ? new Date(item.dataPagamento) : parseDataBR(item.dataVencimento);
               return baseData.getMonth() === mesAtual && baseData.getFullYear() === anoAtual;
             })
             .reduce((total, item) => total + (item.valor || 0), 0);
           setReceitaMensal(receita);
 
-          const baseCobrancas = boletosData.filter((item) => new Date(`${item.dataVencimento}T00:00:00`) <= now);
+          const baseCobrancas = boletosData.filter((item) => parseDataBR(item.dataVencimento) <= now);
           const pagosBase = baseCobrancas.filter((item) => (item.status || '').toUpperCase() === 'PAGO').length;
           const taxa = baseCobrancas.length > 0 ? (pagosBase / baseCobrancas.length) * 100 : 100;
           setTaxaAdimplencia(taxa.toFixed(1));
 
           const vencidosMes = boletosData.filter((item) => {
-            const venc = new Date(`${item.dataVencimento}T00:00:00`);
+            const venc = parseDataBR(item.dataVencimento);
             const status = (item.status || '').toUpperCase();
             const mesmoMes = venc.getMonth() === mesAtual && venc.getFullYear() === anoAtual;
             return mesmoMes && status !== 'PAGO' && venc < now;
@@ -150,13 +151,13 @@ export default function SindicoDashboard() {
           setBoletosVencidosMes(vencidosMes);
 
           const vencidosTotal = boletosData.filter((item) => {
-            const venc = new Date(`${item.dataVencimento}T00:00:00`);
+            const venc = parseDataBR(item.dataVencimento);
             const status = (item.status || '').toUpperCase();
             return status !== 'PAGO' && venc < now;
           });
           setBoletosVencidosTotal(vencidosTotal.length);
           setBoletosVencidos([...vencidosTotal]
-            .sort((a, b) => new Date(`${a.dataVencimento}T00:00:00`).getTime() - new Date(`${b.dataVencimento}T00:00:00`).getTime())
+            .sort((a, b) => parseDataBR(a.dataVencimento).getTime() - parseDataBR(b.dataVencimento).getTime())
             .slice(0, 5));
         }
       } finally {
@@ -214,7 +215,7 @@ export default function SindicoDashboard() {
               {boletosVencidosTotal > 0 ? `${boletosVencidosTotal} boletos vencidos` : 'Sem boletos vencidos'}
             </Badge>
             <Badge variant={prioridades.criticas > 0 ? 'warning' : 'info'}>{prioridades.criticas} ocorrências críticas</Badge>
-            <Badge variant="info">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}</Badge>
+            <Badge variant="info">{getAgoraBR().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}</Badge>
           </div>
         }
         aside={
@@ -305,7 +306,7 @@ export default function SindicoDashboard() {
                       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
                           <p className="text-sm font-bold text-slate-900 dark:text-white">{reserva.areaComumNome}</p>
-                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{reserva.usuarioNome ?? reserva.moradorNome} • {new Date(`${reserva.dataReserva}T00:00:00`).toLocaleDateString('pt-BR')} • {reserva.horaInicio} - {reserva.horaFim}</p>
+                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{reserva.usuarioNome ?? reserva.moradorNome} • {formatarDataBR(reserva.dataReserva)} • {reserva.horaInicio} - {reserva.horaFim}</p>
                         </div>
                         <Badge variant="warning">Pendente</Badge>
                       </div>
@@ -328,7 +329,7 @@ export default function SindicoDashboard() {
                       <div>
                         <p className="text-sm font-bold text-slate-900 dark:text-white">{boleto.usuarioNome ?? boleto.moradorNome}</p>
                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{boleto.descricao} • R$ {(boleto.valor ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                        <p className="mt-1 text-xs font-semibold text-red-600 dark:text-red-400">Vencimento em {new Date(`${boleto.dataVencimento}T00:00:00`).toLocaleDateString('pt-BR')}</p>
+                        <p className="mt-1 text-xs font-semibold text-red-600 dark:text-red-400">Vencimento em {formatarDataBR(boleto.dataVencimento)}</p>
                       </div>
                       <Button variant="danger" size="sm" onClick={() => handleEnviarCobranca(boleto)} disabled={sendingCobranca === boleto.id}>
                         {sendingCobranca === boleto.id ? 'Enviando...' : 'Enviar cobrança'}
@@ -379,7 +380,7 @@ export default function SindicoDashboard() {
                         {comunicado.importante ? <Badge variant="danger" size="sm">Importante</Badge> : null}
                       </div>
                       <p className="text-sm font-bold text-slate-900 dark:text-white">{comunicado.titulo}</p>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{new Date(comunicado.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{formatarDataBR(comunicado.dataCriacao)}</p>
                     </div>
                   </div>
                 </div>

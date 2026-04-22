@@ -8,6 +8,8 @@ import Badge from '@/components/ui/Badge';
 import { DashboardActions, DashboardHero, DashboardPage, DashboardSectionTitle } from '@/components/layout/RoleDashboard';
 import { Boleto } from '@/types';
 import { useApi } from '@/hooks/useApi';
+import { getAgoraBR, parseDataBR, formatarDataBR } from '@/utils/dateUtils';
+
 
 interface MesResumo {
   mes: string;
@@ -43,7 +45,7 @@ export default function FinanceiroPage() {
   }, []);
 
   const hoje = useMemo(() => {
-    const d = new Date();
+    const d = getAgoraBR();
     d.setHours(0, 0, 0, 0);
     return d;
   }, []);
@@ -65,7 +67,7 @@ export default function FinanceiroPage() {
 
     const despesaRealMes = lancamentosBase
       .filter(l => {
-        const dt = new Date(l.data);
+        const dt = parseDataBR(l.data);
         return dt.getMonth() === mesAtual && dt.getFullYear() === anoAtual && l.tipo === 'GASTO';
       })
       .reduce((acc, l) => acc + Number(l.valor), 0);
@@ -88,7 +90,7 @@ export default function FinanceiroPage() {
 
     // Soma entradas reais
     lancamentosBase.forEach(l => {
-      const dt = new Date(l.data);
+      const dt = parseDataBR(l.data);
       const mes = dt.getMonth();
       if (porMes[mes]) {
         if (l.tipo === 'RECEITA') porMes[mes].receitas += Number(l.valor);
@@ -249,7 +251,7 @@ export default function FinanceiroPage() {
                   <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{boleto.usuarioNome ?? boleto.moradorNome}</p>
                   <Badge variant="danger">Vencido</Badge>
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Vencimento: {new Date(`${boleto.dataVencimento}T00:00:00`).toLocaleDateString('pt-BR')}</p>
+                <p className="text-xs text-slate-500 mt-1">Vencimento: {formatarDataBR(boleto.dataVencimento)}</p>
                 <p className="text-sm font-bold text-rose-600 mt-1">R$ {boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               </div>
             ))}
