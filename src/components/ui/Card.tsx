@@ -38,7 +38,7 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, className = '' }: CardHeaderProps) {
   return (
-    <div className={`px-6 py-4 border-b border-slate-100 dark:border-slate-700/50 ${className}`}>
+    <div className={`px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 sm:px-6 sm:py-4 ${className}`}>
       {children}
     </div>
   );
@@ -51,7 +51,7 @@ interface CardContentProps {
 }
 
 export function CardContent({ children, className = '', onClick }: CardContentProps) {
-  return <div className={`px-6 py-4 ${className}`} onClick={onClick}>{children}</div>;
+  return <div className={`px-4 py-3 sm:px-6 sm:py-4 ${className}`} onClick={onClick}>{children}</div>;
 }
 
 interface CardFooterProps {

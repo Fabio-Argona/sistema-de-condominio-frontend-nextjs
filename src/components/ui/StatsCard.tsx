@@ -54,7 +54,7 @@ export default function StatsCard({ title, value, icon, trend, color, subtitle }
   const colors = colorMap[color];
 
   return (
-    <div className={`rounded-2xl border border-slate-200/50 bg-white p-5 shadow-sm transition-all duration-300 group hover:shadow-md dark:border-slate-700/50 dark:bg-slate-800 ${colors.light}`}>
+    <div className={`rounded-2xl border border-slate-200/50 bg-white p-4 shadow-sm transition-all duration-300 group hover:shadow-md dark:border-slate-700/50 dark:bg-slate-800 sm:p-5 ${colors.light}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
